@@ -4,16 +4,30 @@ import api from '../api';
 import Table from '../components/Table';
 import { useToast } from '../context/ToastContext';
 import Modal from '../components/Modal';
+import { useOptions } from '../context/OptionsContext';
 
 const Cars = () => {
     const { showToast } = useToast();
     const [cars, setCars] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentCar, setCurrentCar] = useState(null);
+    const [branches, setBranches] = useState([]);
+    const { getOptionList } = useOptions();
+    const inventoryStatuses = getOptionList('INVENTORY_STATUSES');
 
     useEffect(() => {
         fetchCars();
+        fetchBranches();
     }, []);
+
+    const fetchBranches = async () => {
+        try {
+            const response = await api.get('/branches');
+            setBranches(response.data);
+        } catch (error) {
+            console.error('Error fetching branches:', error);
+        }
+    };
 
     const fetchCars = async () => {
         try {
@@ -21,7 +35,6 @@ const Cars = () => {
             setCars(response.data);
         } catch (error) {
             console.error('Error fetching cars:', error);
-            // alert('Failed to fetch cars');
         }
     };
 
@@ -47,9 +60,12 @@ const Cars = () => {
     };
 
     const columns = [
+        { key: 'registrationNumber', label: 'Reg. Number', render: (row) => row.registrationNumber || '-' },
         { key: 'make', label: 'Make' },
         { key: 'model', label: 'Model' },
         { key: 'variant', label: 'Variant' },
+        { key: 'inventoryStatus', label: 'Status' },
+        { key: 'branch', label: 'Branch', render: (row) => row.branch?.displayName || '-' },
         {
             key: 'actions', label: 'Actions', render: (row) => (
                 <button
@@ -86,6 +102,47 @@ const Cars = () => {
                 title={currentCar?.carId ? 'Edit Car' : 'Add Car'}
             >
                 <form onSubmit={handleSave} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Reg. Number</label>
+                        <input
+                            type="text"
+                            placeholder="e.g. MH12AB1234 or 26BH1234AB"
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 uppercase"
+                            value={currentCar?.registrationNumber || ''}
+                            onChange={(e) => {
+                                const val = e.target.value.toUpperCase().replace(/\s+/g, '');
+                                setCurrentCar({ ...currentCar, registrationNumber: val });
+                            }}
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1 uppercase">Standard (AA00BB0000) or BH Series (YYBH####XX)</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Inventory Status</label>
+                            <select
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                value={currentCar?.inventoryStatus || 'UPCOMING'}
+                                onChange={(e) => setCurrentCar({ ...currentCar, inventoryStatus: e.target.value })}
+                            >
+                                {inventoryStatuses.map(status => (
+                                    <option key={status.value} value={status.value}>{status.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Branch</label>
+                            <select
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                value={currentCar?.branchId || ''}
+                                onChange={(e) => setCurrentCar({ ...currentCar, branchId: e.target.value })}
+                            >
+                                <option value="">Select Branch</option>
+                                {branches.map(branch => (
+                                    <option key={branch.id} value={branch.id}>{branch.displayName}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Make</label>
                         <input

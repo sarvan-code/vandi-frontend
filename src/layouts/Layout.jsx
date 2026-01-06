@@ -20,12 +20,13 @@ const Layout = () => {
         const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(role);
         const isHR = role === 'HR_MGR';
         const isSales = ['SALES_REP', 'SALES_MGR'].includes(role);
+        const isExecutive = role === 'EXECUTIVE';
 
         // Dashboard is for everyone
         navItems.push({ name: 'Dashboard', path: '/', icon: LayoutDashboard });
 
-        if (isSales) {
-            // Sales roles: Only Lead Workspace and Enquiries
+        if (isSales || isExecutive || isSuperUser) {
+            // Sales, Executive, and Super Users: Lead Workspace and Enquiries
             navItems.push({
                 name: 'Lead Workspace',
                 icon: Briefcase,
@@ -34,17 +35,12 @@ const Layout = () => {
             navItems.push({ name: 'Enquiries', path: '/enquiries', icon: MessageSquare });
         }
 
-        if (isSuperUser) {
-            // Super users have access to all features
-            navItems.push({
-                name: 'Lead Workspace',
-                icon: Briefcase,
-                onClick: () => setIsLeadWorkspaceOpen(true)
-            });
-            navItems.push({ name: 'Enquiries', path: '/enquiries', icon: MessageSquare });
+        if (isSuperUser || isExecutive) {
+            // Super users and Executives have access to all features
             navItems.push({ name: 'Customers', path: '/customers', icon: Users });
             navItems.push({ name: 'Cars', path: '/cars', icon: Car });
             navItems.push({ name: 'Follow Ups', path: '/follow-ups', icon: Calendar });
+            navItems.push({ name: 'Users', path: '/users', icon: Users });
         }
 
         if (isSuperUser || isHR) {

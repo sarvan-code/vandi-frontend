@@ -4,12 +4,15 @@ import api from '../api';
 import Table from '../components/Table';
 import { useToast } from '../context/ToastContext';
 import Modal from '../components/Modal';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const Users = () => {
     const { showToast } = useToast();
     const [users, setUsers] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [roles, setRoles] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
+    const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, user: null });
 
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -18,7 +21,17 @@ const Users = () => {
 
     useEffect(() => {
         fetchUsers();
+        fetchRoles();
     }, [page, pageSize]);
+
+    const fetchRoles = async () => {
+        try {
+            const response = await api.get('/roles');
+            setRoles(response.data);
+        } catch (error) {
+            console.error('Error fetching roles:', error);
+        }
+    };
 
     const fetchUsers = async () => {
         try {
@@ -41,15 +54,21 @@ const Users = () => {
         setIsModalOpen(true);
     };
 
-    const handleDelete = async (user) => {
-        if (window.confirm('Are you sure you want to delete this user? All their assigned follow-ups will also be deleted.')) {
-            try {
-                await api.delete(`/users/${user.userId}`);
-                fetchUsers();
-            } catch (error) {
-                console.error("Error deleting user", error);
-                showToast("Failed to delete user", "error");
-            }
+    const handleDelete = (user) => {
+        setDeleteConfirm({ isOpen: true, user });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirm.user) return;
+        try {
+            await api.delete(`/users/${deleteConfirm.user.userId}`);
+            showToast("User deleted successfully", "success");
+            fetchUsers();
+        } catch (error) {
+            console.error("Error deleting user", error);
+            showToast("Failed to delete user", "error");
+        } finally {
+            setDeleteConfirm({ isOpen: false, user: null });
         }
     };
 
@@ -233,19 +252,13 @@ const Users = () => {
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Role</label>
                         <select
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
-                            value={currentUser?.role || 'GUEST'}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 text-gray-700"
+                            value={currentUser?.role || 'AUTH_USER'}
                             onChange={(e) => setCurrentUser({ ...currentUser, role: e.target.value })}
                         >
-                            <option value="APP_OWNER">App Owner</option>
-                            <option value="SYS_ADMIN">System Admin</option>
-                            <option value="DEV">Developer</option>
-                            <option value="SALES_MGR">Sales Manager</option>
-                            <option value="SALES_REP">Sales Representative</option>
-                            <option value="OFFICE_ADMIN">Office Admin</option>
-                            <option value="OFFICE_CLERK">Office Clerk</option>
-                            <option value="AUTH_USER">Auth User</option>
-                            <option value="GUEST">Guest</option>
+                            {roles.map(role => (
+                                <option key={role.code} value={role.code}>{role.name}</option>
+                            ))}
                         </select>
                     </div>
                     <div>
@@ -277,6 +290,17 @@ const Users = () => {
                     </div>
                 </form>
             </Modal>
+
+            <ConfirmDialog
+                isOpen={deleteConfirm.isOpen}
+                onClose={() => setDeleteConfirm({ isOpen: false, user: null })}
+                onConfirm={confirmDelete}
+                title="Delete User"
+                message={`Are you sure you want to delete "${deleteConfirm.user?.fullName}"? All their assigned follow-ups will also be deleted. This action cannot be undone.`}
+                confirmText="Delete"
+                cancelText="Cancel"
+                variant="danger"
+            />
         </div>
     );
 };

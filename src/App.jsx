@@ -35,14 +35,14 @@ function App() {
 
               <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                 <Route index element={<Dashboard />} />
-                <Route path="enquiries" element={<ProtectedRoute allowedRoles={['SALES_REP', 'SALES_MGR']}><Enquiries /></ProtectedRoute>} />
+                <Route path="enquiries" element={<ProtectedRoute allowedRoles={['SALES_REP', 'SALES_MGR', 'EXECUTIVE']}><Enquiries /></ProtectedRoute>} />
                 <Route path="profile" element={<UserProfile />} />
 
                 {/* Admin/Super User Only Pages */}
-                <Route path="customers" element={<ProtectedRoute allowedRoles={[]}><Customers /></ProtectedRoute>} />
-                <Route path="follow-ups" element={<ProtectedRoute allowedRoles={[]}><FollowUps /></ProtectedRoute>} />
-                <Route path="cars" element={<ProtectedRoute allowedRoles={[]}><Cars /></ProtectedRoute>} />
-                <Route path="users" element={<ProtectedRoute allowedRoles={['HR_MGR']}><Users /></ProtectedRoute>} />
+                <Route path="customers" element={<ProtectedRoute allowedRoles={['EXECUTIVE']}><Customers /></ProtectedRoute>} />
+                <Route path="follow-ups" element={<ProtectedRoute allowedRoles={['EXECUTIVE']}><FollowUps /></ProtectedRoute>} />
+                <Route path="cars" element={<ProtectedRoute allowedRoles={['EXECUTIVE']}><Cars /></ProtectedRoute>} />
+                <Route path="users" element={<ProtectedRoute allowedRoles={['HR_MGR', 'EXECUTIVE']}><Users /></ProtectedRoute>} />
 
                 <Route path="settings" element={<ProtectedRoute allowedRoles={['HR_MGR']}><Settings /></ProtectedRoute>}>
                   <Route index element={<SettingsRedirect />} />
