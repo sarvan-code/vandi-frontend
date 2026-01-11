@@ -6,7 +6,7 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 
 const AppConfig = () => {
     const { showToast } = useToast();
-    const [activeTab, setActiveTab] = useState('general'); // 'general' | 'vehicles'
+    const [activeTab, setActiveTab] = useState('general'); // 'general' | 'vehicles' | 'relations'
 
     // Delete confirmation dialog state
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, id: null, type: null });
@@ -29,10 +29,18 @@ const AppConfig = () => {
                 >
                     <Car size={16} /> Vehicle Master
                 </button>
+                <button
+                    onClick={() => setActiveTab('relations')}
+                    className={`px-6 py-3 font-medium text-sm flex items-center gap-2 ${activeTab === 'relations' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    <SettingsIcon size={16} /> Option Relations
+                </button>
             </div>
 
             <div className="flex-1 overflow-y-auto">
-                {activeTab === 'general' ? <GeneralOptionsManager showToast={showToast} /> : <VehicleMasterManager showToast={showToast} />}
+                {activeTab === 'general' && <GeneralOptionsManager showToast={showToast} />}
+                {activeTab === 'vehicles' && <VehicleMasterManager showToast={showToast} />}
+                {activeTab === 'relations' && <OptionRelationManager showToast={showToast} />}
             </div>
         </div>
     );
@@ -386,6 +394,209 @@ const VehicleMasterManager = ({ showToast }) => {
                     </div>
                 </div>
             )}
+        </div>
+    );
+};
+
+// --- Sub-Component: Option Relation Manager ---
+const OptionRelationManager = ({ showToast }) => {
+    const [categories, setCategories] = useState([]);
+    const [parentCategory, setParentCategory] = useState('');
+    const [childCategory, setChildCategory] = useState('');
+
+    const [parentOptions, setParentOptions] = useState([]);
+    const [childOptions, setChildOptions] = useState([]);
+
+    const [relations, setRelations] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    // New Relation state
+    const [newRelation, setNewRelation] = useState({ parentOptionId: '', childOptionId: '' });
+
+    useEffect(() => {
+        fetchCategories();
+        fetchRelations();
+    }, []);
+
+    useEffect(() => {
+        if (parentCategory) fetchOptions(parentCategory, setParentOptions);
+        else setParentOptions([]);
+    }, [parentCategory]);
+
+    useEffect(() => {
+        if (childCategory) fetchOptions(childCategory, setChildOptions);
+        else setChildOptions([]);
+    }, [childCategory]);
+
+    const fetchCategories = async () => {
+        try {
+            const res = await api.get('/options/categories');
+            setCategories(res.data);
+        } catch (error) { console.error("Failed to fetch categories", error); }
+    };
+
+    const fetchOptions = async (cat, setter) => {
+        try {
+            const res = await api.get(`/options`, { params: { category: cat } });
+            setter(res.data);
+        } catch (error) { console.error("Failed to fetch options", error); }
+    };
+
+    const fetchRelations = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get('/option-relations');
+            setRelations(res.data);
+        } catch (error) { console.error("Failed to fetch relations", error); }
+        finally { setLoading(false); }
+    };
+
+    const handleCreateRelation = async (e) => {
+        e.preventDefault();
+        try {
+            await api.post('/option-relations', newRelation);
+            showToast("Relation created successfully", "success");
+            fetchRelations();
+            setNewRelation({ parentOptionId: '', childOptionId: '' });
+        } catch (error) {
+            showToast(error.response?.data?.error || "Failed to create relation", "error");
+        }
+    };
+
+    const handleDeleteRelation = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this relation?")) return;
+        try {
+            await api.delete(`/option-relations/${id}`);
+            showToast("Relation deleted", "success");
+            fetchRelations();
+        } catch (error) {
+            showToast("Delete failed", "error");
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            {/* Creator Form */}
+            <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Plus size={20} className="text-blue-600" /> Create New Relation
+                </h3>
+                <form onSubmit={handleCreateRelation} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Parent Category</label>
+                        <select
+                            className="w-full border p-2 rounded-lg text-sm bg-gray-50"
+                            value={parentCategory}
+                            onChange={e => setParentCategory(e.target.value)}
+                        >
+                            <option value="">Select Parent Cat...</option>
+                            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Parent Option</label>
+                        <select
+                            className="w-full border p-2 rounded-lg text-sm"
+                            value={newRelation.parentOptionId}
+                            onChange={e => setNewRelation({ ...newRelation, parentOptionId: e.target.value })}
+                            required
+                            disabled={!parentCategory}
+                        >
+                            <option value="">Select Parent...</option>
+                            {parentOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.label || opt.value}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Child Category</label>
+                        <select
+                            className="w-full border p-2 rounded-lg text-sm bg-gray-50"
+                            value={childCategory}
+                            onChange={e => setChildCategory(e.target.value)}
+                        >
+                            <option value="">Select Child Cat...</option>
+                            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Child Option</label>
+                        <select
+                            className="w-full border p-2 rounded-lg text-sm"
+                            value={newRelation.childOptionId}
+                            onChange={e => setNewRelation({ ...newRelation, childOptionId: e.target.value })}
+                            required
+                            disabled={!childCategory}
+                        >
+                            <option value="">Select Child...</option>
+                            {childOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.label || opt.value}</option>)}
+                        </select>
+                    </div>
+                    <div className="md:col-span-4 flex justify-end">
+                        <button
+                            type="submit"
+                            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                            disabled={!newRelation.parentOptionId || !newRelation.childOptionId}
+                        >
+                            Link Options
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            {/* List Table */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
+                    <h3 className="font-semibold text-gray-700">Existing Relations</h3>
+                    <button onClick={fetchRelations} className="text-blue-600 hover:underline text-sm">Refresh</button>
+                </div>
+                {loading ? (
+                    <div className="p-10 text-center text-gray-400">Loading relations...</div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-gray-100 text-xs font-bold text-gray-600 uppercase">
+                                <tr>
+                                    <th className="p-4">Parent (Category: Value)</th>
+                                    <th className="p-4">Link</th>
+                                    <th className="p-4">Child (Category: Value)</th>
+                                    <th className="p-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y text-sm">
+                                {relations.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="4" className="p-10 text-center text-gray-400 italic">No relations mapped yet.</td>
+                                    </tr>
+                                ) : (
+                                    relations.map(rel => (
+                                        <tr key={rel.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="p-4">
+                                                <span className="text-xs text-gray-400 block mb-1">{rel.parent.category}</span>
+                                                <span className="font-medium text-gray-900">{rel.parent.label || rel.parent.value}</span>
+                                            </td>
+                                            <td className="p-4 text-gray-300">
+                                                <Plus size={14} className="rotate-45" strokeWidth={3} />
+                                            </td>
+                                            <td className="p-4">
+                                                <span className="text-xs text-gray-400 block mb-1">{rel.child.category}</span>
+                                                <span className="font-medium text-gray-900">{rel.child.label || rel.child.value}</span>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <button
+                                                    onClick={() => handleDeleteRelation(rel.id)}
+                                                    className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                                                    title="Delete Relation"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

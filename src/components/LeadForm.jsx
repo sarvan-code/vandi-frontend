@@ -5,14 +5,17 @@ import { useToast } from '../context/ToastContext';
 import { Save, History, PlusCircle, Search, X, Plus, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 import { useOptions } from '../context/OptionsContext';
+import VehicleAutocomplete from './VehicleAutocomplete';
 
-const LeadForm = ({ onSave, onCancel, tabId }) => {
+const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustomerId, preloadedPhone }) => {
     const { user } = useContext(AuthContext);
     const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(user?.role);
     const [branches, setBranches] = useState([]);
     const [selectedBranchId, setSelectedBranchId] = useState('');
     const { showToast } = useToast();
-    const { getOptionList } = useOptions();
+    const { getOptionList, getDependentOptions, vehicleBrands, vehicleTypes, vehicleModels, vehicleVariants } = useOptions();
+
+    const [filteredFollowupTypes, setFilteredFollowupTypes] = useState([]);
 
     // ---- State ----
     const [loading, setLoading] = useState(false);
@@ -62,14 +65,13 @@ const LeadForm = ({ onSave, onCancel, tabId }) => {
     const [initialCustomer, setInitialCustomer] = useState(null);
     const [initialEnquiry, setInitialEnquiry] = useState(null);
 
-    // Vehicle Data State
-    const [vehicleBrands, setVehicleBrands] = useState([]);
-    const [vehicleTypes, setVehicleTypes] = useState([]);
-    const [vehicleModels, setVehicleModels] = useState([]);
-    const [vehicleVariants, setVehicleVariants] = useState([]);
+    const getMinDateTime = () => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        return now.toISOString().slice(0, 16);
+    };
 
     useEffect(() => {
-        fetchVehicleData();
         if (isSuperUser) fetchBranches();
 
         // Load persistence
@@ -117,23 +119,6 @@ const LeadForm = ({ onSave, onCancel, tabId }) => {
         }
     };
 
-    const fetchVehicleData = async () => {
-        try {
-            const [brandsRes, typesRes, modelsRes, variantsRes] = await Promise.all([
-                api.get('/vehicles/brands'),
-                api.get('/vehicles/types'),
-                api.get('/vehicles/models'),
-                api.get('/vehicles/variants'),
-            ]);
-            setVehicleBrands(brandsRes.data);
-            setVehicleTypes(typesRes.data);
-            setVehicleModels(modelsRes.data);
-            setVehicleVariants(variantsRes.data);
-        } catch (error) {
-            console.error("Error fetching vehicle data", error);
-        }
-    };
-
     // Helper to get options from context
     const getOpt = (key) => getOptionList(key);
 
@@ -168,6 +153,109 @@ const LeadForm = ({ onSave, onCancel, tabId }) => {
         return () => clearTimeout(delayDebounceFn);
     }, [searchQuery, selectedBranchId, isSuperUser]);
 
+    useEffect(() => {
+        const fetchTypes = async () => {
+            if (followUp.followupMode) {
+                const types = await getDependentOptions('FOLLOWUP_TYPES', 'FOLLOWUP_MODES', followUp.followupMode);
+                setFilteredFollowupTypes(types);
+            } else {
+                setFilteredFollowupTypes([]);
+            }
+        };
+        fetchTypes();
+    }, [followUp.followupMode]);
+
+    // Load pre-loaded enquiry if provided
+    useEffect(() => {
+        if (preloadedEnquiryId || preloadedCustomerId || preloadedPhone) {
+            setLoading(true);
+            const loadPreloadedEnquiry = async () => {
+                try {
+                    // Optimized Path: Smart Search
+                    if (preloadedPhone) {
+                        const res = await api.get('/leads/search', { params: { term: preloadedPhone } });
+                        if (res.data.found && res.data.data && res.data.data.length > 0) {
+                            handleSelectResult(res.data.data[0]);
+                            setLoading(false);
+                            return;
+                        }
+                    }
+
+                    // Legacy Path (Multiple APIs)
+                    if (preloadedCustomerId) {
+                        const customerRes = await api.get(`/customers/${preloadedCustomerId}`);
+                        const customerData = customerRes.data;
+                        const sanitizedCustomer = {
+                            customerId: customerData.customerId,
+                            fullName: customerData.fullName || '',
+                            phone: customerData.phone || '',
+                            email: customerData.email || '',
+                            instaid: customerData.instaid || '',
+                            dateOfBirth: customerData.dateOfBirth || '',
+                            marriageDate: customerData.marriageDate || '',
+                            profession: customerData.profession || '',
+                            referredBy: customerData.referredBy || '',
+                            referredByName: customerData.referredByName || '',
+                            address: customerData.address || '',
+                            district: customerData.district || '',
+                            state: customerData.state || '',
+                            country: customerData.country || '',
+                            landMark: customerData.landMark || '',
+                            remarks: customerData.remarks || '',
+                            customerType: customerData.customerType || 'Lead'
+                        };
+
+                        setCustomer(sanitizedCustomer);
+                        setSearchQuery(customerData.fullName || '');
+                    }
+
+                    if (preloadedEnquiryId) {
+                        // Fetch enquiry data
+                        const enquiryRes = await api.get(`/enquiries/${preloadedEnquiryId}`);
+                        const enquiryData = enquiryRes.data;
+                        if (enquiryData.branchId) setSelectedBranchId(enquiryData.branchId);
+
+                        setEnquiry({
+                            enquiryType: enquiryData.enquiryType || 'Buy',
+                            exchange: enquiryData.exchange || false,
+                            exchangeDetail: enquiryData.exchangeDetail || '',
+                            budgetRange: enquiryData.budgetRange || '',
+                            budgetRemarks: enquiryData.budgetRemarks || '',
+                            carDetailRemarks: enquiryData.carDetailRemarks || '',
+                            fuelType: enquiryData.fuelType || '',
+                            usageType: enquiryData.usageType || '',
+                            payment: enquiryData.payment || '',
+                            customerType: enquiryData.customerType || 'Lead',
+                            status: enquiryData.status || 'new',
+                            carDetails: enquiryData.carDetails || []
+                        });
+
+                        // Set enquiry state flags
+                        setActiveEnquiryId(preloadedEnquiryId);
+                        setIsNewEnquiry(false);
+
+                        // Fetch follow-up history
+                        const followupsRes = await api.get(`/follow-ups?enquiryId=${preloadedEnquiryId}`);
+                        const followupHistory = followupsRes.data.data || followupsRes.data || [];
+                        setHistory(followupHistory);
+
+                        // Show history if there are follow-ups
+                        if (followupHistory.length > 0) {
+                            setShowFollowUpHistory(true);
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Error loading pre-loaded enquiry:', error);
+                    showToast('Error loading enquiry data', 'error');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            loadPreloadedEnquiry();
+        }
+    }, [preloadedEnquiryId, preloadedCustomerId, preloadedPhone]);
+
     const handleSelectResult = (result) => {
         const { customer: custData, activeEnquiry, history: histData } = result;
         const sanitizedCust = { ...custData };
@@ -178,11 +266,13 @@ const LeadForm = ({ onSave, onCancel, tabId }) => {
         if (activeEnquiry) {
             showToast(`Found active enquiry (Status: ${activeEnquiry.status}). Loading it...`, "info");
             setActiveEnquiryId(activeEnquiry.enquiryId);
+            if (activeEnquiry.branchId) setSelectedBranchId(activeEnquiry.branchId);
             const sanitizedEnq = { ...activeEnquiry };
             setEnquiry(sanitizedEnq);
             setInitialEnquiry(JSON.stringify(sanitizedEnq));
             setIsNewEnquiry(false);
         } else {
+            if (custData.branchId) setSelectedBranchId(custData.branchId);
             setActiveEnquiryId(null);
             setEnquiry({
                 enquiryType: 'Buy',
@@ -367,11 +457,11 @@ const LeadForm = ({ onSave, onCancel, tabId }) => {
                         <input className="border p-2 rounded" placeholder="Instagram ID" value={customer.instaid || ''} onChange={e => setCustomer({ ...customer, instaid: e.target.value })} />
                         <div>
                             <label className="text-xs text-gray-500">Date of Birth</label>
-                            <input type="date" className="w-full border p-2 rounded" value={customer.dateOfBirth || ''} onChange={e => setCustomer({ ...customer, dateOfBirth: e.target.value })} />
+                            <input type="date" className="w-full border p-2 rounded" max={new Date().toISOString().split("T")[0]} value={customer.dateOfBirth || ''} onChange={e => setCustomer({ ...customer, dateOfBirth: e.target.value })} />
                         </div>
                         <div>
                             <label className="text-xs text-gray-500">Marriage Date</label>
-                            <input type="date" className="w-full border p-2 rounded" value={customer.marriageDate || ''} onChange={e => setCustomer({ ...customer, marriageDate: e.target.value })} />
+                            <input type="date" className="w-full border p-2 rounded" max={new Date().toISOString().split("T")[0]} value={customer.marriageDate || ''} onChange={e => setCustomer({ ...customer, marriageDate: e.target.value })} />
                         </div>
                         <select className="w-full border p-2 rounded text-sm h-[42px]" value={customer.profession} onChange={e => setCustomer({ ...customer, profession: e.target.value })}>
                             <option value="">Select Profession</option>
@@ -640,9 +730,14 @@ const LeadForm = ({ onSave, onCancel, tabId }) => {
                         </div>
                         <div>
                             <label className="block text-xs text-gray-500 font-medium">Type <span className="text-red-500">*</span></label>
-                            <select className="w-full border p-2 rounded text-sm h-[42px]" value={followUp.followupType} onChange={e => setFollowUp({ ...followUp, followupType: e.target.value })}>
-                                <option value="">Select...</option>
-                                {getOpt('FOLLOWUP_TYPES').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
+                            <select
+                                className="w-full border p-2 rounded text-sm h-[42px]"
+                                value={followUp.followupType}
+                                onChange={e => setFollowUp({ ...followUp, followupType: e.target.value })}
+                                disabled={!followUp.followupMode}
+                            >
+                                <option value="">{followUp.followupMode ? 'Select Type...' : 'Select Mode First...'}</option>
+                                {filteredFollowupTypes.map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
                             </select>
                         </div>
                     </div>
@@ -658,7 +753,11 @@ const LeadForm = ({ onSave, onCancel, tabId }) => {
                             <label className="text-xs text-gray-500 font-medium">
                                 Vehicle Number {(followUp.followupActionDone || "").toLowerCase() === "general-query" ? "(Optional)" : "*"}
                             </label>
-                            <input className="border p-2 rounded h-[42px]" placeholder="Vehicle Number (Visiting)" value={followUp.followupCar || ''} onChange={e => setFollowUp({ ...followUp, followupCar: e.target.value })} />
+                            <VehicleAutocomplete
+                                placeholder="Enter Vehicle Number"
+                                value={followUp.followupCar || ''}
+                                onChange={(val, car) => setFollowUp({ ...followUp, followupCar: val, followupCarId: car?.carId || null })}
+                            />
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -671,7 +770,7 @@ const LeadForm = ({ onSave, onCancel, tabId }) => {
                         </div>
                         <div>
                             <label className="block text-xs text-gray-500 font-medium">Next Visit / Contact <span className="text-red-500">*</span></label>
-                            <input type="datetime-local" className="w-full border p-2 rounded" value={followUp.nextVisitDate || ''} onChange={e => setFollowUp({ ...followUp, nextVisitDate: e.target.value })} />
+                            <input type="datetime-local" className="w-full border p-2 rounded" value={followUp.nextVisitDate || ''} min={getMinDateTime()} onChange={e => setFollowUp({ ...followUp, nextVisitDate: e.target.value })} />
                         </div>
                     </div>
                     <div className="mt-4">

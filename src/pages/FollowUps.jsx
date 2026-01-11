@@ -9,6 +9,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useOptions } from '../context/OptionsContext';
 import ConfirmDialog from '../components/ConfirmDialog';
+import VehicleAutocomplete from '../components/VehicleAutocomplete';
 
 const processEnquiryData = (rawEnquiries) => {
     if (!Array.isArray(rawEnquiries)) return [];
@@ -34,9 +35,11 @@ const FollowUps = () => {
     const [currentFollowUp, setCurrentFollowUp] = useState(null);
 
     // Options Context
-    const { getOptionList } = useOptions();
+    const { getOptionList, getDependentOptions } = useOptions();
     // Helper to get options
     const getOpt = (key) => getOptionList(key);
+
+    const [filteredFollowupTypes, setFilteredFollowupTypes] = useState([]);
 
     // Filter state
     const [filterEnquiryId, setFilterEnquiryId] = useState(initialEnquiryId);
@@ -59,6 +62,12 @@ const FollowUps = () => {
 
     // Delete confirmation dialog state
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, followUp: null });
+
+    const getMinDateTime = () => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        return now.toISOString().slice(0, 16);
+    };
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -197,6 +206,30 @@ const FollowUps = () => {
         }
     };
 
+    // Dependent Options Effect
+    useEffect(() => {
+        const fetchTypes = async () => {
+            if (currentFollowUp?.followupMode) {
+                const types = await getDependentOptions('FOLLOWUP_TYPES', 'FOLLOWUP_MODES', currentFollowUp.followupMode);
+                setFilteredFollowupTypes(types);
+
+                // If currently selected type is not in the new filtered list, reset it (unless in view mode or initial load)
+                if (currentFollowUp.followupType && !types.find(t => t.value === currentFollowUp.followupType)) {
+                    // Only reset if we are actively EDITING, not just loading a view
+                    if (!isViewMode && currentFollowUp.followUpId) {
+                        // Keep current if editing? No, if mode changed, type must be valid.
+                        // But wait, if we JUST opened the edit modal, we shouldn't reset.
+                        // We need a way to distinguish "Manual Change" vs "Modal Open"
+                    }
+                }
+            } else {
+                setFilteredFollowupTypes([]);
+            }
+        };
+
+        fetchTypes();
+    }, [currentFollowUp?.followupMode]);
+
     const handleSave = async (e) => {
         e.preventDefault();
 
@@ -212,7 +245,7 @@ const FollowUps = () => {
         }
 
         const isGeneralQuery = (currentFollowUp.followupActionDone || "").toLowerCase() === "general-query";
-        if (!isGeneralQuery && !currentFollowUp.followupCar) {
+        if (!isGeneralQuery && !currentFollowUp.car) {
             showToast("Vehicle Number is mandatory for the selected Action.", "warning");
             return;
         }
@@ -223,6 +256,7 @@ const FollowUps = () => {
         }
 
         try {
+            console.log("currentFollowUp", currentFollowUp);
             // Construct minimal payload to avoid 400 Bad Request with relations
             const payload = {
                 enquiryId: currentFollowUp.enquiryId,
@@ -230,7 +264,7 @@ const FollowUps = () => {
                 followupMode: currentFollowUp.followupMode,
                 followupType: currentFollowUp.followupType,
                 followupActionDone: currentFollowUp.followupActionDone,
-                followupCar: currentFollowUp.followupCar,
+                car: currentFollowUp.car,
                 followupResults: currentFollowUp.followupResults,
                 nextVisitDate: currentFollowUp.nextVisitDate ? new Date(currentFollowUp.nextVisitDate).toISOString() : null,
                 followupRemarks: currentFollowUp.followupRemarks,
@@ -264,7 +298,7 @@ const FollowUps = () => {
         },
         { key: 'followupType', label: 'Type' },
         { key: 'followupActionDone', label: 'Action' },
-        { key: 'followupCar', label: 'Vehicle' },
+        { key: 'followupCar', label: 'Vehicle', render: (row) => row.car?.registrationNumber || 'N/A' },
         {
             key: 'followupResults', label: 'Results', render: (row) => (
                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
@@ -577,9 +611,10 @@ const FollowUps = () => {
                                         className="mt-1 block w-full border p-2 rounded-md"
                                         value={currentFollowUp?.followupType || ''}
                                         onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, followupType: e.target.value })}
+                                        disabled={!currentFollowUp?.followupMode}
                                     >
-                                        <option value="">Select...</option>
-                                        {getOpt('FOLLOWUP_TYPES').map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                                        <option value="">{currentFollowUp?.followupMode ? 'Select Type...' : 'Select Mode First...'}</option>
+                                        {filteredFollowupTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                                     </select>
                                 </div>
                             </div>
@@ -600,11 +635,11 @@ const FollowUps = () => {
                                     <label className="block text-sm font-medium text-gray-700">
                                         Vehicle (Used for Visit) {(currentFollowUp?.followupActionDone || "").toLowerCase() === "general-query" ? <span className="text-gray-400 font-normal">(Optional)</span> : <span className="text-red-500">*</span>}
                                     </label>
-                                    <input
-                                        className="mt-1 block w-full border p-2 rounded-md"
+                                    <VehicleAutocomplete
+                                        className="mt-1"
                                         placeholder="Enter vehicle number"
-                                        value={currentFollowUp?.followupCar || ''}
-                                        onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, followupCar: e.target.value })}
+                                        value={currentFollowUp?.car?.registrationNumber || ''}
+                                        onChange={(car) => setCurrentFollowUp({ ...currentFollowUp, car: car || null })}
                                     />
                                 </div>
                             </div>
@@ -625,7 +660,7 @@ const FollowUps = () => {
                                     <label className="block text-sm font-medium text-gray-700">Next Visit Date <span className="text-red-500">*</span></label>
                                     <input
                                         type="datetime-local"
-                                        className="mt-1 block w-full border p-2 rounded-md"
+                                        className="mt-1 block w-full border p-2 rounded-md" min={getMinDateTime()}
                                         value={currentFollowUp?.nextVisitDate ? new Date(currentFollowUp.nextVisitDate).toISOString().slice(0, 16) : ''}
                                         onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, nextVisitDate: e.target.value })}
                                     />

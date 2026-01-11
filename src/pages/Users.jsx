@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Edit, Trash } from 'lucide-react';
+import React, { useState, useEffect, useContext } from 'react';
+import { Edit, Trash, Filter } from 'lucide-react';
 import api from '../api';
 import Table from '../components/Table';
 import { useToast } from '../context/ToastContext';
 import Modal from '../components/Modal';
+import { AuthContext } from '../context/AuthContext';
 import ConfirmDialog from '../components/ConfirmDialog';
 
 const Users = () => {
@@ -11,8 +12,14 @@ const Users = () => {
     const [users, setUsers] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [roles, setRoles] = useState([]);
+    const [branches, setBranches] = useState([]);
+    const [selectedBranchId, setSelectedBranchId] = useState('');
     const [currentUser, setCurrentUser] = useState(null);
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, user: null });
+    const { user } = useContext(AuthContext);
+
+    const globalRoles = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE', 'HR_MGR', 'HR_ASSIS', 'AUTH_USER', 'GUEST'];
+    const isGlobalUser = globalRoles.includes(user?.role);
 
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -22,7 +29,17 @@ const Users = () => {
     useEffect(() => {
         fetchUsers();
         fetchRoles();
-    }, [page, pageSize]);
+        fetchBranches();
+    }, [page, pageSize, selectedBranchId]);
+
+    const fetchBranches = async () => {
+        try {
+            const response = await api.get('/branches');
+            setBranches(response.data);
+        } catch (error) {
+            console.error('Error fetching branches:', error);
+        }
+    };
 
     const fetchRoles = async () => {
         try {
@@ -35,7 +52,7 @@ const Users = () => {
 
     const fetchUsers = async () => {
         try {
-            const response = await api.get(`/users?page=${page}&pageSize=${pageSize}`);
+            const response = await api.get(`/users?page=${page}&pageSize=${pageSize}${selectedBranchId ? `&branchId=${selectedBranchId}` : ''}`);
             if (response.data.data && response.data.meta) {
                 setUsers(response.data.data);
                 setTotalPages(response.data.meta.totalPages);
@@ -139,7 +156,27 @@ const Users = () => {
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">Users</h1>
+                <div className="flex items-center gap-4">
+                    <h1 className="text-2xl font-bold text-gray-800">Users</h1>
+                    {isGlobalUser && (
+                        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-200">
+                            <Filter size={16} className="text-gray-400" />
+                            <select
+                                className="text-sm border-none focus:ring-0 bg-transparent"
+                                value={selectedBranchId}
+                                onChange={(e) => {
+                                    setSelectedBranchId(e.target.value);
+                                    setPage(1);
+                                }}
+                            >
+                                <option value="">All Branches</option>
+                                {branches.map(b => (
+                                    <option key={b.id} value={b.id}>{b.displayName}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                </div>
                 <button
                     onClick={() => { setCurrentUser({}); setIsModalOpen(true); }}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"

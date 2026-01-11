@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, MessageSquare, Car, Calendar, User, Menu, X, LogOut, Briefcase, Settings as SettingsIcon, ChevronDown, ChevronRight, Database, Building2, ShieldAlert } from 'lucide-react';
 import clsx from 'clsx';
 import { AuthContext } from '../context/AuthContext';
+import { useWorkspace } from '../context/WorkspaceContext';
 import LeadWorkspace from '../pages/LeadWorkspace';
 
 const Layout = () => {
@@ -11,14 +12,13 @@ const Layout = () => {
     const [isSettingsExpanded, setIsSettingsExpanded] = useState(false); // Sub-menu toggle
     const location = useLocation();
     const { user, logout } = useContext(AuthContext);
-    const [isLeadWorkspaceOpen, setIsLeadWorkspaceOpen] = useState(false);
-    const [isLeadWorkspaceMinimized, setIsLeadWorkspaceMinimized] = useState(false);
+    const { isWorkspaceOpen, isWorkspaceMinimized, openWorkspace, closeWorkspace, toggleMinimize } = useWorkspace();
 
     let navItems = [];
     if (user?.userStatus === 'ACTIVE') {
         const role = user.role;
         const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(role);
-        const isHR = role === 'HR_MGR';
+        const isHR = ['HR_MGR', 'HR_ASSIS'].includes(role);
         const isSales = ['SALES_REP', 'SALES_MGR'].includes(role);
         const isExecutive = role === 'EXECUTIVE';
 
@@ -30,16 +30,23 @@ const Layout = () => {
             navItems.push({
                 name: 'Lead Workspace',
                 icon: Briefcase,
-                onClick: () => setIsLeadWorkspaceOpen(true)
+                onClick: () => openWorkspace()
             });
             navItems.push({ name: 'Enquiries', path: '/enquiries', icon: MessageSquare });
         }
 
         if (isSuperUser || isExecutive) {
-            // Super users and Executives have access to all features
+            // Super users and Executives have access to operational data
             navItems.push({ name: 'Customers', path: '/customers', icon: Users });
-            navItems.push({ name: 'Cars', path: '/cars', icon: Car });
             navItems.push({ name: 'Follow Ups', path: '/follow-ups', icon: Calendar });
+        }
+
+        if (isSuperUser || isExecutive || isSales) {
+            navItems.push({ name: 'Cars', path: '/cars', icon: Car });
+        }
+
+        if (isSuperUser || isExecutive || isHR) {
+            // Users list is for HR as well
             navItems.push({ name: 'Users', path: '/users', icon: Users });
         }
 
@@ -134,7 +141,7 @@ const Layout = () => {
                                         <button
                                             className={clsx(
                                                 "w-full flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors relative group",
-                                                isLeadWorkspaceOpen && item.name === 'Lead Workspace' && "bg-blue-50 text-blue-600"
+                                                isWorkspaceOpen && item.name === 'Lead Workspace' && "bg-blue-50 text-blue-600"
                                             )}
                                             onClick={(e) => {
                                                 if (item.onClick) item.onClick();
@@ -235,11 +242,11 @@ const Layout = () => {
                     <Outlet />
                 </main>
 
-                {isLeadWorkspaceOpen && (
+                {isWorkspaceOpen && (
                     <LeadWorkspace
-                        isMinimized={isLeadWorkspaceMinimized}
-                        onMinimize={() => setIsLeadWorkspaceMinimized(!isLeadWorkspaceMinimized)}
-                        onClose={() => setIsLeadWorkspaceOpen(false)}
+                        isMinimized={isWorkspaceMinimized}
+                        onMinimize={toggleMinimize}
+                        onClose={closeWorkspace}
                     />
                 )}
             </div>

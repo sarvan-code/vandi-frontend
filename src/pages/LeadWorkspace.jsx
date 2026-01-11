@@ -5,6 +5,7 @@ import { useToast } from '../context/ToastContext';
 import LeadForm from '../components/LeadForm';
 import api from '../api';
 import { AuthContext } from '../context/AuthContext';
+import { useWorkspace } from '../context/WorkspaceContext';
 
 const LeadWorkspace = ({ isMinimized, onMinimize, onClose }) => {
     const { showToast } = useToast();
@@ -17,6 +18,7 @@ const LeadWorkspace = ({ isMinimized, onMinimize, onClose }) => {
     });
 
     const { user } = useContext(AuthContext);
+    const { preloadedEnquiry, clearPreloadedEnquiry } = useWorkspace();
     const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(user?.role);
     // Removed local branches fetching, will be handled in LeadForm or if needed global state
     // const [branches, setBranches] = useState([]);
@@ -50,6 +52,37 @@ const LeadWorkspace = ({ isMinimized, onMinimize, onClose }) => {
     useEffect(() => {
         localStorage.setItem('vandi_active_tab', activeTabId);
     }, [activeTabId]);
+
+    // Handle pre-loaded enquiry from context
+    useEffect(() => {
+        if (preloadedEnquiry) {
+            const { enquiryId, customerId, phone } = preloadedEnquiry;
+
+            // Check if this enquiry is already open in a tab
+            const existingTab = tabs.find(tab => tab.enquiryId === enquiryId);
+
+            if (existingTab) {
+                // Switch to existing tab
+                setActiveTabId(existingTab.id);
+            } else {
+                // Create new tab with pre-loaded data
+                const newId = Date.now();
+                const newTab = {
+                    id: newId,
+                    title: `Enquiry #${enquiryId.slice(0, 8)}`,
+                    key: newId,
+                    enquiryId,
+                    customerId,
+                    phone
+                };
+                setTabs([...tabs, newTab]);
+                setActiveTabId(newId);
+            }
+
+            // Clear the preloaded enquiry from context
+            clearPreloadedEnquiry();
+        }
+    }, [preloadedEnquiry]);
 
     // ---- Handlers ----
     const addTab = () => {
@@ -177,6 +210,9 @@ const LeadWorkspace = ({ isMinimized, onMinimize, onClose }) => {
                             <div className="flex-1 overflow-auto">
                                 <LeadForm
                                     tabId={tab.id}
+                                    preloadedEnquiryId={tab.enquiryId}
+                                    preloadedCustomerId={tab.customerId}
+                                    preloadedPhone={tab.phone}
                                     onSave={() => handleLeadSaved(tab.id)}
                                     onCancel={(e) => closeTab(e, tab.id)}
                                 />
