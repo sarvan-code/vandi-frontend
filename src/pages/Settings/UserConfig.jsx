@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import api from '../../api';
 import { useToast } from '../../context/ToastContext';
+import { useOptions } from '../../context/OptionsContext';
 import { Search, UserCheck, UserX, Trash2, Edit, X, Save, Eye, Building, UserPlus } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import ConfirmDialog from '../../components/ConfirmDialog';
@@ -9,10 +10,9 @@ const UserConfig = () => {
     const { user: currentUser } = useContext(AuthContext);
     const { showToast } = useToast();
     const [users, setUsers] = useState([]);
-    const [roles, setRoles] = useState([]);
+    const { getOptionList, branches, roles, loading: optionsLoading } = useOptions();
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [branches, setBranches] = useState([]);
     const [selectedBranchId, setSelectedBranchId] = useState('');
     const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(currentUser?.role);
     const isHR = currentUser?.role === 'HR_MGR';
@@ -28,26 +28,17 @@ const UserConfig = () => {
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, user: null });
 
     useEffect(() => {
-        fetchData();
+        fetchUsers();
     }, [selectedBranchId]);
 
-    const fetchData = async () => {
+    const fetchUsers = async () => {
         setLoading(true);
         try {
-            const [usersRes, rolesRes] = await Promise.all([
-                api.get(`/users?pageSize=100${selectedBranchId ? `&branchId=${selectedBranchId}` : ''}`),
-                api.get('/roles')
-            ]);
+            const usersRes = await api.get(`/users?pageSize=100${selectedBranchId ? `&branchId=${selectedBranchId}` : ''}`);
             setUsers(usersRes.data.data);
-            setRoles(rolesRes.data);
-
-            if ((isSuperUser || isHR) && branches.length === 0) {
-                const branchesRes = await api.get('/branches'); // Fixed endpoint
-                setBranches(branchesRes.data.data || branchesRes.data || []);
-            }
         } catch (error) {
-            console.error("Failed to fetch data", error);
-            showToast("Failed to fetch data: " + error.message, "error");
+            console.error("Failed to fetch users", error);
+            showToast("Failed to fetch users: " + error.message, "error");
         } finally {
             setLoading(false);
         }

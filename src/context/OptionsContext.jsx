@@ -15,6 +15,38 @@ export const OptionsProvider = ({ children }) => {
     const [vehicleTypes, setVehicleTypes] = useState([]);
     const [vehicleModels, setVehicleModels] = useState([]);
     const [vehicleVariants, setVehicleVariants] = useState([]);
+    const [roles, setRoles] = useState([]);
+    const [branches, setBranches] = useState([]);
+    const [optionRelations, setOptionRelations] = useState([]);
+
+    const fetchRoles = async () => {
+        try {
+            const res = await api.get('/roles');
+            setRoles(res.data || []);
+        } catch (error) {
+            console.error("Failed to load roles", error);
+        }
+    };
+
+    const fetchBranches = async () => {
+        // Only fetch if super/global user or as needed by logic
+        // For now, let's fetch to have them available
+        try {
+            const res = await api.get('/branches');
+            setBranches(res.data.data || res.data || []);
+        } catch (error) {
+            console.error("Failed to load branches", error);
+        }
+    };
+
+    const fetchOptionRelations = async () => {
+        try {
+            const res = await api.get('/option-relations');
+            setOptionRelations(res.data || []);
+        } catch (error) {
+            console.error("Failed to load option relations", error);
+        }
+    };
 
     const fetchVehicles = async () => {
         try {
@@ -72,6 +104,9 @@ export const OptionsProvider = ({ children }) => {
         if (user) {
             fetchOptions();
             fetchVehicles();
+            fetchRoles();
+            fetchBranches();
+            fetchOptionRelations();
         } else {
             // User logged out? Reset or keep fallbacks? 
             // Maybe keep to avoid errors if partially rendering
@@ -91,17 +126,26 @@ export const OptionsProvider = ({ children }) => {
     };
 
     // Helper to get dependent options (e.g., Follow-up Types for a specific Mode)
-    const getDependentOptions = async (category, parentCategory, parentValue) => {
+    // Refactored to use pre-loaded relations first
+    const getDependentOptions = (category, parentCategory, parentValue) => {
         if (!parentValue) return [];
-        try {
-            const res = await api.get('/options', {
-                params: { category, parentCategory, parentValue }
-            });
-            return res.data || [];
-        } catch (error) {
-            console.error(`Failed to fetch dependent options for ${category}`, error);
-            return [];
+
+        // 1. Filter relations for the given parent
+        const relatedValues = optionRelations
+            .filter(r =>
+                r.parentCategory === parentCategory &&
+                r.parentValue === parentValue &&
+                r.childCategory === category
+            )
+            .map(r => r.childValue);
+
+        if (relatedValues.length > 0) {
+            // 2. Map to actual option objects { value, label } from the pre-loaded options map
+            const categoryOptions = getOptionList(category);
+            return categoryOptions.filter(opt => relatedValues.includes(opt.value));
         }
+
+        return [];
     };
 
     return (
@@ -115,7 +159,13 @@ export const OptionsProvider = ({ children }) => {
             vehicleTypes,
             vehicleModels,
             vehicleVariants,
-            refreshVehicles: fetchVehicles
+            refreshVehicles: fetchVehicles,
+            roles,
+            refreshRoles: fetchRoles,
+            branches,
+            refreshBranches: fetchBranches,
+            optionRelations,
+            refreshOptionRelations: fetchOptionRelations
         }}>
             {children}
         </OptionsContext.Provider>

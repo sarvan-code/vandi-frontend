@@ -11,7 +11,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 const Customers = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
-    const { getOptionList } = useOptions();
+    const { getOptionList, branches, loading: optionsLoading } = useOptions();
     const { user } = useContext(AuthContext);
     const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(user?.role);
 
@@ -24,8 +24,7 @@ const Customers = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalCustomers, setTotalCustomers] = useState(0);
 
-    // Branch state for super users
-    const [branches, setBranches] = useState([]);
+    // Filter state for super users
     const [selectedBranchId, setSelectedBranchId] = useState('');
 
     // Delete confirmation dialog state
@@ -161,21 +160,6 @@ const Customers = () => {
             )
         }
     ];
-
-    // Fetch branches for super users
-    useEffect(() => {
-        if (isSuperUser) {
-            const fetchBranches = async () => {
-                try {
-                    const response = await api.get('/branches');
-                    setBranches(response.data);
-                } catch (error) {
-                    console.error('Error fetching branches:', error);
-                }
-            };
-            fetchBranches();
-        }
-    }, [isSuperUser]);
 
     // Fetch customers when page, pageSize, or selectedBranchId changes
     useEffect(() => {

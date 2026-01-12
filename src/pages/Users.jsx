@@ -3,6 +3,7 @@ import { Edit, Trash, Filter } from 'lucide-react';
 import api from '../api';
 import Table from '../components/Table';
 import { useToast } from '../context/ToastContext';
+import { useOptions } from '../context/OptionsContext';
 import Modal from '../components/Modal';
 import { AuthContext } from '../context/AuthContext';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -11,8 +12,7 @@ const Users = () => {
     const { showToast } = useToast();
     const [users, setUsers] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [roles, setRoles] = useState([]);
-    const [branches, setBranches] = useState([]);
+    const { getOptionList, branches, roles, loading: optionsLoading } = useOptions();
     const [selectedBranchId, setSelectedBranchId] = useState('');
     const [currentUser, setCurrentUser] = useState(null);
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, user: null });
@@ -28,27 +28,7 @@ const Users = () => {
 
     useEffect(() => {
         fetchUsers();
-        fetchRoles();
-        fetchBranches();
     }, [page, pageSize, selectedBranchId]);
-
-    const fetchBranches = async () => {
-        try {
-            const response = await api.get('/branches');
-            setBranches(response.data);
-        } catch (error) {
-            console.error('Error fetching branches:', error);
-        }
-    };
-
-    const fetchRoles = async () => {
-        try {
-            const response = await api.get('/roles');
-            setRoles(response.data);
-        } catch (error) {
-            console.error('Error fetching roles:', error);
-        }
-    };
 
     const fetchUsers = async () => {
         try {

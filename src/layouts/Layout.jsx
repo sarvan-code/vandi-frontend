@@ -110,8 +110,8 @@ const Layout = () => {
                                         <Link
                                             to={item.path}
                                             className={clsx(
-                                                "flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors relative group",
-                                                isPathActive && !isSettingsExpanded && "bg-blue-50 text-blue-600"
+                                                "flex items-center px-3 py-2 rounded-lg transition-all relative group",
+                                                isPathActive ? "bg-blue-50 text-blue-600 shadow-sm" : "text-gray-700 hover:bg-gray-100"
                                             )}
                                             onClick={(e) => {
                                                 if (hasSubItems && isSidebarExpanded) {
@@ -121,11 +121,16 @@ const Layout = () => {
                                             }}
                                             title={!isSidebarExpanded ? item.name : ""}
                                         >
+                                            {/* Active Indicator Border */}
+                                            {isPathActive && (
+                                                <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-blue-600 rounded-r-full" />
+                                            )}
+
                                             <div className="min-w-[2.5rem] flex items-center justify-center">
-                                                <item.icon className="w-5 h-5" />
+                                                <item.icon className={clsx("w-5 h-5", isPathActive ? "text-blue-600" : "text-gray-500")} />
                                             </div>
                                             <span className={clsx(
-                                                "font-medium transition-all duration-300 whitespace-nowrap overflow-hidden flex-1",
+                                                "font-semibold transition-all duration-300 whitespace-nowrap overflow-hidden flex-1",
                                                 !isSidebarExpanded && "opacity-0 w-0 -translate-x-4",
                                                 isSidebarExpanded && "opacity-100 w-auto translate-x-0"
                                             )}>
@@ -140,8 +145,8 @@ const Layout = () => {
                                     ) : (
                                         <button
                                             className={clsx(
-                                                "w-full flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors relative group",
-                                                isWorkspaceOpen && item.name === 'Lead Workspace' && "bg-blue-50 text-blue-600"
+                                                "w-full flex items-center px-3 py-2 rounded-lg transition-all relative group",
+                                                isWorkspaceOpen && item.name === 'Lead Workspace' ? "bg-blue-50 text-blue-600 shadow-sm" : "text-gray-700 hover:bg-gray-100"
                                             )}
                                             onClick={(e) => {
                                                 if (item.onClick) item.onClick();
@@ -149,11 +154,16 @@ const Layout = () => {
                                             }}
                                             title={!isSidebarExpanded ? item.name : ""}
                                         >
+                                            {/* Active Indicator Border for Workspace */}
+                                            {isWorkspaceOpen && item.name === 'Lead Workspace' && (
+                                                <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-blue-600 rounded-r-full" />
+                                            )}
+
                                             <div className="min-w-[2.5rem] flex items-center justify-center">
-                                                <item.icon className="w-5 h-5" />
+                                                <item.icon className={clsx("w-5 h-5", (isWorkspaceOpen && item.name === 'Lead Workspace') ? "text-blue-600" : "text-gray-500")} />
                                             </div>
                                             <span className={clsx(
-                                                "font-medium transition-all duration-300 whitespace-nowrap overflow-hidden flex-1 text-left",
+                                                "font-semibold transition-all duration-300 whitespace-nowrap overflow-hidden flex-1 text-left",
                                                 !isSidebarExpanded && "opacity-0 w-0 -translate-x-4",
                                                 isSidebarExpanded && "opacity-100 w-auto translate-x-0"
                                             )}>
@@ -165,25 +175,31 @@ const Layout = () => {
                                     {/* Sub Items */}
                                     {hasSubItems && isSidebarExpanded && isSettingsExpanded && (
                                         <div className="space-y-1 ml-4 animate-fade-in-down overflow-hidden">
-                                            {item.subItems.map((sub) => (
-                                                <Link
-                                                    key={sub.name}
-                                                    to={sub.path}
-                                                    className={clsx(
-                                                        "flex items-center px-3 py-1.5 rounded-lg transition-colors group",
-                                                        location.pathname === sub.path ? "bg-blue-50 text-blue-600 font-semibold" : "text-gray-500 hover:bg-gray-50"
-                                                    )}
-                                                    onClick={() => setIsSidebarOpen(false)}
-                                                >
-                                                    <div className="min-w-[2rem] flex items-center justify-center">
-                                                        <sub.icon className={clsx(
-                                                            "w-4 h-4",
-                                                            location.pathname === sub.path ? "text-blue-500" : "text-gray-400 group-hover:text-blue-400"
-                                                        )} />
-                                                    </div>
-                                                    <span className="text-sm truncate">{sub.name}</span>
-                                                </Link>
-                                            ))}
+                                            {item.subItems.map((sub) => {
+                                                const isSubActive = location.pathname === sub.path;
+                                                return (
+                                                    <Link
+                                                        key={sub.name}
+                                                        to={sub.path}
+                                                        className={clsx(
+                                                            "flex items-center px-3 py-1.5 rounded-lg transition-all relative group",
+                                                            isSubActive ? "bg-blue-50 text-blue-600 font-bold" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                                                        )}
+                                                        onClick={() => setIsSidebarOpen(false)}
+                                                    >
+                                                        {isSubActive && (
+                                                            <div className="absolute left-0 top-1 bottom-1 w-0.5 bg-blue-600 rounded-r-full" />
+                                                        )}
+                                                        <div className="min-w-[2rem] flex items-center justify-center">
+                                                            <sub.icon className={clsx(
+                                                                "w-4 h-4",
+                                                                isSubActive ? "text-blue-500" : "text-gray-400 group-hover:text-blue-400"
+                                                            )} />
+                                                        </div>
+                                                        <span className="text-sm truncate">{sub.name}</span>
+                                                    </Link>
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>

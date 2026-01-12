@@ -12,9 +12,8 @@ const Cars = () => {
     const [cars, setCars] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentCar, setCurrentCar] = useState(null);
-    const [branches, setBranches] = useState([]);
     const [selectedBranchId, setSelectedBranchId] = useState('');
-    const { getOptionList, vehicleBrands, vehicleTypes, vehicleModels, vehicleVariants } = useOptions();
+    const { getOptionList, vehicleBrands, vehicleTypes, vehicleModels, vehicleVariants, branches, loading: optionsLoading } = useOptions();
     const { user } = useContext(AuthContext);
     const inventoryStatuses = getOptionList('INVENTORY_STATUSES');
 
@@ -24,19 +23,7 @@ const Cars = () => {
 
     useEffect(() => {
         fetchCars();
-        if (isGlobalUser) {
-            fetchBranches();
-        }
-    }, [selectedBranchId, isGlobalUser]);
-
-    const fetchBranches = async () => {
-        try {
-            const response = await api.get('/branches');
-            setBranches(response.data);
-        } catch (error) {
-            console.error('Error fetching branches:', error);
-        }
-    };
+    }, [selectedBranchId]);
 
     const fetchCars = async () => {
         try {

@@ -19,7 +19,7 @@ const Enquiries = () => {
     const navigate = useNavigate();
     const queryParams = new URLSearchParams(location.search);
     const initialCustomerId = queryParams.get('customerId');
-    const { getOptionList, vehicleBrands, vehicleTypes, vehicleModels, vehicleVariants } = useOptions();
+    const { getOptionList, vehicleBrands, vehicleTypes, vehicleModels, vehicleVariants, branches, loading: optionsLoading } = useOptions();
     const { user } = useContext(AuthContext);
     const { openWorkspaceWithEnquiry } = useWorkspace();
     const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(user?.role);
@@ -31,7 +31,6 @@ const Enquiries = () => {
     const [isEditMode, setIsEditMode] = useState(false);
 
     // Branch state
-    const [branches, setBranches] = useState([]);
     const [selectedBranchId, setSelectedBranchId] = useState('');
 
     // Initialize enquiry state with all fields to avoid undefined errors
@@ -62,9 +61,6 @@ const Enquiries = () => {
 
     useEffect(() => {
         fetchEnquiries();
-        if (isSuperUser) {
-            fetchBranches();
-        }
         if (filterCustomerId) {
             setIsEditMode(true);
             setCurrentEnquiry(null);
@@ -74,14 +70,7 @@ const Enquiries = () => {
         }
     }, [page, pageSize, filterCustomerId, selectedBranchId, selectedStatus, isSuperUser]);
 
-    const fetchBranches = async () => {
-        try {
-            const response = await api.get('/branches'); // Fixed endpoint
-            setBranches(response.data.data || response.data || []);
-        } catch (error) {
-            console.error("Error fetching branches:", error);
-        }
-    };
+    const fetchBranches = null; // Removed in favor of OptionsContext
 
     // Helper for options
     const getOpt = (key) => getOptionList(key);
@@ -739,7 +728,7 @@ const Enquiries = () => {
                         >
                             <option value="">All Branches</option>
                             {branches.map(b => (
-                                <option key={b.branchId} value={b.branchId}>{b.branchName}</option>
+                                <option key={b.id} value={b.id}>{b.displayName}</option>
                             ))}
                         </select>
                     </div>

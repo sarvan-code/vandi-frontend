@@ -208,27 +208,13 @@ const FollowUps = () => {
 
     // Dependent Options Effect
     useEffect(() => {
-        const fetchTypes = async () => {
-            if (currentFollowUp?.followupMode) {
-                const types = await getDependentOptions('FOLLOWUP_TYPES', 'FOLLOWUP_MODES', currentFollowUp.followupMode);
-                setFilteredFollowupTypes(types);
-
-                // If currently selected type is not in the new filtered list, reset it (unless in view mode or initial load)
-                if (currentFollowUp.followupType && !types.find(t => t.value === currentFollowUp.followupType)) {
-                    // Only reset if we are actively EDITING, not just loading a view
-                    if (!isViewMode && currentFollowUp.followUpId) {
-                        // Keep current if editing? No, if mode changed, type must be valid.
-                        // But wait, if we JUST opened the edit modal, we shouldn't reset.
-                        // We need a way to distinguish "Manual Change" vs "Modal Open"
-                    }
-                }
-            } else {
-                setFilteredFollowupTypes([]);
-            }
-        };
-
-        fetchTypes();
-    }, [currentFollowUp?.followupMode]);
+        if (currentFollowUp?.followupMode) {
+            const types = getDependentOptions('FOLLOWUP_TYPES', 'FOLLOWUP_MODES', currentFollowUp.followupMode);
+            setFilteredFollowupTypes(types || []);
+        } else {
+            setFilteredFollowupTypes([]);
+        }
+    }, [currentFollowUp?.followupMode, getDependentOptions]);
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -714,7 +700,7 @@ const FollowUps = () => {
                     <div className="flex items-center space-x-4">
                         <div className="flex items-center">
                             <label htmlFor="pageSize" className="mr-2 text-sm text-gray-700">Rows per page:</label>
-                            <select id="pageSize" value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="block w-full rounded-md border-gray-300 py-1.5 text-base leading-5 text-gray-900 focus:border-blue-500 focus:placeholder-gray-400 focus:outline-none focus:ring-blue-500 sm:text-sm">
+                            <select id="pageSize" value={pageSize || 10} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="block w-full rounded-md border-gray-300 py-1.5 text-base leading-5 text-gray-900 focus:border-blue-500 focus:placeholder-gray-400 focus:outline-none focus:ring-blue-500 sm:text-sm">
                                 <option value={5}>5</option>
                                 <option value={10}>10</option>
                                 <option value={20}>20</option>

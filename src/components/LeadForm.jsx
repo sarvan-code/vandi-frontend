@@ -10,10 +10,9 @@ import VehicleAutocomplete from './VehicleAutocomplete';
 const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustomerId, preloadedPhone }) => {
     const { user } = useContext(AuthContext);
     const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(user?.role);
-    const [branches, setBranches] = useState([]);
+    const { getOptionList, getDependentOptions, vehicleBrands, vehicleTypes, vehicleModels, vehicleVariants, branches, loading: optionsLoading } = useOptions();
     const [selectedBranchId, setSelectedBranchId] = useState('');
     const { showToast } = useToast();
-    const { getOptionList, getDependentOptions, vehicleBrands, vehicleTypes, vehicleModels, vehicleVariants } = useOptions();
 
     const [filteredFollowupTypes, setFilteredFollowupTypes] = useState([]);
 
@@ -72,8 +71,6 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
     };
 
     useEffect(() => {
-        if (isSuperUser) fetchBranches();
-
         // Load persistence
         if (tabId) {
             const saved = localStorage.getItem(`vandi_lead_form_${tabId}`);
@@ -92,7 +89,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                 }
             }
         }
-    }, [tabId, isSuperUser]);
+    }, [tabId]);
 
     // Save persistence
     useEffect(() => {
@@ -109,15 +106,6 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
             localStorage.setItem(`vandi_lead_form_${tabId}`, JSON.stringify(dataToSave));
         }
     }, [tabId, customer, enquiry, followUp, selectedBranchId, activeEnquiryId, isNewEnquiry, history]);
-
-    const fetchBranches = async () => {
-        try {
-            const res = await api.get('/branches');
-            setBranches(res.data.data || res.data || []);
-        } catch (error) {
-            console.error("Error fetching branches:", error);
-        }
-    };
 
     // Helper to get options from context
     const getOpt = (key) => getOptionList(key);
@@ -154,16 +142,13 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
     }, [searchQuery, selectedBranchId, isSuperUser]);
 
     useEffect(() => {
-        const fetchTypes = async () => {
-            if (followUp.followupMode) {
-                const types = await getDependentOptions('FOLLOWUP_TYPES', 'FOLLOWUP_MODES', followUp.followupMode);
-                setFilteredFollowupTypes(types);
-            } else {
-                setFilteredFollowupTypes([]);
-            }
-        };
-        fetchTypes();
-    }, [followUp.followupMode]);
+        if (followUp.followupMode) {
+            const types = getDependentOptions('FOLLOWUP_TYPES', 'FOLLOWUP_MODES', followUp.followupMode);
+            setFilteredFollowupTypes(types);
+        } else {
+            setFilteredFollowupTypes([]);
+        }
+    }, [followUp.followupMode, getDependentOptions]);
 
     // Load pre-loaded enquiry if provided
     useEffect(() => {
@@ -587,7 +572,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                             const filteredVariants = vehicleVariants.filter(v => selectedModelObj && v.modelId === selectedModelObj.id);
                             return (
                                 <div key={idx} className="flex gap-2 mb-2 items-end">
-                                    <select className="flex-1 border p-1 rounded text-sm" value={car.carBrand} onChange={e => {
+                                    <select className="flex-1 border p-1 rounded text-sm" value={car.carBrand || ''} onChange={e => {
                                         const mk = [...enquiry.carDetails];
                                         mk[idx].carBrand = e.target.value; mk[idx].carType = ''; mk[idx].carModel = ''; mk[idx].carVariant = '';
                                         setEnquiry({ ...enquiry, carDetails: mk });
@@ -595,7 +580,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                         <option value="">Brand...</option>
                                         {vehicleBrands.map((b, i) => <option key={b.id || i} value={b.name}>{b.name}</option>)}
                                     </select>
-                                    <select className="flex-1 border p-1 rounded text-sm" value={car.carType} onChange={e => {
+                                    <select className="flex-1 border p-1 rounded text-sm" value={car.carType || ''} onChange={e => {
                                         const mk = [...enquiry.carDetails];
                                         mk[idx].carType = e.target.value; mk[idx].carModel = ''; mk[idx].carVariant = '';
                                         setEnquiry({ ...enquiry, carDetails: mk });
@@ -603,14 +588,14 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                         <option value="">Type...</option>
                                         {availableTypes.map((t, i) => <option key={t.id || i} value={t.name}>{t.name}</option>)}
                                     </select>
-                                    <select className="flex-1 border p-1 rounded text-sm" value={car.carModel} onChange={e => {
+                                    <select className="flex-1 border p-1 rounded text-sm" value={car.carModel || ''} onChange={e => {
                                         const mk = [...enquiry.carDetails]; mk[idx].carModel = e.target.value; mk[idx].carVariant = '';
                                         setEnquiry({ ...enquiry, carDetails: mk });
                                     }}>
                                         <option value="">Model...</option>
                                         {filteredModels.map((m, i) => <option key={m.id || i} value={m.name}>{m.name}</option>)}
                                     </select>
-                                    <select className="flex-1 border p-1 rounded text-sm" value={car.carVariant} onChange={e => {
+                                    <select className="flex-1 border p-1 rounded text-sm" value={car.carVariant || ''} onChange={e => {
                                         const mk = [...enquiry.carDetails]; mk[idx].carVariant = e.target.value;
                                         setEnquiry({ ...enquiry, carDetails: mk });
                                     }}>
@@ -628,7 +613,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <select className="w-full border p-2 rounded text-sm h-[42px]" value={enquiry.budgetRange} onChange={e => setEnquiry({ ...enquiry, budgetRange: e.target.value })}>
+                        <select className="w-full border p-2 rounded text-sm h-[42px]" value={enquiry.budgetRange || ''} onChange={e => setEnquiry({ ...enquiry, budgetRange: e.target.value })}>
                             <option value="">Budget Range</option>
                             {getOpt('BUDGET_RANGES').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
                         </select>
@@ -636,7 +621,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        <select className="w-full border p-2 rounded text-sm h-[42px]" value={enquiry.fuelType} onChange={e => setEnquiry({ ...enquiry, fuelType: e.target.value })}>
+                        <select className="w-full border p-2 rounded text-sm h-[42px]" value={enquiry.fuelType || ''} onChange={e => setEnquiry({ ...enquiry, fuelType: e.target.value })}>
                             <option value="">Fuel Type</option>
                             {getOpt('FUEL_TYPES').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
                         </select>
@@ -644,7 +629,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                             <option value="">Usage...</option>
                             {getOpt('USAGE_TYPES').map((u, i) => <option key={u.value || i} value={u.value}>{u.label}</option>)}
                         </select>
-                        <select className="w-full border p-2 rounded text-sm h-[42px]" value={enquiry.payment} onChange={e => setEnquiry({ ...enquiry, payment: e.target.value })}>
+                        <select className="w-full border p-2 rounded text-sm h-[42px]" value={enquiry.payment || ''} onChange={e => setEnquiry({ ...enquiry, payment: e.target.value })}>
                             <option value="">Payment Mode</option>
                             {getOpt('PAYMENT_MODES').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
                         </select>
@@ -699,13 +684,13 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                             </td>
                                             <td className="p-2 align-top">
                                                 <div className="font-medium">{f.followupActionDone}</div>
-                                                {f.followupCar && <div className="text-gray-500 text-[10px]">{f.followupCar}</div>}
+                                                {f.car && <div className="font-bold bg-blue-100 uppercase text-[10px] px-1.5 py-0.5 rounded w-fit mb-1">{f.car?.registrationNumber}</div>}
                                             </td>
                                             <td className="p-2 align-top">
-                                                <div className={`font - bold uppercase text - [10px] px - 1.5 py - 0.5 rounded w - fit mb - 1 ${f.followupResults === 'not-interested' ? 'bg-red-100 text-red-700' :
+                                                <div className={`font-bold uppercase text-[10px] px-1.5 py-0.5 rounded w-fit mb-1 ${f.followupResults === 'not-interested' ? 'bg-red-100 text-red-700' :
                                                     f.followupResults === 'sale-closed' ? 'bg-green-100 text-green-700' :
                                                         'bg-blue-100 text-blue-700'
-                                                    } `}>
+                                                    }`}>
                                                     {f.followupResults}
                                                 </div>
                                                 <div className="text-gray-600 italic leading-tight">{f.followupRemarks}</div>
@@ -723,7 +708,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs text-gray-500 font-medium">Mode <span className="text-red-500">*</span></label>
-                            <select className="w-full border p-2 rounded text-sm h-[42px]" value={followUp.followupMode} onChange={e => setFollowUp({ ...followUp, followupMode: e.target.value })}>
+                            <select className="w-full border p-2 rounded text-sm h-[42px]" value={followUp.followupMode || ''} onChange={e => setFollowUp({ ...followUp, followupMode: e.target.value })}>
                                 <option value="">Select...</option>
                                 {getOpt('FOLLOWUP_MODES').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
                             </select>
@@ -732,7 +717,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                             <label className="block text-xs text-gray-500 font-medium">Type <span className="text-red-500">*</span></label>
                             <select
                                 className="w-full border p-2 rounded text-sm h-[42px]"
-                                value={followUp.followupType}
+                                value={followUp.followupType || ''}
                                 onChange={e => setFollowUp({ ...followUp, followupType: e.target.value })}
                                 disabled={!followUp.followupMode}
                             >
@@ -744,7 +729,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div>
                             <label className="block text-xs text-gray-500 font-medium">Action Done <span className="text-red-500">*</span></label>
-                            <select className="w-full border p-2 rounded text-sm h-[42px]" value={followUp.followupActionDone} onChange={e => setFollowUp({ ...followUp, followupActionDone: e.target.value })}>
+                            <select className="w-full border p-2 rounded text-sm h-[42px]" value={followUp.followupActionDone || ''} onChange={e => setFollowUp({ ...followUp, followupActionDone: e.target.value })}>
                                 <option value="">Select...</option>
                                 {getOpt('FOLLOWUP_ACTIONS').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
                             </select>
