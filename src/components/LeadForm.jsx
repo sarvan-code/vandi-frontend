@@ -3,7 +3,6 @@ import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Save, History, PlusCircle, Search, X, Plus, Trash2 } from 'lucide-react';
-import clsx from 'clsx';
 import { useOptions } from '../context/OptionsContext';
 import VehicleAutocomplete from './VehicleAutocomplete';
 
@@ -48,7 +47,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
 
     const [followUp, setFollowUp] = useState({
         followupMode: '', followupType: '',
-        followupActionDone: '', followupCar: '',
+        followupActionDone: '', car: null,
         followupResults: '', followupRemarks: '',
         nextVisitDate: ''
     });
@@ -306,7 +305,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
         }
 
         const isGeneralQuery = (followUp.followupActionDone || "").toLowerCase() === "general-query";
-        if (!isGeneralQuery && !followUp.followupCar) {
+        if (!isGeneralQuery && !followUp.car) {
             showToast("Vehicle Number is mandatory for the selected Follow-up Action.", "warning");
             return;
         }
@@ -321,7 +320,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
         const currentEnqJSON = JSON.stringify(enquiry);
         const skipCustomerUpdate = customer.customerId && initialCustomer === currentCustJSON;
         const skipEnquiryUpdate = !isNewEnquiry && initialEnquiry === currentEnqJSON;
-
+        console.log("followUp", followUp);
         try {
             const payload = {
                 customer,
@@ -740,8 +739,8 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                             </label>
                             <VehicleAutocomplete
                                 placeholder="Enter Vehicle Number"
-                                value={followUp.followupCar || ''}
-                                onChange={(val, car) => setFollowUp({ ...followUp, followupCar: val, followupCarId: car?.carId || null })}
+                                value={followUp.car?.registrationNumber || ''}
+                                onChange={(car) => setFollowUp({ ...followUp, car: car || null })}
                             />
                         </div>
                     </div>
