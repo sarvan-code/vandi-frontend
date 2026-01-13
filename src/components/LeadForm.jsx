@@ -57,6 +57,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
     const [isNewEnquiry, setIsNewEnquiry] = useState(true);
     const [history, setHistory] = useState([]);
     const [showHistory, setShowHistory] = useState(false);
+    const [isHistoryLoading, setIsHistoryLoading] = useState(false);
     const [showFollowUpHistory, setShowFollowUpHistory] = useState(false);
 
     // Initial Data for Change Detection
@@ -191,7 +192,8 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
         const sanitizedCust = { ...custData };
         setCustomer(sanitizedCust);
         setInitialCustomer(JSON.stringify(sanitizedCust));
-        setHistory(histData || []);
+        setHistory([]); // Clear history when context changes
+        setShowHistory(false);
 
         if (activeEnquiry) {
             showToast(`Found active enquiry (Status: ${activeEnquiry.status}). Loading it...`, "info");
@@ -220,6 +222,23 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
         }
         setShowDropdown(false);
         setSearchQuery('');
+    };
+
+    const fetchHistory = async () => {
+        if (!customer.customerId) return;
+        setIsHistoryLoading(true);
+        try {
+            const res = await api.get(`/leads/${customer.customerId}/history`, {
+                params: { excludeEnquiryId: activeEnquiryId }
+            });
+            setHistory(res.data.data || []);
+            setShowHistory(true);
+        } catch (error) {
+            console.error("Fetch history error", error);
+            showToast("Failed to fetch lead history", "error");
+        } finally {
+            setIsHistoryLoading(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -441,13 +460,21 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                 <PlusCircle className="h-4 w-4" /> Start New Instead
                             </button>
                         )}
-                        {history.length > 0 && (
+                        {(customer.customerId) && (
                             <button
                                 type="button"
-                                onClick={() => setShowHistory(!showHistory)}
+                                onClick={() => {
+                                    if (!showHistory && history.length === 0) {
+                                        fetchHistory();
+                                    } else {
+                                        setShowHistory(!showHistory);
+                                    }
+                                }}
                                 className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                                disabled={isHistoryLoading}
                             >
-                                <History className="h-4 w-4" /> {showHistory ? 'Hide History' : 'View History'}
+                                <History className={`h-4 w-4 ${isHistoryLoading ? 'animate-spin' : ''}`} />
+                                {isHistoryLoading ? 'Loading...' : (showHistory ? 'Hide History' : 'View History')}
                             </button>
                         )}
                     </div>
@@ -455,20 +482,25 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                     {showHistory && (
                         <div className="mb-4 bg-gray-50 p-3 rounded text-sm text-gray-600">
                             <h4 className="font-medium mb-2">Past Enquiries:</h4>
-                            <ul className="list-disc pl-5 space-y-1">
-                                {history.map(h => (
-                                    <li key={h.enquiryId}>
-                                        <span className="font-medium">{h.enquiryType}</span> -
-                                        {h.carDetails && h.carDetails.length > 0 ? (
-                                            <span> {h.carDetails.map(c => `${c.carBrand} ${c.carModel}`).join(', ')}</span>
-                                        ) : ' No vehicle details'}
-                                        <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${h.status === 'converted' ? 'bg-green-100 text-green-700' :
-                                            h.status === 'lost' ? 'bg-red-100 text-red-700' :
-                                                'bg-gray-200 text-gray-600'
-                                            }`}> {h.status} </span> - {new Date(h.createdAt).toLocaleDateString()}
-                                    </li>
-                                ))}
-                            </ul>
+                            {history.length > 0 ? (
+                                <ul className="list-disc pl-5 space-y-1">
+                                    {history.map(h => (
+                                        <li key={h.enquiryId}>
+                                            {h.branch && <span className="font-bold text-blue-700 mr-2">[{h.branch.displayName}]</span>}
+                                            <span className="font-medium">{h.enquiryType}</span> -
+                                            {h.carDetails && h.carDetails.length > 0 ? (
+                                                <span> {h.carDetails.map(c => `${c.carBrand} ${c.carModel}`).join(', ')}</span>
+                                            ) : ' No vehicle details'}
+                                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${h.status === 'converted' ? 'bg-green-100 text-green-700' :
+                                                h.status === 'lost' ? 'bg-red-100 text-red-700' :
+                                                    'bg-gray-200 text-gray-600'
+                                                }`}> {h.status} </span> - {new Date(h.createdAt).toLocaleDateString()}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="italic text-gray-400">No past enquiries found for this customer.</p>
+                            )}
                         </div>
                     )}
 
