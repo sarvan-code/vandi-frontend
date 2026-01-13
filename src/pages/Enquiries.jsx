@@ -359,7 +359,7 @@ const Enquiries = () => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    openWorkspaceWithEnquiry(row.enquiryId, row.customerId, row.customer?.phone);
+                                    openWorkspaceWithEnquiry(row.enquiryId, row.customerId, row.customer?.phone, row.branchId);
                                 }}
                                 className="text-green-600 hover:text-green-900 bg-green-50 px-2 py-1 rounded-md text-sm border border-green-200"
                                 title="Open in Lead Workspace"
@@ -379,19 +379,21 @@ const Enquiries = () => {
                                 <Calendar size={16} />
                             </button>
                         )}
-                        {(!['SALES_REP', 'SALES_MGR'].includes(user?.role)) && isActive && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDelete(row);
-                                }}
-                                className="text-red-600 hover:text-red-900 bg-red-50 px-2 py-1 rounded-md text-sm border border-red-200"
-                                title="Delete Enquiry"
-                            >
-                                <Trash size={16} />
-                            </button>
-                        )}
-                    </div>
+                        {
+                            (!['SALES_REP', 'SALES_MGR'].includes(user?.role)) && isActive && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDelete(row);
+                                    }}
+                                    className="text-red-600 hover:text-red-900 bg-red-50 px-2 py-1 rounded-md text-sm border border-red-200"
+                                    title="Delete Enquiry"
+                                >
+                                    <Trash size={16} />
+                                </button>
+                            )
+                        }
+                    </div >
                 );
             }
         }

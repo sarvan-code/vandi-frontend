@@ -56,7 +56,7 @@ const LeadWorkspace = ({ isMinimized, onMinimize, onClose }) => {
     // Handle pre-loaded enquiry from context
     useEffect(() => {
         if (preloadedEnquiry) {
-            const { enquiryId, customerId, phone } = preloadedEnquiry;
+            const { enquiryId, customerId, phone, branchId } = preloadedEnquiry;
 
             // Check if this enquiry is already open in a tab
             const existingTab = tabs.find(tab => tab.enquiryId === enquiryId);
@@ -73,7 +73,8 @@ const LeadWorkspace = ({ isMinimized, onMinimize, onClose }) => {
                     key: newId,
                     enquiryId,
                     customerId,
-                    phone
+                    phone,
+                    branchId
                 };
                 setTabs([...tabs, newTab]);
                 setActiveTabId(newId);
@@ -213,6 +214,7 @@ const LeadWorkspace = ({ isMinimized, onMinimize, onClose }) => {
                                     preloadedEnquiryId={tab.enquiryId}
                                     preloadedCustomerId={tab.customerId}
                                     preloadedPhone={tab.phone}
+                                    preloadedBranchId={tab.branchId}
                                     onSave={() => handleLeadSaved(tab.id)}
                                     onCancel={(e) => closeTab(e, tab.id)}
                                 />

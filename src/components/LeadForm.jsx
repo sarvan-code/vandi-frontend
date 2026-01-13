@@ -6,7 +6,7 @@ import { Save, History, PlusCircle, Search, X, Plus, Trash2 } from 'lucide-react
 import { useOptions } from '../context/OptionsContext';
 import VehicleAutocomplete from './VehicleAutocomplete';
 
-const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustomerId, preloadedPhone }) => {
+const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustomerId, preloadedPhone, preloadedBranchId }) => {
     const { user } = useContext(AuthContext);
     const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(user?.role);
     const { getOptionList, getDependentOptions, vehicleBrands, vehicleTypes, vehicleModels, vehicleVariants, branches, loading: optionsLoading } = useOptions();
@@ -155,9 +155,15 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
             setLoading(true);
             const loadPreloadedEnquiry = async () => {
                 try {
-                    // Optimized Path: Smart Search
+                    // Optimized Path: Smart Search (Now with Branch context)
                     if (preloadedPhone) {
-                        const res = await api.get('/leads/search', { params: { term: preloadedPhone } });
+                        const res = await api.get('/leads/search', {
+                            params: {
+                                term: preloadedPhone,
+                                branchId: preloadedBranchId
+                            }
+                        });
+
                         if (res.data.found && res.data.data && res.data.data.length > 0) {
                             handleSelectResult(res.data.data[0]);
                             setLoading(false);
@@ -165,69 +171,9 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                         }
                     }
 
-                    // Legacy Path (Multiple APIs)
-                    if (preloadedCustomerId) {
-                        const customerRes = await api.get(`/customers/${preloadedCustomerId}`);
-                        const customerData = customerRes.data;
-                        const sanitizedCustomer = {
-                            customerId: customerData.customerId,
-                            fullName: customerData.fullName || '',
-                            phone: customerData.phone || '',
-                            email: customerData.email || '',
-                            instaid: customerData.instaid || '',
-                            dateOfBirth: customerData.dateOfBirth || '',
-                            marriageDate: customerData.marriageDate || '',
-                            profession: customerData.profession || '',
-                            referredBy: customerData.referredBy || '',
-                            referredByName: customerData.referredByName || '',
-                            address: customerData.address || '',
-                            district: customerData.district || '',
-                            state: customerData.state || '',
-                            country: customerData.country || '',
-                            landMark: customerData.landMark || '',
-                            remarks: customerData.remarks || '',
-                            customerType: customerData.customerType || 'Lead'
-                        };
-
-                        setCustomer(sanitizedCustomer);
-                        setSearchQuery(customerData.fullName || '');
-                    }
-
-                    if (preloadedEnquiryId) {
-                        // Fetch enquiry data
-                        const enquiryRes = await api.get(`/enquiries/${preloadedEnquiryId}`);
-                        const enquiryData = enquiryRes.data;
-                        if (enquiryData.branchId) setSelectedBranchId(enquiryData.branchId);
-
-                        setEnquiry({
-                            enquiryType: enquiryData.enquiryType || 'Buy',
-                            exchange: enquiryData.exchange || false,
-                            exchangeDetail: enquiryData.exchangeDetail || '',
-                            budgetRange: enquiryData.budgetRange || '',
-                            budgetRemarks: enquiryData.budgetRemarks || '',
-                            carDetailRemarks: enquiryData.carDetailRemarks || '',
-                            fuelType: enquiryData.fuelType || '',
-                            usageType: enquiryData.usageType || '',
-                            payment: enquiryData.payment || '',
-                            customerType: enquiryData.customerType || 'Lead',
-                            status: enquiryData.status || 'new',
-                            carDetails: enquiryData.carDetails || []
-                        });
-
-                        // Set enquiry state flags
-                        setActiveEnquiryId(preloadedEnquiryId);
-                        setIsNewEnquiry(false);
-
-                        // Fetch follow-up history
-                        const followupsRes = await api.get(`/follow-ups?enquiryId=${preloadedEnquiryId}`);
-                        const followupHistory = followupsRes.data.data || followupsRes.data || [];
-                        setHistory(followupHistory);
-
-                        // Show history if there are follow-ups
-                        if (followupHistory.length > 0) {
-                            setShowFollowUpHistory(true);
-                        }
-                    }
+                    // Fallback: If search fails or phone is missing, we log it.
+                    // The "Legacy Path" has been removed per user instruction.
+                    console.log("No active lead context found for preloaded data.");
 
                 } catch (error) {
                     console.error('Error loading pre-loaded enquiry:', error);
@@ -238,7 +184,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
             };
             loadPreloadedEnquiry();
         }
-    }, [preloadedEnquiryId, preloadedCustomerId, preloadedPhone]);
+    }, [preloadedEnquiryId, preloadedCustomerId, preloadedPhone, preloadedBranchId]);
 
     const handleSelectResult = (result) => {
         const { customer: custData, activeEnquiry, history: histData } = result;

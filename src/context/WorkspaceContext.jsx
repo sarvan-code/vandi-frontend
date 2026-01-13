@@ -20,8 +20,8 @@ export const WorkspaceProvider = ({ children }) => {
         setIsWorkspaceMinimized(false);
     };
 
-    const openWorkspaceWithEnquiry = (enquiryId, customerId, phone) => {
-        setPreloadedEnquiry({ enquiryId, customerId, phone });
+    const openWorkspaceWithEnquiry = (enquiryId, customerId, phone, branchId) => {
+        setPreloadedEnquiry({ enquiryId, customerId, phone, branchId });
         setIsWorkspaceOpen(true);
         setIsWorkspaceMinimized(false);
     };
