@@ -19,82 +19,36 @@ export const OptionsProvider = ({ children }) => {
     const [branches, setBranches] = useState([]);
     const [optionRelations, setOptionRelations] = useState([]);
 
-    const fetchRoles = async () => {
+    const fetchBootstrapData = async () => {
+        if (!user) return;
+        setLoading(true);
         try {
-            const res = await api.get('/roles');
-            setRoles(res.data || []);
-        } catch (error) {
-            console.error("Failed to load roles", error);
-        }
-    };
+            const res = await api.get('/auth/bootstrap');
+            const data = res.data;
 
-    const fetchBranches = async () => {
-        // Only fetch if super/global user or as needed by logic
-        // For now, let's fetch to have them available
-        try {
-            const res = await api.get('/branches');
-            setBranches(res.data.data || res.data || []);
-        } catch (error) {
-            console.error("Failed to load branches", error);
-        }
-    };
-
-    const fetchOptionRelations = async () => {
-        try {
-            const res = await api.get('/option-relations');
-            setOptionRelations(res.data || []);
-        } catch (error) {
-            console.error("Failed to load option relations", error);
-        }
-    };
-
-    const fetchVehicles = async () => {
-        try {
-            const [brandsRes, typesRes, modelsRes, variantsRes] = await Promise.all([
-                api.get('/vehicles/brands'),
-                api.get('/vehicles/types'),
-                api.get('/vehicles/models'),
-                api.get('/vehicles/variants'),
-            ]);
-            setVehicleBrands(brandsRes.data || []);
-            setVehicleTypes(typesRes.data || []);
-            setVehicleModels(modelsRes.data || []);
-            setVehicleVariants(variantsRes.data || []);
-        } catch (error) {
-            console.error("Failed to load vehicle data", error);
-        }
-    };
-
-    const fetchOptions = async () => {
-        if (!user) return; // Don't fetch if not logged in
-
-        try {
-            const res = await api.get('/options');
-            // Transform flat list to category map
-            // Server returns array of { category, value, label }
-            // We want { CATEGORY_NAME: [{ value, label }, ...] }
-
-            const raw = res.data || [];
-            if (raw.length === 0) {
-                // Keep fallbacks if DB empty
-                setLoading(false);
-                return;
-            }
-
-            const grouped = raw.reduce((acc, item) => {
-                // Ensure category key exists
-                if (!acc[item.category]) {
-                    acc[item.category] = [];
-                }
+            // 1. Process Options
+            const rawOptions = data.options || [];
+            const grouped = rawOptions.reduce((acc, item) => {
+                if (!acc[item.category]) acc[item.category] = [];
                 acc[item.category].push({ value: item.value, label: item.label });
                 return acc;
             }, {});
-
-            // Merge with fallbacks to ensure usage safety if DB incomplete
             setOptions(prev => ({ ...prev, ...grouped }));
+
+            // 2. Process Other Metadata
+            setBranches(data.branches || []);
+            setRoles(data.roles || []);
+            setOptionRelations(data.relations || []);
+
+            // 3. Process Vehicles
+            if (data.vehicles) {
+                setVehicleBrands(data.vehicles.brands || []);
+                setVehicleTypes(data.vehicles.types || []);
+                setVehicleModels(data.vehicles.models || []);
+                setVehicleVariants(data.vehicles.variants || []);
+            }
         } catch (error) {
-            console.error("Failed to load dynamic options", error);
-            // Fallback options already set
+            console.error("Failed to load bootstrap data", error);
         } finally {
             setLoading(false);
         }
@@ -102,14 +56,7 @@ export const OptionsProvider = ({ children }) => {
 
     useEffect(() => {
         if (user) {
-            fetchOptions();
-            fetchVehicles();
-            fetchRoles();
-            fetchBranches();
-            fetchOptionRelations();
-        } else {
-            // User logged out? Reset or keep fallbacks? 
-            // Maybe keep to avoid errors if partially rendering
+            fetchBootstrapData();
         }
     }, [user]);
 
@@ -154,18 +101,18 @@ export const OptionsProvider = ({ children }) => {
             loading,
             getOptionList,
             getDependentOptions,
-            refreshOptions: fetchOptions,
+            refreshOptions: fetchBootstrapData,
             vehicleBrands,
             vehicleTypes,
             vehicleModels,
             vehicleVariants,
-            refreshVehicles: fetchVehicles,
+            refreshVehicles: fetchBootstrapData,
             roles,
-            refreshRoles: fetchRoles,
+            refreshRoles: fetchBootstrapData,
             branches,
-            refreshBranches: fetchBranches,
+            refreshBranches: fetchBootstrapData,
             optionRelations,
-            refreshOptionRelations: fetchOptionRelations
+            refreshOptionRelations: fetchBootstrapData
         }}>
             {children}
         </OptionsContext.Provider>
