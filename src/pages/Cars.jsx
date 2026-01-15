@@ -61,6 +61,14 @@ const Cars = () => {
         { key: 'carType', label: 'Type' },
         { key: 'model', label: 'Model' },
         { key: 'variant', label: 'Variant' },
+        { key: 'maximumRetailPrice', label: 'MRP', render: (row) => row.maximumRetailPrice ? `₹${row.maximumRetailPrice.toLocaleString()}` : '-' },
+        { key: 'discountAmount', label: 'Discount', render: (row) => row.discountAmount ? `₹${row.discountAmount.toLocaleString()}` : '-' },
+        {
+            key: 'finalPrice', label: 'Final Price', render: (row) => {
+                const final = (row.maximumRetailPrice || 0) - (row.discountAmount || 0);
+                return final > 0 ? `₹${final.toLocaleString()}` : '-';
+            }
+        },
         { key: 'inventoryStatus', label: 'Status' },
         { key: 'branch', label: 'Branch', render: (row) => row.branch?.displayName || '-' },
         ...(canManageCars ? [{
@@ -155,30 +163,52 @@ const Cars = () => {
             >
                 <form onSubmit={handleSave} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2 md:col-span-1">
-                            <label className="block text-sm font-medium text-gray-700">Reg. Number</label>
-                            <input
-                                type="text"
-                                placeholder="MH12AB1234"
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 uppercase"
-                                value={currentCar?.registrationNumber || ''}
-                                onChange={(e) => {
-                                    const val = e.target.value.toUpperCase().replace(/\s+/g, '');
-                                    setCurrentCar({ ...currentCar, registrationNumber: val });
-                                }}
-                            />
-                        </div>
-                        <div className="col-span-2 md:col-span-1">
-                            <label className="block text-sm font-medium text-gray-700">Inventory Status</label>
-                            <select
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
-                                value={currentCar?.inventoryStatus || 'UPCOMING'}
-                                onChange={(e) => setCurrentCar({ ...currentCar, inventoryStatus: e.target.value })}
-                            >
-                                {inventoryStatuses.map(status => (
-                                    <option key={status.value} value={status.value}>{status.label}</option>
-                                ))}
-                            </select>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="col-span-2 md:col-span-1">
+                                <label className="block text-sm font-medium text-gray-700">Reg. Number</label>
+                                <input
+                                    type="text"
+                                    placeholder="MH12AB1234"
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 uppercase"
+                                    value={currentCar?.registrationNumber || ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value.toUpperCase().replace(/\s+/g, '');
+                                        setCurrentCar({ ...currentCar, registrationNumber: val });
+                                    }}
+                                />
+                            </div>
+                            <div className="col-span-2 md:col-span-1">
+                                <label className="block text-sm font-medium text-gray-700">Inventory Status</label>
+                                <select
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                    value={currentCar?.inventoryStatus || 'UPCOMING'}
+                                    onChange={(e) => setCurrentCar({ ...currentCar, inventoryStatus: e.target.value })}
+                                >
+                                    {inventoryStatuses.map(status => (
+                                        <option key={status.value} value={status.value}>{status.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="col-span-2 md:col-span-1">
+                                <label className="block text-sm font-medium text-gray-700">MRP (₹)</label>
+                                <input
+                                    type="number"
+                                    placeholder="0.00"
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                    value={currentCar?.maximumRetailPrice || ''}
+                                    onChange={(e) => setCurrentCar({ ...currentCar, maximumRetailPrice: e.target.value })}
+                                />
+                            </div>
+                            <div className="col-span-2 md:col-span-1">
+                                <label className="block text-sm font-medium text-gray-700">Discount (₹)</label>
+                                <input
+                                    type="number"
+                                    placeholder="0.00"
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                    value={currentCar?.discountAmount || ''}
+                                    onChange={(e) => setCurrentCar({ ...currentCar, discountAmount: e.target.value })}
+                                />
+                            </div>
                         </div>
                     </div>
 
