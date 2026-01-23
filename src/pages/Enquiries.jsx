@@ -280,9 +280,9 @@ const Enquiries = () => {
                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                     ${row.status === 'new' ? 'bg-blue-100 text-blue-800' : ''}
                     ${row.status === 'in-followup' ? 'bg-yellow-100 text-yellow-800' : ''}
-                    ${row.status === 'conversion-in-progress' ? 'bg-purple-100 text-purple-800' : ''}
+                    ${row.status === 'booking-pending' ? 'bg-purple-100 text-purple-800' : ''}
                     ${row.status === 'closed' ? 'bg-gray-100 text-gray-800' : ''}
-                    ${!['new', 'in-followup', 'conversion-in-progress', 'closed'].includes(row.status) ? 'bg-gray-100 text-gray-800' : ''}
+                    ${!['new', 'in-followup', 'booking-pending', 'closed'].includes(row.status) ? 'bg-gray-100 text-gray-800' : ''}
 `}>
                     {row.status}
                 </span>

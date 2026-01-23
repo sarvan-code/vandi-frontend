@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import api from '../api';
-import { Users, FileText, Calendar, Car, UserPlus, UserX, CheckCircle, XCircle, Database } from 'lucide-react';
+import { Users, FileText, Calendar, Car, UserPlus, UserX, CheckCircle, XCircle, Database, Clock } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 
 const Dashboard = () => {
@@ -26,6 +26,14 @@ const Dashboard = () => {
     const getCards = () => {
         const role = user?.role;
         const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(role);
+
+        if (role === 'ACCOUNTANT') {
+            return [
+                { label: 'Pending Handovers', value: stats.pendingHandovers, icon: <Clock size={24} className="text-orange-500" />, color: 'orange' },
+                { label: 'Active Bookings', value: stats.activeBookings, icon: <FileText size={24} className="text-blue-500" />, color: 'blue' },
+                { label: 'Delivered Vehicles', value: stats.deliveredVehicles, icon: <CheckCircle size={24} className="text-green-500" />, color: 'green' },
+            ];
+        }
 
         if (role === 'HR_MGR') {
             return [
@@ -86,7 +94,11 @@ const Dashboard = () => {
                     <h2 className="text-lg font-bold mb-4 text-gray-800">Shortcut Links</h2>
                     <div className="grid grid-cols-2 gap-4 text-center">
                         <a href="/enquiries" className="p-3 bg-indigo-50 text-indigo-700 rounded-lg font-medium hover:bg-indigo-100 transition-colors">Enquiries</a>
-                        <a href="/follow-ups" className="p-3 bg-indigo-50 text-indigo-700 rounded-lg font-medium hover:bg-indigo-100 transition-colors">Follow-ups</a>
+                        {user?.role === 'ACCOUNTANT' || ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(user?.role) ? (
+                            <a href="/bookings" className="p-3 bg-indigo-50 text-indigo-700 rounded-lg font-medium hover:bg-indigo-100 transition-colors">Finance Bookings</a>
+                        ) : (
+                            <a href="/follow-ups" className="p-3 bg-indigo-50 text-indigo-700 rounded-lg font-medium hover:bg-indigo-100 transition-colors">Follow-ups</a>
+                        )}
                     </div>
                 </div>
             </div>

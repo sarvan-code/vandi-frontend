@@ -1,10 +1,12 @@
 import React, { useState, useContext } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, MessageSquare, Car, Calendar, User, Menu, X, LogOut, Briefcase, Settings as SettingsIcon, ChevronDown, ChevronRight, Database, Building2, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Users, MessageSquare, Car, Calendar, User, Menu, X, LogOut, Briefcase, Settings as SettingsIcon, ChevronDown, ChevronRight, Database, Building2, ShieldAlert, DollarSign } from 'lucide-react';
 import clsx from 'clsx';
 import { AuthContext } from '../context/AuthContext';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { useFinanceWorkspace } from '../context/FinanceWorkspaceContext';
 import LeadWorkspace from '../pages/LeadWorkspace';
+import FinanceWorkspaceOverlay from '../components/FinanceWorkspaceOverlay';
 
 import IdleMonitor from '../components/IdleMonitor';
 
@@ -15,6 +17,7 @@ const Layout = () => {
     const location = useLocation();
     const { user, logout } = useContext(AuthContext);
     const { isWorkspaceOpen, isWorkspaceMinimized, openWorkspace, closeWorkspace, toggleMinimize } = useWorkspace();
+    const { isFinanceOpen, financeTabs, openFinanceTab, toggleFinanceMinimize, closeFinanceWorkspace } = useFinanceWorkspace();
 
     let navItems = [];
     if (user?.userStatus === 'ACTIVE') {
@@ -23,6 +26,7 @@ const Layout = () => {
         const isHR = ['HR_MGR', 'HR_ASSIS'].includes(role);
         const isSales = ['SALES_REP', 'SALES_MGR'].includes(role);
         const isExecutive = role === 'EXECUTIVE';
+        const isAccountant = role === 'ACCOUNTANT';
 
         // Dashboard is for everyone
         navItems.push({ name: 'Dashboard', path: '/', icon: LayoutDashboard });
@@ -45,6 +49,23 @@ const Layout = () => {
 
         if (isSuperUser || isExecutive || isSales) {
             navItems.push({ name: 'Cars', path: '/cars', icon: Car });
+        }
+
+        if (isSuperUser || isAccountant) {
+            navItems.push({
+                name: 'Finance Workspace',
+                icon: DollarSign,
+                onClick: () => {
+                    if (financeTabs.length > 0) {
+                        openFinanceTab(financeTabs[0].enquiryId, financeTabs[0].title);
+                    } else {
+                        // If no tabs, just navigate to bookings to start one
+                        // or show a message. For now, navigate.
+                        window.location.href = '/bookings';
+                    }
+                }
+            });
+            navItems.push({ name: 'Finance List', path: '/bookings', icon: Database });
         }
 
         if (isSuperUser || isExecutive || isHR) {
@@ -267,6 +288,10 @@ const Layout = () => {
                             onMinimize={toggleMinimize}
                             onClose={closeWorkspace}
                         />
+                    )}
+
+                    {isFinanceOpen && (
+                        <FinanceWorkspaceOverlay />
                     )}
                 </div>
             </div>
