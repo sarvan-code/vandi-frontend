@@ -25,10 +25,12 @@ import { ToastProvider } from './context/ToastContext';
 import { OptionsProvider } from './context/OptionsContext';
 import { WorkspaceProvider } from './context/WorkspaceContext';
 import { FinanceWorkspaceProvider } from './context/FinanceWorkspaceContext';
+import Loading from './components/Loading';
 
 function App() {
   return (
     <AuthProvider>
+      <Loading />
       <OptionsProvider>
         <WorkspaceProvider>
           <FinanceWorkspaceProvider>
