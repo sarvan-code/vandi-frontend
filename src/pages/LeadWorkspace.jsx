@@ -135,7 +135,7 @@ const LeadWorkspace = ({ isMinimized, onMinimize, onClose }) => {
 
     return (
         <div className={clsx(
-            "fixed bottom-0 right-4 z-[9999] bg-white shadow-2xl rounded-t-xl border border-gray-300 transition-all duration-300 flex flex-col overflow-hidden",
+            "fixed bottom-0 right-4 z-[9997] bg-white shadow-2xl rounded-t-xl border border-gray-300 transition-all duration-300 flex flex-col overflow-hidden",
             isMinimized ? "h-12 w-80" : "h-[85vh] w-[95vw] lg:w-[80vw] xl:w-[70vw]"
         )}>
             {/* Header / Tab Bar */}
