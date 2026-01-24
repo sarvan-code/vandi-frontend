@@ -13,17 +13,17 @@ api.interceptors.request.use((config) => {
     }
     return config;
 }, (error) => {
-    //hideLoading();
+    hideLoading();
     return Promise.reject(error);
 });
 
 api.interceptors.response.use(
     (response) => {
-        //hideLoading();
+        hideLoading();
         return response;
     },
     (error) => {
-        //hideLoading();
+        hideLoading();
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
             // Token expired or invalid
             localStorage.removeItem('token');
