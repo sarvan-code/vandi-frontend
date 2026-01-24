@@ -20,7 +20,7 @@ const Bookings = () => {
     const [view, setView] = useState('active'); // Default to active management
     const [statusFilter, setStatusFilter] = useState('active'); // Default to active status
     const [selectedBranchId, setSelectedBranchId] = useState('');
-    const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(user?.role);
+    const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE'].includes(user?.role);
 
     useEffect(() => {
         fetchData();

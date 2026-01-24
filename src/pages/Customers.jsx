@@ -13,7 +13,7 @@ const Customers = () => {
     const { showToast } = useToast();
     const { getOptionList, branches, loading: optionsLoading } = useOptions();
     const { user } = useContext(AuthContext);
-    const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(user?.role);
+    const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE'].includes(user?.role);
 
     const [customers, setCustomers] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);

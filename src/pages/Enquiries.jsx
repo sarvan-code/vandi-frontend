@@ -22,7 +22,7 @@ const Enquiries = () => {
     const { getOptionList, vehicleBrands, vehicleTypes, vehicleModels, vehicleVariants, branches, loading: optionsLoading } = useOptions();
     const { user } = useContext(AuthContext);
     const { openWorkspaceWithEnquiry } = useWorkspace();
-    const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(user?.role);
+    const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE'].includes(user?.role);
 
 
     const [enquiries, setEnquiries] = useState([]);
