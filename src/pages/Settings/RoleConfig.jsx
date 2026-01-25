@@ -4,6 +4,8 @@ import { useToast } from '../../context/ToastContext';
 import { Search, Plus, Trash2, Edit, X, Save, ShieldAlert } from 'lucide-react';
 import clsx from 'clsx';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import Table from '../../components/Table';
+import FloatingActionPanel from '../../components/FloatingActionPanel';
 
 const RoleConfig = () => {
     const { showToast } = useToast();
@@ -23,6 +25,9 @@ const RoleConfig = () => {
 
     // Delete confirmation dialog state
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, role: null });
+
+    // Selected role for floating action panel
+    const [selectedRole, setSelectedRole] = useState(null);
 
     useEffect(() => {
         fetchRoles();
@@ -96,15 +101,40 @@ const RoleConfig = () => {
         role.code.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const columns = [
+        {
+            key: 'code',
+            label: 'Role Code',
+            render: (row) => (
+                <span className="bg-gray-100 px-2 py-1 rounded text-gray-800 font-mono text-xs">{row.code}</span>
+            )
+        },
+        { key: 'name', label: 'Name' },
+        {
+            key: 'description',
+            label: 'Description',
+            render: (row) => <span className="text-sm text-gray-500">{row.description || '-'}</span>
+        },
+        {
+            key: 'category',
+            label: 'Category',
+            render: (row) => (
+                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${row.category === 'SYSTEM' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                    {row.category}
+                </span>
+            )
+        }
+    ];
+
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">Role Management</h2>
-                <div className="flex gap-4">
-                    <div className="relative w-64">
+            <div className="flex flex-col md:flex-row md:items-center justify-between my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                <h2 className="text-xl font-bold text-gray-800">Role Management</h2>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div className="relative">
                         <Search className="absolute left-3 top-2.5 text-gray-400 h-5 w-5" />
                         <input
-                            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                             placeholder="Search roles..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
@@ -112,64 +142,45 @@ const RoleConfig = () => {
                     </div>
                     <button
                         onClick={() => handleOpenModal()}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 transition-colors whitespace-nowrap text-sm font-medium"
                     >
-                        <Plus size={20} /> Add Role
+                        <Plus size={18} /> Add Role
                     </button>
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-                <table className="w-full text-left">
-                    <thead className="bg-gray-50 border-b text-sm font-semibold text-gray-600">
-                        <tr>
-                            <th className="p-4">Role Code</th>
-                            <th className="p-4">Name</th>
-                            <th className="p-4">Description</th>
-                            <th className="p-4">Category</th>
-                            <th className="p-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y text-gray-700">
-                        {loading ? (
-                            <tr><td colSpan="5" className="p-8 text-center text-gray-500">Loading roles...</td></tr>
-                        ) : filteredRoles.length === 0 ? (
-                            <tr><td colSpan="5" className="p-8 text-center text-gray-500">No roles found.</td></tr>
-                        ) : (
-                            filteredRoles.map(role => (
-                                <tr key={role.code} className="hover:bg-gray-50 transition-colors">
-                                    <td className="p-4 font-mono text-sm">
-                                        <span className="bg-gray-100 px-2 py-1 rounded text-gray-800">{role.code}</span>
-                                    </td>
-                                    <td className="p-4 font-medium">{role.name}</td>
-                                    <td className="p-4 text-sm text-gray-500">{role.description || '-'}</td>
-                                    <td className="p-4 text-sm">
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${role.category === 'SYSTEM' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
-                                            }`}>
-                                            {role.category}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-right flex justify-end gap-2">
-                                        <button
-                                            onClick={() => handleOpenModal(role)}
-                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                            title="Edit Role"
-                                        >
-                                            <Edit size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(role)}
-                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                            title="Delete Role"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+            <div className="relative">
+                <Table
+                    columns={columns}
+                    data={filteredRoles}
+                    onRowClick={(row) => setSelectedRole(row)}
+                    selectedRow={selectedRole?.code}
+                    rowKey="code"
+                    emptyMessage={loading ? "Loading roles..." : "No roles found."}
+                />
+
+                <FloatingActionPanel
+                    selectedItem={selectedRole}
+                    onClose={() => setSelectedRole(null)}
+                    title={selectedRole?.name}
+                    subtitle={selectedRole?.code}
+                    actions={[
+                        {
+                            icon: Edit,
+                            label: 'Edit Role',
+                            onClick: handleOpenModal,
+                            color: 'blue',
+                            title: 'Edit Role'
+                        },
+                        {
+                            icon: Trash2,
+                            label: 'Delete Role',
+                            onClick: handleDelete,
+                            color: 'red',
+                            title: 'Delete Role'
+                        }
+                    ]}
+                />
             </div>
 
             {/* Role Modal */}

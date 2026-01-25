@@ -11,6 +11,7 @@ import { useOptions } from '../context/OptionsContext';
 import { AuthContext } from '../context/AuthContext';
 import { useWorkspace } from '../context/WorkspaceContext';
 import ConfirmDialog from '../components/ConfirmDialog';
+import FloatingActionPanel from '../components/FloatingActionPanel';
 
 
 const Enquiries = () => {
@@ -43,6 +44,9 @@ const Enquiries = () => {
 
     // Delete confirmation dialog state
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, enquiry: null });
+
+    // Selected enquiry for floating action panel
+    const [selectedEnquiry, setSelectedEnquiry] = useState(null);
 
     // Customer Profile Detail State
     const [customerProfile, setCustomerProfile] = useState(null);
@@ -326,77 +330,7 @@ const Enquiries = () => {
                 return new Date(last.nextVisitDate).toLocaleDateString()
             }
         },
-        { key: 'createdAt', label: 'Created', render: (row) => new Date(row.createdAt).toLocaleDateString() },
-        {
-            key: 'actions', label: 'Actions', render: (row) => {
-                const isActive = ['new', 'in-followup'].includes(row.status);
-                return (
-                    <div className="flex gap-2">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleView(row);
-                            }}
-                            className="text-gray-600 hover:text-gray-900 bg-gray-50 px-2 py-1 rounded-md text-sm border border-gray-200"
-                            title="View Details"
-                        >
-                            <Eye size={16} />
-                        </button>
-                        {isActive && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEdit(row);
-                                }}
-                                className="text-blue-600 hover:text-blue-900 bg-blue-50 px-2 py-1 rounded-md text-sm border border-blue-200"
-                            >
-                                <Edit size={16} />
-
-                            </button>
-                        )}
-
-                        {(['SALES_REP', 'SALES_MGR', 'EXECUTIVE'].includes(user?.role) || isSuperUser) && isActive && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    openWorkspaceWithEnquiry(row.enquiryId, row.customerId, row.customer?.phone, row.branchId);
-                                }}
-                                className="text-green-600 hover:text-green-900 bg-green-50 px-2 py-1 rounded-md text-sm border border-green-200"
-                                title="Open in Lead Workspace"
-                            >
-                                <Briefcase size={16} />
-                            </button>
-                        )}
-                        {(!['SALES_REP', 'SALES_MGR'].includes(user?.role)) && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/follow-ups?enquiryId=${row.enquiryId}`);
-                                }}
-                                className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-2 py-1 rounded-md text-sm border border-indigo-200"
-                                title="Go to Follow-ups Page"
-                            >
-                                <Calendar size={16} />
-                            </button>
-                        )}
-                        {
-                            (!['SALES_REP', 'SALES_MGR'].includes(user?.role)) && isActive && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDelete(row);
-                                    }}
-                                    className="text-red-600 hover:text-red-900 bg-red-50 px-2 py-1 rounded-md text-sm border border-red-200"
-                                    title="Delete Enquiry"
-                                >
-                                    <Trash size={16} />
-                                </button>
-                            )
-                        }
-                    </div >
-                );
-            }
-        }
+        { key: 'createdAt', label: 'Created', render: (row) => new Date(row.createdAt).toLocaleDateString() }
     ];
 
     return (
@@ -719,48 +653,50 @@ const Enquiries = () => {
                 </div>
             )}
 
-            <div className="flex justify-between items-center my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                {isSuperUser && (
+            <div className="flex flex-col md:flex-row md:items-center justify-between my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    {isSuperUser && (
+                        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
+                            <Building size={16} className="text-gray-400" />
+                            <select
+                                className="flex-1 text-sm bg-transparent border-none focus:ring-0 text-gray-700 min-w-[120px]"
+                                value={selectedBranchId}
+                                onChange={(e) => setSelectedBranchId(e.target.value)}
+                            >
+                                <option value="">All Branches</option>
+                                {branches.map(b => (
+                                    <option key={b.id} value={b.id}>{b.displayName}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
-                        <Building size={16} className="text-gray-400" />
+                        <ClipboardList size={16} className="text-gray-400" />
                         <select
-                            className="text-sm bg-transparent border-none focus:ring-0 text-gray-700"
-                            value={selectedBranchId}
-                            onChange={(e) => setSelectedBranchId(e.target.value)}
+                            className="flex-1 bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer min-w-[120px]"
+                            value={selectedStatus}
+                            onChange={(e) => {
+                                setSelectedStatus(e.target.value);
+                                setPage(1);
+                            }}
                         >
-                            <option value="">All Branches</option>
-                            {branches.map(b => (
-                                <option key={b.id} value={b.id}>{b.displayName}</option>
+                            <option value="" disabled>Select Status...</option>
+                            {getOpt('ENQUIRY_STATUSES').map(s => (
+                                <option key={s.value} value={s.value}>{s.label}</option>
                             ))}
                         </select>
                     </div>
-                )}
-
-                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
-                    <ClipboardList size={16} className="text-gray-400" />
-                    <select
-                        className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer"
-                        value={selectedStatus}
-                        onChange={(e) => {
-                            setSelectedStatus(e.target.value);
-                            setPage(1);
-                        }}
-                    >
-                        <option value="" disabled>Select Status...</option>
-                        {getOpt('ENQUIRY_STATUSES').map(s => (
-                            <option key={s.value} value={s.value}>{s.label}</option>
-                        ))}
-                    </select>
                 </div>
 
-                <div className="flex items-center gap-4 ml-auto">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     {filterCustomerId && (
                         <button
                             onClick={() => {
                                 setSelectedStatus('new');
                                 navigate('/enquiries');
                             }}
-                            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors whitespace-nowrap text-sm font-medium"
                         >
                             Display All Enquiry
                         </button>
@@ -768,8 +704,6 @@ const Enquiries = () => {
                     <button
                         onClick={() => {
                             setCurrentEnquiry({ status: 'new', enquiryType: 'Buy', carDetails: [] });
-                            // If we are in a specific customer context (filterCustomerId), 
-                            // auto-populate that customer and keep them selected.
                             if (filterCustomerId && customerProfile) {
                                 setSelectedCustomer(customerProfile);
                                 setCurrentEnquiry(prev => ({ ...prev, customerId: customerProfile.customerId }));
@@ -779,14 +713,70 @@ const Enquiries = () => {
                             setIsViewMode(false);
                             setIsEditMode(true);
                         }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium"
                     >
                         <Plus size={18} /> New Enquiry
                     </button>
                 </div>
             </div>
 
-            <Table columns={columns} data={enquiries} />
+            <div className="relative">
+                <Table
+                    columns={columns}
+                    data={enquiries}
+                    onRowClick={(enquiry) => setSelectedEnquiry(enquiry)}
+                    selectedRow={selectedEnquiry?.enquiryId}
+                    rowKey="enquiryId"
+                />
+
+                <FloatingActionPanel
+                    selectedItem={selectedEnquiry}
+                    onClose={() => setSelectedEnquiry(null)}
+                    title={selectedEnquiry?.customer?.fullName}
+                    subtitle={selectedEnquiry?.customer?.phone}
+                    actions={[
+                        {
+                            icon: Eye,
+                            label: 'View Details',
+                            onClick: handleView,
+                            color: 'gray',
+                            title: 'View Details'
+                        },
+                        // Show Edit only if active
+                        ...(['new', 'in-followup'].includes(selectedEnquiry?.status) ? [{
+                            icon: Edit,
+                            label: 'Edit Enquiry',
+                            onClick: handleEdit,
+                            color: 'blue',
+                            title: 'Edit Enquiry'
+                        }] : []),
+                        // Show Lead Workspace only if authorized and active
+                        ...((['SALES_REP', 'SALES_MGR', 'EXECUTIVE'].includes(user?.role) || isSuperUser) && ['new', 'in-followup'].includes(selectedEnquiry?.status) ? [{
+                            icon: Briefcase,
+                            label: 'Lead Workspace',
+                            onClick: (enq) => openWorkspaceWithEnquiry(enq.enquiryId, enq.customerId, enq.customer?.phone, enq.branchId),
+                            color: 'indigo',
+                            title: 'Open in Lead Workspace'
+                        }] : []),
+                        // Show Follow-ups only if not sales rep/mgr
+                        ...(!['SALES_REP', 'SALES_MGR'].includes(user?.role) ? [{
+                            icon: Calendar,
+                            label: 'Follow-ups Page',
+                            onClick: (enq) => navigate(`/follow-ups?enquiryId=${enq.enquiryId}`),
+                            color: 'indigo',
+                            title: 'Go to Follow-ups Page'
+                        }] : []),
+                        // Show Delete only if authorized and active
+                        ...((!['SALES_REP', 'SALES_MGR'].includes(user?.role)) && ['new', 'in-followup'].includes(selectedEnquiry?.status) ? [{
+                            icon: Trash,
+                            label: 'Delete Enquiry',
+                            onClick: handleDelete,
+                            color: 'red',
+                            title: 'Delete Enquiry'
+                        }] : [])
+                    ]}
+                />
+            </div>
 
             {/* Pagination Controls */}
             <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-lg shadow">

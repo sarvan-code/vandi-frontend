@@ -328,11 +328,13 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
         <div className="h-full flex flex-col bg-gray-50 p-4 overflow-y-auto">
             <form onSubmit={handleSubmit} className="flex-1 space-y-4" autoComplete="off">
                 <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500 relative">
-                    <div className="flex justify-between items-center mb-3">
+                    <div className="flex justify-between items-center mb-1">
                         <h3 className="text-lg font-semibold text-gray-800">Customer Details</h3>
+
+                    </div>
+                    <div className="mb-4 relative">
                         {isSuperUser && (
-                            <div className="flex items-center gap-2">
-                                <label className="text-xs font-semibold text-gray-400 uppercase">Branch:</label>
+                            <div className="relative mb-1">
                                 <select
                                     value={selectedBranchId}
                                     onChange={(e) => setSelectedBranchId(e.target.value)}
@@ -346,8 +348,6 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                 </select>
                             </div>
                         )}
-                    </div>
-                    <div className="mb-4 relative">
                         <div className="relative">
                             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                             <input
@@ -531,60 +531,88 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                 setEnquiry({ ...enquiry, carDetails: mk });
                             }} className="text-xs bg-blue-600 text-white px-2 py-1 rounded flex items-center gap-1"> <Plus size={14} /> Add </button>
                         </div>
-                        {(enquiry.carDetails || []).map((car, idx) => {
-                            const typeTerm = (car.carType || '').trim().toLowerCase();
-                            const selectedTypeObj = vehicleTypes.find(t => t.name.toLowerCase() === typeTerm);
-                            const brandTerm = (car.carBrand || '').trim().toLowerCase();
-                            const selectedBrandObj = vehicleBrands.find(b => b.name.toLowerCase() === brandTerm);
-                            const typesForBrand = selectedBrandObj
-                                ? new Set(vehicleModels.filter(m => m.brandId === selectedBrandObj.id).map(m => m.typeId))
-                                : null;
-                            const availableTypes = typesForBrand
-                                ? vehicleTypes.filter(t => typesForBrand.has(t.id))
-                                : vehicleTypes;
-                            const filteredModels = vehicleModels.filter(m => selectedBrandObj && m.brandId === selectedBrandObj.id && selectedTypeObj && m.typeId === selectedTypeObj.id);
-                            const modelTerm = (car.carModel || '').trim().toLowerCase();
-                            const selectedModelObj = filteredModels.find(m => m.name.toLowerCase() === modelTerm);
-                            const filteredVariants = vehicleVariants.filter(v => selectedModelObj && v.modelId === selectedModelObj.id);
-                            return (
-                                <div key={idx} className="flex gap-2 mb-2 items-end">
-                                    <select className="flex-1 border p-1 rounded text-sm" value={car.carBrand || ''} onChange={e => {
-                                        const mk = [...enquiry.carDetails];
-                                        mk[idx].carBrand = e.target.value; mk[idx].carType = ''; mk[idx].carModel = ''; mk[idx].carVariant = '';
-                                        setEnquiry({ ...enquiry, carDetails: mk });
-                                    }}>
-                                        <option value="">Brand...</option>
-                                        {vehicleBrands.map((b, i) => <option key={b.id || i} value={b.name}>{b.name}</option>)}
-                                    </select>
-                                    <select className="flex-1 border p-1 rounded text-sm" value={car.carType || ''} onChange={e => {
-                                        const mk = [...enquiry.carDetails];
-                                        mk[idx].carType = e.target.value; mk[idx].carModel = ''; mk[idx].carVariant = '';
-                                        setEnquiry({ ...enquiry, carDetails: mk });
-                                    }}>
-                                        <option value="">Type...</option>
-                                        {availableTypes.map((t, i) => <option key={t.id || i} value={t.name}>{t.name}</option>)}
-                                    </select>
-                                    <select className="flex-1 border p-1 rounded text-sm" value={car.carModel || ''} onChange={e => {
-                                        const mk = [...enquiry.carDetails]; mk[idx].carModel = e.target.value; mk[idx].carVariant = '';
-                                        setEnquiry({ ...enquiry, carDetails: mk });
-                                    }}>
-                                        <option value="">Model...</option>
-                                        {filteredModels.map((m, i) => <option key={m.id || i} value={m.name}>{m.name}</option>)}
-                                    </select>
-                                    <select className="flex-1 border p-1 rounded text-sm" value={car.carVariant || ''} onChange={e => {
-                                        const mk = [...enquiry.carDetails]; mk[idx].carVariant = e.target.value;
-                                        setEnquiry({ ...enquiry, carDetails: mk });
-                                    }}>
-                                        <option value="">Variant...</option>
-                                        {filteredVariants.map((v, i) => <option key={v.id || i} value={v.name}>{v.name}</option>)}
-                                    </select>
-                                    <button type="button" onClick={() => {
-                                        const mk = enquiry.carDetails.filter((_, i) => i !== idx);
-                                        setEnquiry({ ...enquiry, carDetails: mk });
-                                    }} className="text-red-500 p-2 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
-                                </div>
-                            );
-                        })}
+                        <div className="space-y-3">
+                            {(enquiry.carDetails || []).map((car, idx) => {
+                                const typeTerm = (car.carType || '').trim().toLowerCase();
+                                const selectedTypeObj = vehicleTypes.find(t => t.name.toLowerCase() === typeTerm);
+                                const brandTerm = (car.carBrand || '').trim().toLowerCase();
+                                const selectedBrandObj = vehicleBrands.find(b => b.name.toLowerCase() === brandTerm);
+                                const typesForBrand = selectedBrandObj
+                                    ? new Set(vehicleModels.filter(m => m.brandId === selectedBrandObj.id).map(m => m.typeId))
+                                    : null;
+                                const availableTypes = typesForBrand
+                                    ? vehicleTypes.filter(t => typesForBrand.has(t.id))
+                                    : vehicleTypes;
+                                const filteredModels = vehicleModels.filter(m => selectedBrandObj && m.brandId === selectedBrandObj.id && selectedTypeObj && m.typeId === selectedTypeObj.id);
+                                const modelTerm = (car.carModel || '').trim().toLowerCase();
+                                const selectedModelObj = filteredModels.find(m => m.name.toLowerCase() === modelTerm);
+                                const filteredVariants = vehicleVariants.filter(v => selectedModelObj && v.modelId === selectedModelObj.id);
+
+                                return (
+                                    <div key={idx} className="grid grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-3 p-3 bg-white rounded-lg border border-blue-100 shadow-sm relative group transition-all hover:border-blue-300">
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[10px] uppercase font-bold text-gray-400">Brand</label>
+                                            <select className="w-full border p-1.5 rounded text-sm bg-gray-50 focus:bg-white transition-colors" value={car.carBrand || ''} onChange={e => {
+                                                const mk = [...enquiry.carDetails];
+                                                mk[idx].carBrand = e.target.value; mk[idx].carType = ''; mk[idx].carModel = ''; mk[idx].carVariant = '';
+                                                setEnquiry({ ...enquiry, carDetails: mk });
+                                            }}>
+                                                <option value="">Select Brand</option>
+                                                {vehicleBrands.map((b, i) => <option key={b.id || i} value={b.name}>{b.name}</option>)}
+                                            </select>
+                                        </div>
+
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[10px] uppercase font-bold text-gray-400">Type</label>
+                                            <select className="w-full border p-1.5 rounded text-sm bg-gray-50 focus:bg-white transition-colors" value={car.carType || ''} onChange={e => {
+                                                const mk = [...enquiry.carDetails];
+                                                mk[idx].carType = e.target.value; mk[idx].carModel = ''; mk[idx].carVariant = '';
+                                                setEnquiry({ ...enquiry, carDetails: mk });
+                                            }}>
+                                                <option value="">Select Type</option>
+                                                {availableTypes.map((t, i) => <option key={t.id || i} value={t.name}>{t.name}</option>)}
+                                            </select>
+                                        </div>
+
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[10px] uppercase font-bold text-gray-400">Model</label>
+                                            <select className="w-full border p-1.5 rounded text-sm bg-gray-50 focus:bg-white transition-colors" value={car.carModel || ''} onChange={e => {
+                                                const mk = [...enquiry.carDetails]; mk[idx].carModel = e.target.value; mk[idx].carVariant = '';
+                                                setEnquiry({ ...enquiry, carDetails: mk });
+                                            }}>
+                                                <option value="">Select Model</option>
+                                                {filteredModels.map((m, i) => <option key={m.id || i} value={m.name}>{m.name}</option>)}
+                                            </select>
+                                        </div>
+
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[10px] uppercase font-bold text-gray-400">Variant</label>
+                                            <select className="w-full border p-1.5 rounded text-sm bg-gray-50 focus:bg-white transition-colors" value={car.carVariant || ''} onChange={e => {
+                                                const mk = [...enquiry.carDetails]; mk[idx].carVariant = e.target.value;
+                                                setEnquiry({ ...enquiry, carDetails: mk });
+                                            }}>
+                                                <option value="">Select Variant</option>
+                                                {filteredVariants.map((v, i) => <option key={v.id || i} value={v.name}>{v.name}</option>)}
+                                            </select>
+                                        </div>
+
+                                        <div className="col-span-2 lg:col-span-1 flex items-end justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const mk = enquiry.carDetails.filter((_, i) => i !== idx);
+                                                    setEnquiry({ ...enquiry, carDetails: mk });
+                                                }}
+                                                className="text-red-500 p-2 hover:bg-red-50 rounded transition-colors"
+                                                title="Remove vehicle"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                         <input className="w-full border p-2 text-sm rounded mt-1" placeholder="Car Detail Remarks..." value={enquiry.carDetailRemarks || ''} onChange={e => setEnquiry({ ...enquiry, carDetailRemarks: e.target.value })} />
                     </div>
 
@@ -636,7 +664,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                     </div>
 
                     {showFollowUpHistory && enquiry.followUps && (
-                        <div className="mb-4 bg-amber-50 rounded-lg border border-amber-100 overflow-hidden">
+                        <div className="mb-4 bg-amber-50 rounded-lg border border-amber-100 overflow-auto">
                             <table className="w-full text-left text-xs">
                                 <thead className="bg-amber-100/50 text-amber-900 font-semibold border-b border-amber-200">
                                     <tr>

@@ -7,6 +7,7 @@ import { useOptions } from '../context/OptionsContext';
 import Modal from '../components/Modal';
 import { AuthContext } from '../context/AuthContext';
 import ConfirmDialog from '../components/ConfirmDialog';
+import FloatingActionPanel from '../components/FloatingActionPanel';
 
 const Users = () => {
     const { showToast } = useToast();
@@ -17,6 +18,9 @@ const Users = () => {
     const [currentUser, setCurrentUser] = useState(null);
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, user: null });
     const { user } = useContext(AuthContext);
+
+    // Selected user for floating action panel
+    const [selectedUser, setSelectedUser] = useState(null);
 
     const globalRoles = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE', 'HR_MGR', 'HR_ASSIS', 'AUTH_USER', 'GUEST'];
     const isGlobalUser = globalRoles.includes(user?.role);
@@ -105,44 +109,18 @@ const Users = () => {
                 </span>
             )
         },
-        {
-            key: 'actions', label: 'Actions', render: (row) => (
-                <div className="flex gap-2">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(row);
-                        }}
-                        className="text-blue-600 hover:text-blue-900 bg-blue-50 px-2 py-1 rounded-md text-sm border border-blue-200"
-                        title="Edit User"
-                    >
-                        <Edit size={16} />
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(row);
-                        }}
-                        className="text-red-600 hover:text-red-900 bg-red-50 px-2 py-1 rounded-md text-sm border border-red-200"
-                        title="Delete User"
-                    >
-                        <Trash size={16} />
-                    </button>
-                </div>
-            )
-        }
     ];
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-4">
-                    <h1 className="text-2xl font-bold text-gray-800">Users</h1>
+            <div className="flex flex-col md:flex-row md:items-center justify-between my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <h1 className="text-xl font-bold text-gray-800">Users</h1>
                     {isGlobalUser && (
                         <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-200">
                             <Filter size={16} className="text-gray-400" />
                             <select
-                                className="text-sm border-none focus:ring-0 bg-transparent"
+                                className="flex-1 text-sm border-none focus:ring-0 bg-transparent min-w-[150px]"
                                 value={selectedBranchId}
                                 onChange={(e) => {
                                     setSelectedBranchId(e.target.value);
@@ -159,13 +137,44 @@ const Users = () => {
                 </div>
                 <button
                     onClick={() => { setCurrentUser({}); setIsModalOpen(true); }}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap text-sm font-medium"
                 >
                     Add User
                 </button>
             </div>
 
-            <Table columns={columns} data={users} />
+            <div className="relative">
+                <Table
+                    columns={columns}
+                    data={users}
+                    onRowClick={(row) => setSelectedUser(row)}
+                    selectedRow={selectedUser?.userId}
+                    rowKey="userId"
+                />
+
+                <FloatingActionPanel
+                    selectedItem={selectedUser}
+                    onClose={() => setSelectedUser(null)}
+                    title={selectedUser?.fullName}
+                    subtitle={selectedUser?.email}
+                    actions={[
+                        {
+                            icon: Edit,
+                            label: 'Edit User',
+                            onClick: handleEdit,
+                            color: 'blue',
+                            title: 'Edit User'
+                        },
+                        {
+                            icon: Trash,
+                            label: 'Delete User',
+                            onClick: handleDelete,
+                            color: 'red',
+                            title: 'Delete User'
+                        }
+                    ]}
+                />
+            </div>
 
             {/* Pagination Controls */}
             <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-lg shadow">

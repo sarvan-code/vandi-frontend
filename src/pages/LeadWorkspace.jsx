@@ -1,15 +1,12 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Trash2, Phone, User, Calendar, Plus, ExternalLink, Filter, Search, Layout, X, Building, Briefcase, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, X, Briefcase, ChevronDown, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
 import { useToast } from '../context/ToastContext';
 import LeadForm from '../components/LeadForm';
-import api from '../api';
-import { AuthContext } from '../context/AuthContext';
 import { useWorkspace } from '../context/WorkspaceContext';
 
 const LeadWorkspace = ({ isMinimized, onMinimize, onClose }) => {
     const { showToast } = useToast();
-    const [leads, setLeads] = useState([]);
     // ---- State ----
     // Tabs Array: { id: number, title: string, key: number }
     const [tabs, setTabs] = useState(() => {
@@ -17,28 +14,7 @@ const LeadWorkspace = ({ isMinimized, onMinimize, onClose }) => {
         return saved ? JSON.parse(saved) : [{ id: 1, title: 'New Lead', key: Date.now() }];
     });
 
-    const { user } = useContext(AuthContext);
     const { preloadedEnquiry, clearPreloadedEnquiry } = useWorkspace();
-    const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(user?.role);
-    // Removed local branches fetching, will be handled in LeadForm or if needed global state
-    // const [branches, setBranches] = useState([]);
-    // const [selectedBranchId, setSelectedBranchId] = useState('');
-
-    // useEffect(() => {
-    //     if (isSuperUser) {
-    //         fetchBranches();
-    //     }
-    // }, [isSuperUser]);
-
-    // const fetchBranches = async () => {
-    //     try {
-    //         const res = await api.get('/branches');
-    //         setBranches(res.data.data || res.data || []);
-    //     } catch (error) {
-    //         console.error("Error fetching branches:", error);
-    //     }
-    // };
-
     const [activeTabId, setActiveTabId] = useState(() => {
         const saved = localStorage.getItem('vandi_active_tab');
         return saved ? Number(saved) : 1;

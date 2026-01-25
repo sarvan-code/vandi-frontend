@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Edit, Filter, Plus, X } from 'lucide-react';
+import { Edit, Filter, Plus, X, Trash2 } from 'lucide-react';
 import api from '../api';
 import Table from '../components/Table';
 import { useToast } from '../context/ToastContext';
 import Modal from '../components/Modal';
 import { useOptions } from '../context/OptionsContext';
 import { AuthContext } from '../context/AuthContext';
+import FloatingActionPanel from '../components/FloatingActionPanel';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const Cars = () => {
     const { showToast } = useToast();
@@ -16,6 +18,11 @@ const Cars = () => {
     const { getOptionList, vehicleBrands, vehicleTypes, vehicleModels, vehicleVariants, branches, loading: optionsLoading, refreshVehicles } = useOptions();
     const { user } = useContext(AuthContext);
     const inventoryStatuses = getOptionList('INVENTORY_STATUSES');
+
+    // Selected car for floating action panel
+    const [selectedCarRow, setSelectedCarRow] = useState(null);
+    // Delete confirmation state
+    const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, car: null });
 
     const globalRoles = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE', 'HR_MGR', 'HR_ASSIS', 'AUTH_USER', 'GUEST'];
     const isGlobalUser = globalRoles.includes(user?.role);
@@ -185,6 +192,25 @@ const Cars = () => {
         }
     };
 
+    const handleDelete = (car) => {
+        setDeleteConfirm({ isOpen: true, car });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirm.car) return;
+        try {
+            await api.delete(`/cars/${deleteConfirm.car.carId}`);
+            showToast('Car deleted successfully', 'success');
+            setSelectedCarRow(null);
+            fetchCars();
+        } catch (error) {
+            console.error('Error deleting car:', error);
+            showToast('Failed to delete car', 'error');
+        } finally {
+            setDeleteConfirm({ isOpen: false, car: null });
+        }
+    };
+
     const columns = [
         { key: 'registrationNumber', label: 'Reg. Number', render: (row) => row.registrationNumber || '-' },
         { key: 'make', label: 'Brand' },
@@ -200,21 +226,7 @@ const Cars = () => {
             }
         },
         { key: 'inventoryStatus', label: 'Status' },
-        { key: 'branch', label: 'Branch', render: (row) => row.branch?.displayName || '-' },
-        ...(canManageCars ? [{
-            key: 'actions', label: 'Actions', render: (row) => (
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(row);
-                    }}
-                    className="text-blue-600 hover:text-blue-900 bg-blue-50 px-2 py-1 rounded-md text-sm border border-blue-200"
-                    title="Edit Car"
-                >
-                    <Edit size={16} />
-                </button>
-            )
-        }] : [])
+        { key: 'branch', label: 'Branch', render: (row) => row.branch?.displayName || '-' }
     ];
 
     // Helper logic for filtered dropdowns
@@ -269,14 +281,14 @@ const Cars = () => {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-4">
-                    <h1 className="text-2xl font-bold text-gray-800">Cars</h1>
+            <div className="flex flex-col md:flex-row md:items-center justify-between my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <h1 className="text-xl font-bold text-gray-800">Cars</h1>
                     {isGlobalUser && (
                         <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-200">
                             <Filter size={16} className="text-gray-400" />
                             <select
-                                className="text-sm border-none focus:ring-0 bg-transparent"
+                                className="flex-1 text-sm border-none focus:ring-0 bg-transparent min-w-[150px]"
                                 value={selectedBranchId}
                                 onChange={(e) => setSelectedBranchId(e.target.value)}
                             >
@@ -291,14 +303,45 @@ const Cars = () => {
                 {canManageCars && (
                     <button
                         onClick={() => { setCurrentCar({}); setManualEntry({ make: false, carType: false, model: false, variant: false }); setIsModalOpen(true); }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap text-sm font-medium"
                     >
                         Add Car
                     </button>
                 )}
             </div>
 
-            <Table columns={columns} data={cars} />
+            <div className="relative">
+                <Table
+                    columns={columns}
+                    data={cars}
+                    onRowClick={(row) => setSelectedCarRow(row)}
+                    selectedRow={selectedCarRow?.carId}
+                    rowKey="carId"
+                />
+
+                <FloatingActionPanel
+                    selectedItem={selectedCarRow}
+                    onClose={() => setSelectedCarRow(null)}
+                    title={selectedCarRow?.registrationNumber || 'No Reg. Number'}
+                    subtitle={`${selectedCarRow?.make} ${selectedCarRow?.model} ${selectedCarRow?.variant}`}
+                    actions={[
+                        {
+                            icon: Edit,
+                            label: 'Edit Car',
+                            onClick: handleEdit,
+                            color: 'blue',
+                            title: 'Edit Car'
+                        },
+                        {
+                            icon: Trash2,
+                            label: 'Delete Car',
+                            onClick: handleDelete,
+                            color: 'red',
+                            title: 'Delete Car'
+                        }
+                    ]}
+                />
+            </div>
 
             <Modal
                 isOpen={isModalOpen}
@@ -603,6 +646,16 @@ const Cars = () => {
                     </div>
                 </form>
             </Modal>
+            <ConfirmDialog
+                isOpen={deleteConfirm.isOpen}
+                onClose={() => setDeleteConfirm({ isOpen: false, car: null })}
+                onConfirm={confirmDelete}
+                title="Delete Car"
+                message={`Are you sure you want to delete the car "${deleteConfirm.car?.registrationNumber || 'this car'}"? This action cannot be undone.`}
+                confirmText="Delete"
+                cancelText="Cancel"
+                variant="danger"
+            />
         </div>
     );
 };

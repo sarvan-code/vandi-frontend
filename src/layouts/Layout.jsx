@@ -9,6 +9,7 @@ import LeadWorkspace from '../pages/LeadWorkspace';
 import FinanceWorkspaceOverlay from '../components/FinanceWorkspaceOverlay';
 
 import IdleMonitor from '../components/IdleMonitor';
+import '../components/Loading.css';
 
 const Layout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile drawer
@@ -115,12 +116,21 @@ const Layout = () => {
                         </button>
 
                         {/* Logo and Name */}
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
-                                <span className="text-white font-bold text-2xl">V</span>
+                        <Link to="/" className="flex items-center gap-3 group">
+                            <div className="w-12 h-10 shrink-0 -ml-1 overflow-hidden">
+                                <div className="car-loader mini">
+                                    <div className="car-body">
+                                        <div className="car-top">
+                                            <div className="car-window"></div>
+                                            <div className="car-window rear"></div>
+                                        </div>
+                                    </div>
+                                    <div className="car-wheel rear"></div>
+                                    <div className="car-wheel front"></div>
+                                </div>
                             </div>
-                            <span className="text-2xl font-bold text-blue-600 hidden sm:block">ANDI</span>
-                        </div>
+                            <span className="text-2xl font-bold text-blue-600 hidden sm:block tracking-tighter group-hover:text-blue-700 transition-colors">VANDI</span>
+                        </Link>
                     </div>
 
                     {/* Right Side - Profile and Logout */}

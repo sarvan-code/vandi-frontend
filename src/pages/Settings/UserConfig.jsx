@@ -5,6 +5,8 @@ import { useOptions } from '../../context/OptionsContext';
 import { Search, UserCheck, UserX, Trash2, Edit, X, Save, Eye, Building, UserPlus } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import Table from '../../components/Table';
+import FloatingActionPanel from '../../components/FloatingActionPanel';
 
 const UserConfig = () => {
     const { user: currentUser } = useContext(AuthContext);
@@ -23,6 +25,9 @@ const UserConfig = () => {
     const [selectedUser, setSelectedUser] = useState(null); // For Detail/Edit Modal
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCreateMode, setIsCreateMode] = useState(false);
+
+    // Selected user for floating action panel row selection
+    const [selectedUserRow, setSelectedUserRow] = useState(null);
 
     // Delete confirmation dialog state
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, user: null });
@@ -141,16 +146,77 @@ const UserConfig = () => {
         ? roles.filter(r => !superRoles.includes(r.code))
         : roles;
 
+    const columns = [
+        {
+            key: 'userDetails',
+            label: 'User Details',
+            render: (row) => (
+                <div className="flex flex-col">
+                    <div className="font-bold text-gray-900">{row.fullName}</div>
+                    <div className="text-[10px] text-gray-400 font-medium">JOINED: {new Date(row.createdAt).toLocaleDateString()}</div>
+                </div>
+            )
+        },
+        {
+            key: 'contactInfo',
+            label: 'Contact Info',
+            render: (row) => (
+                <div className="flex flex-col text-sm text-gray-600">
+                    <div className="flex items-center gap-1">{row.email}</div>
+                    <div className="text-gray-400">{row.phone || '-'}</div>
+                </div>
+            )
+        },
+        {
+            key: 'role',
+            label: 'System Role',
+            render: (row) => (
+                <select
+                    className="border-gray-200 rounded p-1 text-xs bg-white cursor-pointer hover:border-blue-300 transition-colors max-w-[150px] font-medium"
+                    value={row.role}
+                    onChange={(e) => handleRoleChange(row, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    disabled={isHR && superRoles.includes(row.role)}
+                >
+                    {availableRoles.map(r => (
+                        <option key={r.code} value={r.code}>{r.name}</option>
+                    ))}
+                </select>
+            )
+        },
+        {
+            key: 'status',
+            label: 'Lifecycle Status',
+            render: (row) => (
+                <div className="text-center">
+                    <select
+                        className={`border rounded-full px-2 py-0.5 text-[10px] font-bold cursor-pointer transition-colors ${row.userStatus === 'ACTIVE' ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' :
+                            row.userStatus === 'NEW' ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' :
+                                'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                            }`}
+                        value={row.userStatus}
+                        onChange={(e) => handleStatusChange(row, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <option value="NEW">NEW</option>
+                        <option value="ACTIVE">ACTIVE</option>
+                        <option value="INACTIVE">INACTIVE</option>
+                    </select>
+                </div>
+            )
+        }
+    ];
+
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">User Management</h2>
-                <div className="flex gap-4 items-center">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                <h2 className="text-xl font-bold text-gray-800">User Management</h2>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     {(isSuperUser || isHR) && (
                         <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
                             <Building size={16} className="text-gray-400" />
                             <select
-                                className="text-sm bg-transparent border-none focus:ring-0 text-gray-700 font-medium"
+                                className="flex-1 text-sm bg-transparent border-none focus:ring-0 text-gray-700 font-medium min-w-[150px]"
                                 value={selectedBranchId}
                                 onChange={(e) => setSelectedBranchId(e.target.value)}
                             >
@@ -161,10 +227,10 @@ const UserConfig = () => {
                             </select>
                         </div>
                     )}
-                    <div className="relative w-64">
+                    <div className="relative">
                         <Search className="absolute left-3 top-2.5 text-gray-400 h-5 w-5" />
                         <input
-                            className="w-full pl-10 pr-4 py-2 border rounded-lg"
+                            className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm"
                             placeholder="Search users..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
@@ -172,89 +238,45 @@ const UserConfig = () => {
                     </div>
                     <button
                         onClick={openCreateModal}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors shadow-sm"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 transition-colors shadow-sm whitespace-nowrap text-sm font-medium"
                     >
                         <UserPlus size={18} /> Add User
                     </button>
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-100">
-                <table className="w-full text-left">
-                    <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500 font-semibold">
-                        <tr>
-                            <th className="p-4">User Details</th>
-                            <th className="p-4">Contact info</th>
-                            <th className="p-4">System Role</th>
-                            <th className="p-4 text-center">Lifecycle Status</th>
-                            <th className="p-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {filteredUsers.map(user => (
-                            <tr key={user.userId} className="hover:bg-gray-50 transition-colors">
-                                <td className="p-4">
-                                    <div className="font-bold text-gray-900">{user.fullName}</div>
-                                    <div className="text-[10px] text-gray-400 font-medium">JOINED: {new Date(user.createdAt).toLocaleDateString()}</div>
-                                </td>
-                                <td className="p-4 text-sm text-gray-600">
-                                    <div className="flex items-center gap-1">{user.email}</div>
-                                    <div className="text-gray-400">{user.phone || '-'}</div>
-                                </td>
-                                <td className="p-4">
-                                    <select
-                                        className="border-gray-200 rounded p-1 text-xs bg-white cursor-pointer hover:border-blue-300 transition-colors max-w-[150px] font-medium"
-                                        value={user.role}
-                                        onChange={(e) => handleRoleChange(user, e.target.value)}
-                                        disabled={isHR && superRoles.includes(user.role)}
-                                    >
-                                        {availableRoles.map(r => (
-                                            <option key={r.code} value={r.code}>{r.name}</option>
-                                        ))}
-                                    </select>
-                                </td>
-                                <td className="p-4 text-center">
-                                    <select
-                                        className={`border rounded-full px-2 py-0.5 text-[10px] font-bold cursor-pointer transition-colors ${user.userStatus === 'ACTIVE' ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' :
-                                            user.userStatus === 'NEW' ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' :
-                                                'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
-                                            }`}
-                                        value={user.userStatus}
-                                        onChange={(e) => handleStatusChange(user, e.target.value)}
-                                    >
-                                        <option value="NEW">NEW</option>
-                                        <option value="ACTIVE">ACTIVE</option>
-                                        <option value="INACTIVE">INACTIVE</option>
-                                    </select>
-                                </td>
-                                <td className="p-4 text-right">
-                                    <div className="flex justify-end gap-1">
-                                        <button
-                                            onClick={() => openDetailModal(user)}
-                                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                                            title="View/Edit Details"
-                                        >
-                                            <Eye size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteUser(user)}
-                                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                                            title="Delete User"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {filteredUsers.length === 0 && !loading && (
-                    <div className="p-12 text-center text-gray-400 flex flex-col items-center">
-                        <UserCheck size={48} className="mb-2 opacity-20" />
-                        <p>No staff members found in this view.</p>
-                    </div>
-                )}
+            <div className="relative">
+                <Table
+                    columns={columns}
+                    data={filteredUsers}
+                    onRowClick={(row) => setSelectedUserRow(row)}
+                    selectedRow={selectedUserRow?.userId}
+                    rowKey="userId"
+                    emptyMessage={loading ? "Loading users..." : "No staff members found."}
+                />
+
+                <FloatingActionPanel
+                    selectedItem={selectedUserRow}
+                    onClose={() => setSelectedUserRow(null)}
+                    title={selectedUserRow?.fullName}
+                    subtitle={selectedUserRow?.email}
+                    actions={[
+                        {
+                            icon: Eye,
+                            label: 'Edit Details',
+                            onClick: openDetailModal,
+                            color: 'blue',
+                            title: 'View/Edit Details'
+                        },
+                        ...(currentUser?.userId !== selectedUserRow?.userId ? [{
+                            icon: Trash2,
+                            label: 'Delete User',
+                            onClick: handleDeleteUser,
+                            color: 'red',
+                            title: 'Delete User'
+                        }] : [])
+                    ]}
+                />
             </div>
 
             {/* Detail/Edit/Create Modal */}

@@ -10,6 +10,7 @@ import { useToast } from '../context/ToastContext';
 import { useOptions } from '../context/OptionsContext';
 import ConfirmDialog from '../components/ConfirmDialog';
 import VehicleAutocomplete from '../components/VehicleAutocomplete';
+import FloatingActionPanel from '../components/FloatingActionPanel';
 
 const processEnquiryData = (rawEnquiries) => {
     if (!Array.isArray(rawEnquiries)) return [];
@@ -62,6 +63,9 @@ const FollowUps = () => {
 
     // Delete confirmation dialog state
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, followUp: null });
+
+    // Selected follow-up for floating action panel
+    const [selectedFollowUp, setSelectedFollowUp] = useState(null);
 
     const getMinDateTime = () => {
         const now = new Date();
@@ -298,41 +302,7 @@ const FollowUps = () => {
         },
         { key: 'followupRemarks', label: 'Remarks', render: (row) => <span className="text-xs text-gray-500 truncate block max-w-[150px]">{row.followupRemarks}</span> },
         { key: 'nextVisitDate', label: 'Next Visit', render: (row) => row.nextVisitDate ? <span className="text-blue-600 font-medium">{new Date(row.nextVisitDate).toLocaleDateString()}</span> : '-' },
-        { key: 'updatedAt', label: 'Updated At', render: (row) => new Date(row.updatedAt).toLocaleString() },
-        {
-            key: 'actions', label: 'Actions', render: (row) => (
-                <div className="flex gap-2">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleView(row);
-                        }}
-                        className="text-gray-600 hover:text-gray-900 bg-gray-50 px-2 py-1 rounded-md text-sm border border-gray-200"
-                        title="View Details"
-                    >
-                        <Eye size={16} />
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(row);
-                        }}
-                        className="text-blue-600 hover:text-blue-900 bg-blue-50 px-2 py-1 rounded-md text-sm border border-blue-200"
-                    >
-                        <Edit size={16} />
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(row);
-                        }}
-                        className="text-red-600 hover:text-red-900 bg-red-50 px-2 py-1 rounded-md text-sm border border-red-200"
-                    >
-                        <Trash size={16} />
-                    </button>
-                </div>
-            )
-        }
+        { key: 'updatedAt', label: 'Updated At', render: (row) => new Date(row.updatedAt).toLocaleString() }
     ];
 
     return (
@@ -466,15 +436,15 @@ const FollowUps = () => {
                 </div>
             )}
 
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">
+            <div className="flex flex-col md:flex-row md:items-center justify-between my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                <h1 className="text-xl font-bold text-gray-800">
                     {filterEnquiryId ? 'Enquiry Follow Ups' : 'Follow Ups'}
                 </h1>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     {filterEnquiryId && (
                         <button
                             onClick={() => navigate('/follow-ups')}
-                            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors whitespace-nowrap text-sm font-medium"
                         >
                             Display All Followups
                         </button>
@@ -482,26 +452,21 @@ const FollowUps = () => {
                     <button
                         onClick={() => {
                             const newFollowUp = {};
-
-                            // Context Aware Pre-fill
                             if (filterEnquiryId && enquiryDetails) {
-                                // Pre-fill customer
                                 if (enquiryDetails.customer) {
                                     setSelectedCustomer(enquiryDetails.customer);
                                 }
-                                // Pre-fill enquiry
                                 setSelectedEnquiry(enquiryDetails);
                                 newFollowUp.enquiryId = enquiryDetails.enquiryId;
                             } else {
                                 setSelectedCustomer(null);
                                 setSelectedEnquiry(null);
                             }
-
                             setCurrentFollowUp(newFollowUp);
                             setIsViewMode(false);
                             setIsModalOpen(true);
                         }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium"
                     >
                         <Calendar size={18} /> Schedule Follow-up
                     </button>
@@ -684,7 +649,52 @@ const FollowUps = () => {
                 </div>
             )}
 
-            <Table columns={columns} data={followUps} />
+            <div className="relative">
+                <Table
+                    columns={columns}
+                    data={followUps}
+                    onRowClick={(followUp) => setSelectedFollowUp(followUp)}
+                    selectedRow={selectedFollowUp?.followUpId}
+                    rowKey="followUpId"
+                />
+
+                <FloatingActionPanel
+                    selectedItem={selectedFollowUp}
+                    onClose={() => setSelectedFollowUp(null)}
+                    title={selectedFollowUp?.enquiry?.customer?.fullName}
+                    subtitle={selectedFollowUp?.enquiry?.customer?.phone}
+                    actions={[
+                        {
+                            icon: Eye,
+                            label: 'View Details',
+                            onClick: handleView,
+                            color: 'gray',
+                            title: 'View Details'
+                        },
+                        {
+                            icon: Edit,
+                            label: 'Edit Follow-up',
+                            onClick: handleEdit,
+                            color: 'blue',
+                            title: 'Edit Follow-up'
+                        },
+                        {
+                            icon: Briefcase,
+                            label: 'View Enquiry',
+                            onClick: (row) => navigate(`/enquiries?enquiryId=${row.enquiryId}`),
+                            color: 'indigo',
+                            title: 'Go to Enquiry Page'
+                        },
+                        {
+                            icon: Trash,
+                            label: 'Delete Follow-up',
+                            onClick: handleDelete,
+                            color: 'red',
+                            title: 'Delete Follow-up'
+                        }
+                    ]}
+                />
+            </div>
 
             {/* Pagination Controls */}
             <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-lg shadow">

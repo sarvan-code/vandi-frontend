@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, Eye, Edit, Trash, MessageSquare, X } from 'lucide-react';
+import { Eye, Edit, Trash, MessageSquare, X } from 'lucide-react';
 import api from '../api';
 import Table from '../components/Table';
 import { useToast } from '../context/ToastContext';
 import { useOptions } from '../context/OptionsContext';
 import { AuthContext } from '../context/AuthContext';
 import ConfirmDialog from '../components/ConfirmDialog';
+import FloatingActionPanel from '../components/FloatingActionPanel';
 
 const Customers = () => {
     const navigate = useNavigate();
@@ -29,6 +30,9 @@ const Customers = () => {
 
     // Delete confirmation dialog state
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, customer: null });
+
+    // Selected customer for floating action panel
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
 
 
     // Helper to get options from context
@@ -114,49 +118,6 @@ const Customers = () => {
                     {row.customerType}
                 </span>
             )
-        },
-        {
-            key: 'actions', label: 'Actions', render: (row) => (
-                <div className="flex gap-2">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleView(row);
-                        }}
-                        className="text-gray-600 hover:text-gray-900 bg-gray-50 px-3 py-1 rounded-md text-sm border border-gray-200"
-                        title="View Details"
-                    >
-                        <Eye size={16} />
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation(); // Prevent row click if any
-                            navigate(`/enquiries?customerId=${row.customerId}`);
-                        }}
-                        className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-sm border border-indigo-200"
-                    >
-                        <MessageSquare size={16} />
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(row);
-                        }}
-                        className="text-blue-600 hover:text-blue-900 bg-blue-50 px-2 py-1 rounded-md text-sm border border-blue-200"
-                    >
-                        <Edit size={16} />
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(row);
-                        }}
-                        className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md text-sm border border-red-200"
-                    >
-                        <Trash size={16} />
-                    </button>
-                </div>
-            )
         }
     ];
 
@@ -167,16 +128,16 @@ const Customers = () => {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Customers</h1>
-                <div className="flex gap-4 items-center">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
                     {isSuperUser && (
                         <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium text-gray-700">Branch:</label>
+                            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Branch:</label>
                             <select
                                 value={selectedBranchId}
                                 onChange={(e) => setSelectedBranchId(e.target.value)}
-                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="flex-1 sm:flex-initial border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                                 <option value="">All Branches</option>
                                 {branches.map((branch) => (
@@ -189,7 +150,7 @@ const Customers = () => {
                     )}
                     <button
                         onClick={() => { setCurrentCustomer({}); setIsViewMode(false); setIsModalOpen(true); }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
                     >
                         Add Customer
                     </button>
@@ -393,7 +354,54 @@ const Customers = () => {
                 </div>
             )}
 
-            <Table columns={columns} data={customers} />
+
+            <div className="relative">
+                <Table
+                    columns={columns}
+                    data={customers}
+                    onRowClick={(customer) => setSelectedCustomer(customer)}
+                    selectedRow={selectedCustomer?.customerId}
+                    rowKey="customerId"
+                />
+
+                {/* Floating Action Panel */}
+                <FloatingActionPanel
+                    selectedItem={selectedCustomer}
+                    onClose={() => setSelectedCustomer(null)}
+                    actions={[
+                        {
+                            icon: Eye,
+                            label: 'View Details',
+                            onClick: handleView,
+                            color: 'gray',
+                            title: 'View Details'
+                        },
+                        {
+                            icon: MessageSquare,
+                            label: 'View Enquiries',
+                            onClick: (customer) => navigate(`/enquiries?customerId=${customer.customerId}`),
+                            color: 'indigo',
+                            title: 'View Enquiries'
+                        },
+                        {
+                            icon: Edit,
+                            label: 'Edit Customer',
+                            onClick: handleEdit,
+                            color: 'blue',
+                            title: 'Edit Customer'
+                        },
+                        {
+                            icon: Trash,
+                            label: 'Delete Customer',
+                            onClick: handleDelete,
+                            color: 'red',
+                            title: 'Delete Customer'
+                        }
+                    ]}
+                    title={selectedCustomer?.fullName}
+                    subtitle={selectedCustomer?.phone}
+                />
+            </div>
 
             {/* Pagination Controls */}
             <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-lg shadow">

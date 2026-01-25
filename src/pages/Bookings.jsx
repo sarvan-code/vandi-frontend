@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, Eye, ArrowRight, Clock, CheckCircle, Building } from 'lucide-react';
+import { DollarSign, Eye, Clock, CheckCircle, Building } from 'lucide-react';
 import api from '../api';
 import Table from '../components/Table';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useOptions } from '../context/OptionsContext';
 import { useFinanceWorkspace } from '../context/FinanceWorkspaceContext';
+import FloatingActionPanel from '../components/FloatingActionPanel';
 
 const Bookings = () => {
     const { user } = useContext(AuthContext);
@@ -22,8 +23,12 @@ const Bookings = () => {
     const [selectedBranchId, setSelectedBranchId] = useState('');
     const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE'].includes(user?.role);
 
+    // Selected booking/enquiry for floating action panel
+    const [selectedItem, setSelectedItem] = useState(null);
+
     useEffect(() => {
         fetchData();
+        setSelectedItem(null); // Reset selection when view/filter changes
     }, [view, statusFilter, selectedBranchId]);
 
     const fetchData = async () => {
@@ -77,20 +82,7 @@ const Bookings = () => {
                 return 'N/A';
             }
         },
-        { label: 'Handover Date', key: 'updatedAt', render: (row) => new Date(row.updatedAt).toLocaleDateString('en-IN') },
-        {
-            label: 'Actions',
-            key: 'actions',
-            render: (row) => (
-                <button
-                    onClick={() => openFinanceTab(row.enquiryId, row.customer?.fullName || 'New Lead')}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                >
-                    <DollarSign size={14} />
-                    Start Booking
-                </button>
-            )
-        }
+        { label: 'Handover Date', key: 'updatedAt', render: (row) => new Date(row.updatedAt).toLocaleDateString('en-IN') }
     ];
 
     const activeColumns = [
@@ -113,31 +105,18 @@ const Bookings = () => {
                     {formatCurrency(row.balanceAmount)}
                 </span>
             )
-        },
-        {
-            label: 'Actions',
-            key: 'actions',
-            render: (row) => (
-                <button
-                    onClick={() => openFinanceTab(row.enquiryId, row.enquiry?.customer?.fullName || 'Booking')}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="Open Workspace"
-                >
-                    <Eye size={18} />
-                </button>
-            )
         }
     ];
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    <DollarSign size={28} className="text-blue-600" />
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <DollarSign size={24} className="text-blue-600" />
                     Finance & Bookings
                 </h2>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     {isSuperUser && (
                         <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
                             <Building size={16} className="text-gray-400" />
@@ -185,18 +164,47 @@ const Bookings = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border overflow-hidden relative">
                 {loading ? (
                     <div className="p-12 flex flex-col items-center justify-center space-y-4">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                         <p className="text-gray-500 font-medium">Loading {view} listings...</p>
                     </div>
                 ) : (
-                    <Table
-                        columns={view === 'pending' ? pendingColumns : activeColumns}
-                        data={view === 'pending' ? handovers : activeBookings}
-                        emptyMessage={view === 'pending' ? 'No enquiries waiting for booking.' : 'No active bookings found.'}
-                    />
+                    <>
+                        <Table
+                            columns={view === 'pending' ? pendingColumns : activeColumns}
+                            data={view === 'pending' ? handovers : activeBookings}
+                            emptyMessage={view === 'pending' ? 'No enquiries waiting for booking.' : 'No active bookings found.'}
+                            onRowClick={(row) => setSelectedItem(row)}
+                            selectedRow={view === 'pending' ? selectedItem?.enquiryId : selectedItem?.id}
+                            rowKey={view === 'pending' ? 'enquiryId' : 'id'}
+                        />
+
+                        <FloatingActionPanel
+                            selectedItem={selectedItem}
+                            onClose={() => setSelectedItem(null)}
+                            title={view === 'pending' ? selectedItem?.customer?.fullName : selectedItem?.enquiry?.customer?.fullName}
+                            subtitle={view === 'pending' ? selectedItem?.customer?.phone : selectedItem?.enquiry?.customer?.phone}
+                            actions={view === 'pending' ? [
+                                {
+                                    icon: DollarSign,
+                                    label: 'Start Booking',
+                                    onClick: (row) => openFinanceTab(row.enquiryId, row.customer?.fullName || 'New Lead'),
+                                    color: 'blue',
+                                    title: 'Start Booking'
+                                }
+                            ] : [
+                                {
+                                    icon: Eye,
+                                    label: 'Open Workspace',
+                                    onClick: (row) => openFinanceTab(row.enquiryId, row.enquiry?.customer?.fullName || 'Booking'),
+                                    color: 'blue',
+                                    title: 'Open Workspace'
+                                }
+                            ]}
+                        />
+                    </>
                 )}
             </div>
         </div>
