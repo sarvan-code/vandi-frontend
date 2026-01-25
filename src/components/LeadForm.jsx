@@ -285,7 +285,6 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
         const currentEnqJSON = JSON.stringify(enquiry);
         const skipCustomerUpdate = customer.customerId && initialCustomer === currentCustJSON;
         const skipEnquiryUpdate = !isNewEnquiry && initialEnquiry === currentEnqJSON;
-        console.log("followUp", followUp);
         try {
             const payload = {
                 customer,

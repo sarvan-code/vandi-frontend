@@ -98,7 +98,6 @@ const Cars = () => {
             }
 
             const response = await api.post(endpoint, payload);
-            console.log(response);
             showToast(`${type} created successfully!`, 'success');
 
             // Refresh options in background

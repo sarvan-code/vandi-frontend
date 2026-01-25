@@ -242,7 +242,6 @@ const FollowUps = () => {
         }
 
         try {
-            console.log("currentFollowUp", currentFollowUp);
             // Construct minimal payload to avoid 400 Bad Request with relations
             const payload = {
                 enquiryId: currentFollowUp.enquiryId,

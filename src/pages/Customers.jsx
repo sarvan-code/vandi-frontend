@@ -92,7 +92,6 @@ const Customers = () => {
             if (currentCustomer.customerId) {
                 // Remove system fields and relations
                 const { enquiries, createdAt, updatedAt, customerId, ...dataToUpdate } = currentCustomer;
-                console.log(dataToUpdate);
                 await api.put(`/customers/${currentCustomer.customerId}`, dataToUpdate);
             } else {
                 await api.post('/customers', currentCustomer);

@@ -14,6 +14,7 @@ const Layout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile drawer
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(true); // Desktop collapse
     const [isSettingsExpanded, setIsSettingsExpanded] = useState(false); // Sub-menu toggle
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false); // Profile dropdown
     const location = useLocation();
     const { user, logout } = useContext(AuthContext);
     const { isWorkspaceOpen, isWorkspaceMinimized, openWorkspace, closeWorkspace, toggleMinimize } = useWorkspace();
@@ -94,205 +95,238 @@ const Layout = () => {
 
     return (
         <IdleMonitor>
-            <div className="flex h-screen bg-gray-100">
-                {/* Sidebar */}
-                <aside className={clsx(
-                    "fixed inset-y-0 left-0 z-50 bg-white shadow-md transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto overflow-hidden",
-                    isSidebarOpen ? "translate-x-0" : "-translate-x-full",
-                    isSidebarExpanded ? "w-64" : "lg:w-20"
-                )}>
-                    <div className="flex items-center justify-between h-16 px-6 border-b shrink-0">
-                        <div className="flex items-center gap-3 overflow-hidden">
-                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
-                                <span className="text-white font-bold text-xl">V</span>
+            <div className="flex flex-col h-screen bg-gray-100">
+                {/* Top Header - Gmail Style */}
+                <header className="flex items-center justify-between h-16 px-4 bg-white shadow-sm z-40 shrink-0">
+                    <div className="flex items-center gap-4">
+                        {/* Hamburger Menu */}
+                        <button
+                            onClick={() => {
+                                if (window.innerWidth < 1024) {
+                                    setIsSidebarOpen(!isSidebarOpen);
+                                } else {
+                                    setIsSidebarExpanded(!isSidebarExpanded);
+                                }
+                            }}
+                            className="text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors"
+                            title="Toggle menu"
+                        >
+                            <Menu size={24} />
+                        </button>
+
+                        {/* Logo and Name */}
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
+                                <span className="text-white font-bold text-2xl">V</span>
                             </div>
-                            <span className={clsx(
-                                "text-2xl font-bold text-blue-600 transition-all duration-300 whitespace-nowrap",
-                                !isSidebarExpanded && "opacity-0 invisible w-0 -translate-x-4",
-                                isSidebarExpanded && "opacity-100 visible w-auto translate-x-0"
-                            )}>
-                                ANDI
-                            </span>
+                            <span className="text-2xl font-bold text-blue-600 hidden sm:block">ANDI</span>
                         </div>
-                        <button className="hidden lg:block text-gray-500 hover:text-blue-600" onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}>
-                            <Menu size={20} />
-                        </button>
-                        <button className="lg:hidden" onClick={() => setIsSidebarOpen(false)}>
-                            <X size={24} />
-                        </button>
                     </div>
-                    <nav className="p-4 space-y-2 flex flex-col h-[calc(100%-4rem)] overflow-hidden">
-                        <div className="flex-1 space-y-2 overflow-y-auto no-scrollbar">
-                            {navItems.map((item) => {
-                                const isSettings = item.name === 'Settings';
-                                const hasSubItems = item.subItems && item.subItems.length > 0;
-                                const isPathActive = location.pathname === item.path || (hasSubItems && item.subItems.some(sub => location.pathname === sub.path));
 
-                                return (
-                                    <div key={item.name} className="space-y-1">
-                                        {item.path ? (
-                                            <Link
-                                                to={item.path}
-                                                className={clsx(
-                                                    "flex items-center px-3 py-2 rounded-lg transition-all relative group",
-                                                    isPathActive ? "bg-blue-50 text-blue-600 shadow-sm" : "text-gray-700 hover:bg-gray-100"
-                                                )}
-                                                onClick={(e) => {
-                                                    if (hasSubItems && isSidebarExpanded) {
-                                                        setIsSettingsExpanded(!isSettingsExpanded);
-                                                    }
-                                                    setIsSidebarOpen(false);
-                                                }}
-                                                title={!isSidebarExpanded ? item.name : ""}
-                                            >
-                                                {/* Active Indicator Border */}
-                                                {isPathActive && (
-                                                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-blue-600 rounded-r-full" />
-                                                )}
-
-                                                <div className="min-w-[2.5rem] flex items-center justify-center">
-                                                    <item.icon className={clsx("w-5 h-5", isPathActive ? "text-blue-600" : "text-gray-500")} />
-                                                </div>
-                                                <span className={clsx(
-                                                    "font-semibold transition-all duration-300 whitespace-nowrap overflow-hidden flex-1",
-                                                    !isSidebarExpanded && "opacity-0 w-0 -translate-x-4",
-                                                    isSidebarExpanded && "opacity-100 w-auto translate-x-0"
-                                                )}>
-                                                    {item.name}
-                                                </span>
-                                                {hasSubItems && isSidebarExpanded && (
-                                                    <div className="ml-auto">
-                                                        {isSettingsExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                                                    </div>
-                                                )}
-                                            </Link>
-                                        ) : (
-                                            <button
-                                                className={clsx(
-                                                    "w-full flex items-center px-3 py-2 rounded-lg transition-all relative group",
-                                                    isWorkspaceOpen && item.name === 'Lead Workspace' ? "bg-blue-50 text-blue-600 shadow-sm" : "text-gray-700 hover:bg-gray-100"
-                                                )}
-                                                onClick={(e) => {
-                                                    if (item.onClick) item.onClick();
-                                                    setIsSidebarOpen(false);
-                                                }}
-                                                title={!isSidebarExpanded ? item.name : ""}
-                                            >
-                                                {/* Active Indicator Border for Workspace */}
-                                                {isWorkspaceOpen && item.name === 'Lead Workspace' && (
-                                                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-blue-600 rounded-r-full" />
-                                                )}
-
-                                                <div className="min-w-[2.5rem] flex items-center justify-center">
-                                                    <item.icon className={clsx("w-5 h-5", (isWorkspaceOpen && item.name === 'Lead Workspace') ? "text-blue-600" : "text-gray-500")} />
-                                                </div>
-                                                <span className={clsx(
-                                                    "font-semibold transition-all duration-300 whitespace-nowrap overflow-hidden flex-1 text-left",
-                                                    !isSidebarExpanded && "opacity-0 w-0 -translate-x-4",
-                                                    isSidebarExpanded && "opacity-100 w-auto translate-x-0"
-                                                )}>
-                                                    {item.name}
-                                                </span>
-                                            </button>
-                                        )}
-
-                                        {/* Sub Items */}
-                                        {hasSubItems && isSidebarExpanded && isSettingsExpanded && (
-                                            <div className="space-y-1 ml-4 animate-fade-in-down overflow-hidden">
-                                                {item.subItems.map((sub) => {
-                                                    const isSubActive = location.pathname === sub.path;
-                                                    return (
-                                                        <Link
-                                                            key={sub.name}
-                                                            to={sub.path}
-                                                            className={clsx(
-                                                                "flex items-center px-3 py-1.5 rounded-lg transition-all relative group",
-                                                                isSubActive ? "bg-blue-50 text-blue-600 font-bold" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-                                                            )}
-                                                            onClick={() => setIsSidebarOpen(false)}
-                                                        >
-                                                            {isSubActive && (
-                                                                <div className="absolute left-0 top-1 bottom-1 w-0.5 bg-blue-600 rounded-r-full" />
-                                                            )}
-                                                            <div className="min-w-[2rem] flex items-center justify-center">
-                                                                <sub.icon className={clsx(
-                                                                    "w-4 h-4",
-                                                                    isSubActive ? "text-blue-500" : "text-gray-400 group-hover:text-blue-400"
-                                                                )} />
-                                                            </div>
-                                                            <span className="text-sm truncate">{sub.name}</span>
-                                                        </Link>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <div className="border-t pt-4 shrink-0 overflow-hidden">
-                            <Link to="/profile" className="block px-3 py-2 hover:bg-gray-50 transition-colors rounded-lg mb-2" onClick={() => setIsSidebarOpen(false)}>
-                                <div className="flex items-center gap-3">
-                                    <div className="bg-blue-100 p-2 rounded-full text-blue-600 shrink-0">
-                                        <User size={20} />
-                                    </div>
-                                    <div className={clsx(
-                                        "overflow-hidden transition-all duration-300",
-                                        !isSidebarExpanded && "opacity-0 w-0 -translate-x-4",
-                                        isSidebarExpanded && "opacity-100 w-auto translate-x-0"
-                                    )}>
-                                        <p className="text-sm font-medium text-gray-900 truncate">{user?.fullName}</p>
-                                        <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-                                    </div>
-                                </div>
-                            </Link>
+                    {/* Right Side - Profile and Logout */}
+                    <div className="flex items-center gap-2">
+                        {/* Profile Button */}
+                        <div className="relative">
                             <button
-                                onClick={logout}
-                                className="w-full flex items-center px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors group"
-                                title={!isSidebarExpanded ? "Logout" : ""}
+                                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-full transition-colors"
+                                title="Profile"
                             >
-                                <div className="min-w-[2.5rem] flex items-center justify-center">
-                                    <LogOut className="w-5 h-5" />
+                                <div className="bg-blue-100 p-1.5 rounded-full text-blue-600">
+                                    <User size={20} />
                                 </div>
-                                <span className={clsx(
-                                    "font-medium transition-all duration-300 whitespace-nowrap overflow-hidden",
-                                    !isSidebarExpanded && "opacity-0 w-0 -translate-x-4",
-                                    isSidebarExpanded && "opacity-100 w-auto translate-x-0"
-                                )}>
-                                    Logout
+                                <span className="text-sm font-medium text-gray-700 hidden md:block max-w-[150px] truncate">
+                                    {user?.fullName}
                                 </span>
                             </button>
+
+                            {/* Profile Dropdown */}
+                            {isProfileMenuOpen && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setIsProfileMenuOpen(false)}
+                                    />
+                                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                                        <Link
+                                            to="/profile"
+                                            className="block px-4 py-3 hover:bg-gray-50 transition-colors"
+                                            onClick={() => setIsProfileMenuOpen(false)}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-blue-100 p-2 rounded-full text-blue-600">
+                                                    <User size={20} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900 truncate">{user?.fullName}</p>
+                                                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                        <div className="border-t border-gray-100 my-1" />
+                                        <Link
+                                            to="/profile"
+                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            onClick={() => setIsProfileMenuOpen(false)}
+                                        >
+                                            View Profile
+                                        </Link>
+                                    </div>
+                                </>
+                            )}
                         </div>
-                    </nav>
-                </aside>
 
-                {/* Main Content */}
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    {/* Header */}
-                    <header className="flex items-center justify-between h-16 px-6 bg-white shadow-sm lg:hidden">
-                        <button onClick={() => setIsSidebarOpen(true)}>
-                            <Menu size={24} className="text-gray-600" />
+                        {/* Logout Button */}
+                        <button
+                            onClick={logout}
+                            className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                            title="Logout"
+                        >
+                            <LogOut size={20} />
+                            <span className="text-sm font-medium hidden md:block">Logout</span>
                         </button>
-                        <span className="text-lg font-semibold text-gray-800">VANDI</span>
-                        {/* Mobile User Menu could go here, for now just spacer */}
-                        <div className="w-6"></div>
-                    </header>
+                    </div>
+                </header>
 
-                    <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
-                        <Outlet />
-                    </main>
+                <div className="flex flex-1 overflow-hidden">
+                    {/* Sidebar - Gmail Style */}
+                    <aside className={clsx(
+                        "fixed inset-y-0 left-0 top-16 z-30 bg-white shadow-md transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto overflow-hidden",
+                        isSidebarOpen ? "translate-x-0" : "-translate-x-full",
+                        isSidebarExpanded ? "w-64" : "lg:w-16"
+                    )}>
+                        {/* Mobile Close Button */}
+                        <div className="lg:hidden flex justify-end p-2 border-b">
+                            <button onClick={() => setIsSidebarOpen(false)} className="text-gray-500 hover:text-gray-700">
+                                <X size={24} />
+                            </button>
+                        </div>
 
-                    {isWorkspaceOpen && (
-                        <LeadWorkspace
-                            isMinimized={isWorkspaceMinimized}
-                            onMinimize={toggleMinimize}
-                            onClose={closeWorkspace}
+                        <nav className="p-3 space-y-1 flex flex-col h-full overflow-hidden">
+                            <div className="flex-1 space-y-1 overflow-y-auto no-scrollbar">
+                                {navItems.map((item) => {
+                                    const isSettings = item.name === 'Settings';
+                                    const hasSubItems = item.subItems && item.subItems.length > 0;
+                                    const isPathActive = location.pathname === item.path || (hasSubItems && item.subItems.some(sub => location.pathname === sub.path));
+
+                                    return (
+                                        <div key={item.name} className="space-y-1">
+                                            {item.path ? (
+                                                <Link
+                                                    to={item.path}
+                                                    className={clsx(
+                                                        "flex items-center px-3 py-2.5 rounded-lg transition-all relative group",
+                                                        isPathActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100"
+                                                    )}
+                                                    onClick={(e) => {
+                                                        if (hasSubItems && isSidebarExpanded) {
+                                                            setIsSettingsExpanded(!isSettingsExpanded);
+                                                        }
+                                                        setIsSidebarOpen(false);
+                                                    }}
+                                                    title={!isSidebarExpanded ? item.name : ""}
+                                                >
+                                                    <div className="min-w-[2rem] flex items-center justify-center">
+                                                        <item.icon className={clsx("w-5 h-5", isPathActive ? "text-blue-600" : "text-gray-500")} />
+                                                    </div>
+                                                    <span className={clsx(
+                                                        "ml-3 font-medium transition-all duration-300 whitespace-nowrap overflow-hidden flex-1",
+                                                        !isSidebarExpanded && "opacity-0 w-0 ml-0",
+                                                        isSidebarExpanded && "opacity-100 w-auto"
+                                                    )}>
+                                                        {item.name}
+                                                    </span>
+                                                    {hasSubItems && isSidebarExpanded && (
+                                                        <div className="ml-auto">
+                                                            {isSettingsExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                                        </div>
+                                                    )}
+                                                </Link>
+                                            ) : (
+                                                <button
+                                                    className={clsx(
+                                                        "w-full flex items-center px-3 py-2.5 rounded-lg transition-all relative group",
+                                                        isWorkspaceOpen && item.name === 'Lead Workspace' ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100"
+                                                    )}
+                                                    onClick={(e) => {
+                                                        if (item.onClick) item.onClick();
+                                                        setIsSidebarOpen(false);
+                                                    }}
+                                                    title={!isSidebarExpanded ? item.name : ""}
+                                                >
+                                                    <div className="min-w-[2rem] flex items-center justify-center">
+                                                        <item.icon className={clsx("w-5 h-5", (isWorkspaceOpen && item.name === 'Lead Workspace') ? "text-blue-600" : "text-gray-500")} />
+                                                    </div>
+                                                    <span className={clsx(
+                                                        "ml-3 font-medium transition-all duration-300 whitespace-nowrap overflow-hidden flex-1 text-left",
+                                                        !isSidebarExpanded && "opacity-0 w-0 ml-0",
+                                                        isSidebarExpanded && "opacity-100 w-auto"
+                                                    )}>
+                                                        {item.name}
+                                                    </span>
+                                                </button>
+                                            )}
+
+                                            {/* Sub Items */}
+                                            {hasSubItems && isSidebarExpanded && isSettingsExpanded && (
+                                                <div className="space-y-1 ml-4 animate-fade-in-down overflow-hidden">
+                                                    {item.subItems.map((sub) => {
+                                                        const isSubActive = location.pathname === sub.path;
+                                                        return (
+                                                            <Link
+                                                                key={sub.name}
+                                                                to={sub.path}
+                                                                className={clsx(
+                                                                    "flex items-center px-3 py-2 rounded-lg transition-all relative group",
+                                                                    isSubActive ? "bg-blue-50 text-blue-600 font-medium" : "text-gray-600 hover:bg-gray-50 hover:text-gray-700"
+                                                                )}
+                                                                onClick={() => setIsSidebarOpen(false)}
+                                                            >
+                                                                <div className="min-w-[1.75rem] flex items-center justify-center">
+                                                                    <sub.icon className={clsx(
+                                                                        "w-4 h-4",
+                                                                        isSubActive ? "text-blue-500" : "text-gray-400 group-hover:text-blue-400"
+                                                                    )} />
+                                                                </div>
+                                                                <span className="text-sm truncate ml-2">{sub.name}</span>
+                                                            </Link>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </nav>
+                    </aside>
+
+                    {/* Mobile Overlay */}
+                    {isSidebarOpen && (
+                        <div
+                            className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden top-16"
+                            onClick={() => setIsSidebarOpen(false)}
                         />
                     )}
 
-                    {isFinanceOpen && (
-                        <FinanceWorkspaceOverlay />
-                    )}
+                    {/* Main Content */}
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+                            <Outlet />
+                        </main>
+
+                        {isWorkspaceOpen && (
+                            <LeadWorkspace
+                                isMinimized={isWorkspaceMinimized}
+                                onMinimize={toggleMinimize}
+                                onClose={closeWorkspace}
+                            />
+                        )}
+
+                        {isFinanceOpen && (
+                            <FinanceWorkspaceOverlay />
+                        )}
+                    </div>
                 </div>
             </div>
         </IdleMonitor>

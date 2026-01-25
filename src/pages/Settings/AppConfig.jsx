@@ -63,7 +63,6 @@ const GeneralOptionsManager = ({ showToast }) => {
     const fetchCategories = async () => {
         try {
             const res = await api.get('/options/categories');
-            console.log(res.data);
             setCategories(res.data);
         } catch (error) { console.error("Failed to fetch categories", error); }
     };
