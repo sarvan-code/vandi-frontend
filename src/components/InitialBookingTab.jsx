@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { useToast } from '../context/ToastContext';
 import VehicleAutocomplete from './VehicleAutocomplete';
+import { X } from 'lucide-react';
 
 const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
     const { showToast } = useToast();
@@ -403,13 +404,23 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Target Delivery Date
                         </label>
-                        <input
-                            type="date"
-                            value={formData.deliveryDate}
-                            onChange={(e) => setFormData({ ...formData, deliveryDate: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-
-                        />
+                        <div className="relative group">
+                            <input
+                                type="date"
+                                value={formData.deliveryDate}
+                                onChange={(e) => setFormData({ ...formData, deliveryDate: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100 pr-10"
+                            />
+                            {formData.deliveryDate && (
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, deliveryDate: '' })}
+                                    className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 

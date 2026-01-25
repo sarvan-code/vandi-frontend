@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { DollarSign, Plus, FileText, Phone } from 'lucide-react';
+import { DollarSign, Plus, FileText, Phone, X } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../context/ToastContext';
 import { AuthContext } from '../context/AuthContext';
@@ -409,12 +409,23 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Next Action Date
                                 </label>
-                                <input
-                                    type="date"
-                                    value={followUpData.nextActionDate}
-                                    onChange={(e) => setFollowUpData({ ...followUpData, nextActionDate: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                />
+                                <div className="relative group">
+                                    <input
+                                        type="date"
+                                        value={followUpData.nextActionDate}
+                                        onChange={(e) => setFollowUpData({ ...followUpData, nextActionDate: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 pr-10"
+                                    />
+                                    {followUpData.nextActionDate && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setFollowUpData({ ...followUpData, nextActionDate: '' })}
+                                            className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         <div className="mt-4 flex justify-end">

@@ -403,13 +403,36 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                         />
                         <input className="border p-2 rounded" placeholder="Email" value={customer.email || ''} onChange={e => setCustomer({ ...customer, email: e.target.value })} />
                         <input className="border p-2 rounded" placeholder="Instagram ID" value={customer.instaid || ''} onChange={e => setCustomer({ ...customer, instaid: e.target.value })} />
-                        <div>
+                        <div className="flex flex-col">
                             <label className="text-xs text-gray-500">Date of Birth</label>
-                            <input type="date" className="w-full border p-2 rounded" max={new Date().toISOString().split("T")[0]} value={customer.dateOfBirth || ''} onChange={e => setCustomer({ ...customer, dateOfBirth: e.target.value })} />
+                            <div className="relative group">
+                                <input type="date" className="w-full border p-2 rounded pr-6" max={new Date().toISOString().split("T")[0]} value={customer.dateOfBirth || ''} onChange={e => setCustomer({ ...customer, dateOfBirth: e.target.value })} />
+                                {customer.dateOfBirth && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setCustomer({ ...customer, dateOfBirth: '' })}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                        <div>
+                        <div className="flex flex-col">
                             <label className="text-xs text-gray-500">Marriage Date</label>
-                            <input type="date" className="w-full border p-2 rounded" max={new Date().toISOString().split("T")[0]} value={customer.marriageDate || ''} onChange={e => setCustomer({ ...customer, marriageDate: e.target.value })} />
+                            <div className="relative group">
+
+                                <input type="date" className="w-full border p-2 rounded pr-6" max={new Date().toISOString().split("T")[0]} value={customer.marriageDate || ''} onChange={e => setCustomer({ ...customer, marriageDate: e.target.value })} />
+                                {customer.marriageDate && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setCustomer({ ...customer, marriageDate: '' })}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         <select className="w-full border p-2 rounded text-sm h-[42px]" value={customer.profession} onChange={e => setCustomer({ ...customer, profession: e.target.value })}>
                             <option value="">Select Profession</option>
@@ -549,7 +572,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                 const filteredVariants = vehicleVariants.filter(v => selectedModelObj && v.modelId === selectedModelObj.id);
 
                                 return (
-                                    <div key={idx} className="grid grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-3 p-3 bg-white rounded-lg border border-blue-100 shadow-sm relative group transition-all hover:border-blue-300">
+                                    <div key={idx} className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-3 p-3 bg-white rounded-lg border border-blue-100 shadow-sm relative group transition-all hover:border-blue-300">
                                         <div className="flex flex-col gap-1">
                                             <label className="text-[10px] uppercase font-bold text-gray-400">Brand</label>
                                             <select className="w-full border p-1.5 rounded text-sm bg-gray-50 focus:bg-white transition-colors" value={car.carBrand || ''} onChange={e => {
@@ -757,9 +780,20 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                 {getOpt('FOLLOWUP_RESULTS').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
                             </select>
                         </div>
-                        <div>
+                        <div className="flex flex-col">
                             <label className="block text-xs text-gray-500 font-medium">Next Visit / Contact <span className="text-red-500">*</span></label>
-                            <input type="datetime-local" className="w-full border p-2 rounded" value={followUp.nextVisitDate || ''} min={getMinDateTime()} onChange={e => setFollowUp({ ...followUp, nextVisitDate: e.target.value })} />
+                            <div className="relative group">
+                                <input type="datetime-local" className="w-full border p-2 rounded pr-6" value={followUp.nextVisitDate || ''} min={getMinDateTime()} onChange={e => setFollowUp({ ...followUp, nextVisitDate: e.target.value })} />
+                                {followUp.nextVisitDate && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setFollowUp({ ...followUp, nextVisitDate: '' })}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div className="mt-4">
