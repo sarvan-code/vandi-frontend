@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Edit, Trash, MessageSquare, X } from 'lucide-react';
+import { Eye, Edit, Trash, MessageSquare, X, Phone } from 'lucide-react';
 import api from '../api';
 import Table from '../components/Table';
 import { useToast } from '../context/ToastContext';
@@ -369,6 +369,19 @@ const Customers = () => {
                     selectedItem={selectedCustomer}
                     onClose={() => setSelectedCustomer(null)}
                     actions={[
+                        {
+                            icon: Phone,
+                            label: 'Call Customer',
+                            onClick: (customer) => {
+                                if (customer.phone) {
+                                    window.open(`tel:${customer.phone}`, '_self');
+                                } else {
+                                    showToast("No phone number available.", "warning");
+                                }
+                            },
+                            color: 'green',
+                            title: 'Call Customer'
+                        },
                         {
                             icon: Eye,
                             label: 'View Details',

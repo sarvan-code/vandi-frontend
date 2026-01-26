@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Eye, Edit, Trash, X, Plus, Calendar, Building, Briefcase, ClipboardList } from 'lucide-react';
+import { Eye, Edit, Trash, X, Plus, Calendar, Building, Briefcase, ClipboardList, Phone } from 'lucide-react';
 import api from '../api';
 import Table from '../components/Table';
 import CustomerSearch from '../components/CustomerSearch';
@@ -735,6 +735,19 @@ const Enquiries = () => {
                     title={selectedEnquiry?.customer?.fullName}
                     subtitle={selectedEnquiry?.customer?.phone}
                     actions={[
+                        {
+                            icon: Phone,
+                            label: 'Call Customer',
+                            onClick: (enq) => {
+                                if (enq.customer?.phone) {
+                                    window.open(`tel:${enq.customer.phone}`, '_self');
+                                } else {
+                                    showToast("No phone number available for this customer.", "warning");
+                                }
+                            },
+                            color: 'green',
+                            title: 'Call Customer'
+                        },
                         {
                             icon: Eye,
                             label: 'View Details',

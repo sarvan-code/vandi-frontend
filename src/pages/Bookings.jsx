@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, Eye, Clock, CheckCircle, Building } from 'lucide-react';
+import { DollarSign, Eye, Clock, CheckCircle, Building, Phone } from 'lucide-react';
 import api from '../api';
 import Table from '../components/Table';
 import { AuthContext } from '../context/AuthContext';
@@ -188,6 +188,17 @@ const Bookings = () => {
                             subtitle={view === 'pending' ? selectedItem?.customer?.phone : selectedItem?.enquiry?.customer?.phone}
                             actions={view === 'pending' ? [
                                 {
+                                    icon: Phone,
+                                    label: 'Call Customer',
+                                    onClick: (row) => {
+                                        const phone = row.customer?.phone;
+                                        if (phone) window.open(`tel:${phone}`, '_self');
+                                        else showToast("No phone number available.", "warning");
+                                    },
+                                    color: 'green',
+                                    title: 'Call Customer'
+                                },
+                                {
                                     icon: DollarSign,
                                     label: 'Start Booking',
                                     onClick: (row) => openFinanceTab(row.enquiryId, row.customer?.fullName || 'New Lead'),
@@ -195,6 +206,17 @@ const Bookings = () => {
                                     title: 'Start Booking'
                                 }
                             ] : [
+                                {
+                                    icon: Phone,
+                                    label: 'Call Customer',
+                                    onClick: (row) => {
+                                        const phone = row.enquiry?.customer?.phone;
+                                        if (phone) window.open(`tel:${phone}`, '_self');
+                                        else showToast("No phone number available.", "warning");
+                                    },
+                                    color: 'green',
+                                    title: 'Call Customer'
+                                },
                                 {
                                     icon: Eye,
                                     label: 'Open Workspace',

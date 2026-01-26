@@ -671,6 +671,20 @@ const FollowUps = () => {
                     subtitle={selectedFollowUp?.enquiry?.customer?.phone}
                     actions={[
                         {
+                            icon: Phone,
+                            label: 'Call Customer',
+                            onClick: (row) => {
+                                const phone = row.enquiry?.customer?.phone;
+                                if (phone) {
+                                    window.open(`tel:${phone}`, '_self');
+                                } else {
+                                    showToast("No phone number available.", "warning");
+                                }
+                            },
+                            color: 'green',
+                            title: 'Call Customer'
+                        },
+                        {
                             icon: Eye,
                             label: 'View Details',
                             onClick: handleView,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown, X, Phone } from 'lucide-react';
 
 /**
  * Reusable Floating Action Panel Component
@@ -41,6 +41,12 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
             hover: 'hover:bg-red-50',
             hoverExpanded: 'hover:bg-red-50',
             text: 'text-red-700'
+        },
+        green: {
+            icon: 'text-green-600',
+            hover: 'hover:bg-green-50',
+            hoverExpanded: 'hover:bg-green-50',
+            text: 'text-green-700'
         }
     };
 
@@ -83,7 +89,7 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
                                     className={`w-full flex items-center justify-center p-2.5 ${colors.icon} ${colors.hover} rounded-lg transition-colors`}
                                     title={action.title || action.label}
                                 >
-                                    <Icon size={20} />
+                                    <Icon size={20} className={colors.icon} />
                                 </button>
                             );
                         })}
