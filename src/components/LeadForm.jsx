@@ -241,6 +241,8 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
         }
     };
 
+    const VEHICLE_ACTIONS = ["general-query", "inform-on-available"];
+    const NEXT_VISIT_ACTIONS = ["will-come-on-available"];
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -269,14 +271,15 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
             return;
         }
 
-        const isGeneralQuery = (followUp.followupActionDone || "").toLowerCase() === "general-query";
-        if (!isGeneralQuery && !followUp.car) {
+        const isVehicleRelated = VEHICLE_ACTIONS.includes(followUp.followupActionDone?.toLowerCase());
+        if (!isVehicleRelated && !followUp.car) {
             showToast("Vehicle Number is mandatory for the selected Follow-up Action.", "warning");
             return;
         }
 
-        if (!followUp.nextVisitDate) {
-            showToast("Next Visit / Contact Date is mandatory.", "warning");
+        const isNextVisitRelated = NEXT_VISIT_ACTIONS.includes(followUp.followupResults?.toLowerCase());
+        if (!isNextVisitRelated && !followUp.nextVisitDate) {
+            showToast("Next Visit Date is mandatory.", "warning");
             return;
         }
 
@@ -763,7 +766,11 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                         </div>
                         <div className="flex flex-col gap-1">
                             <label className="text-xs text-gray-500 font-medium">
-                                Vehicle Number {(followUp.followupActionDone || "").toLowerCase() === "general-query" ? "(Optional)" : "*"}
+                                Vehicle Number {
+                                    VEHICLE_ACTIONS.includes(followUp.followupActionDone?.toLowerCase())
+                                        ? "(Optional)"
+                                        : "*"
+                                }
                             </label>
                             <VehicleAutocomplete
                                 placeholder="Enter Vehicle Number"
@@ -781,7 +788,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                             </select>
                         </div>
                         <div className="flex flex-col">
-                            <label className="block text-xs text-gray-500 font-medium">Next Visit / Contact <span className="text-red-500">*</span></label>
+                            <label className="block text-xs text-gray-500 font-medium">Next Visit / Contact {NEXT_VISIT_ACTIONS.includes(followUp.followupResults?.toLowerCase()) ? <span className="text-gray-400 font-normal">(Optional)</span> : <span className="text-red-500">*</span>}</label>
                             <div className="relative group">
                                 <input type="datetime-local" className="w-full border p-2 rounded pr-6" value={followUp.nextVisitDate || ''} min={getMinDateTime()} onChange={e => setFollowUp({ ...followUp, nextVisitDate: e.target.value })} />
                                 {followUp.nextVisitDate && (

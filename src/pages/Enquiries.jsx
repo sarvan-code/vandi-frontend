@@ -298,7 +298,7 @@ const Enquiries = () => {
                 if (!row.carDetails || row.carDetails.length === 0) return 'Any';
                 const first = row.carDetails[0];
                 const more = row.carDetails.length > 1 ? ` + ${row.carDetails.length - 1} ` : '';
-                return `${first.carBrand || ''} ${first.carType || ''} ${first.carVariant ? `(${first.carVariant})` : ''}${more} `;
+                return `${first.carBrand || ''} ${first.carModel || ''} ${first.carVariant ? `(${first.carVariant})` : ''}${more} `;
             }
         },
         { key: 'budgetRange', label: 'Budget' },

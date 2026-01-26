@@ -220,6 +220,9 @@ const FollowUps = () => {
         }
     }, [currentFollowUp?.followupMode, getDependentOptions]);
 
+
+    const VEHICLE_ACTIONS = ["general-query", "inform-on-available"];
+    const NEXT_VISIT_ACTIONS = ["will-come-on-available"];
     const handleSave = async (e) => {
         e.preventDefault();
 
@@ -234,13 +237,14 @@ const FollowUps = () => {
             return;
         }
 
-        const isGeneralQuery = (currentFollowUp.followupActionDone || "").toLowerCase() === "general-query";
-        if (!isGeneralQuery && !currentFollowUp.car) {
+        const isVehicleRelated = VEHICLE_ACTIONS.includes(currentFollowUp.followupActionDone?.toLowerCase());
+        if (!isVehicleRelated && !currentFollowUp.car) {
             showToast("Vehicle Number is mandatory for the selected Action.", "warning");
             return;
         }
 
-        if (!currentFollowUp.nextVisitDate) {
+        const isNextVisitRelated = NEXT_VISIT_ACTIONS.includes(currentFollowUp.followupResults?.toLowerCase());
+        if (!isNextVisitRelated && !currentFollowUp.nextVisitDate) {
             showToast("Next Visit Date is mandatory.", "warning");
             return;
         }
@@ -583,7 +587,7 @@ const FollowUps = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">
-                                        Vehicle (Used for Visit) {(currentFollowUp?.followupActionDone || "").toLowerCase() === "general-query" ? <span className="text-gray-400 font-normal">(Optional)</span> : <span className="text-red-500">*</span>}
+                                        Vehicle (Used for Visit) {VEHICLE_ACTIONS.includes(currentFollowUp?.followupActionDone?.toLowerCase()) ? <span className="text-gray-400 font-normal">(Optional)</span> : <span className="text-red-500">*</span>}
                                     </label>
                                     <VehicleAutocomplete
                                         className="mt-1"
@@ -607,7 +611,9 @@ const FollowUps = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Next Visit Date <span className="text-red-500">*</span></label>
+                                    <label className="block text-sm font-medium text-gray-700">Next Visit Date
+                                        {NEXT_VISIT_ACTIONS.includes(currentFollowUp?.followupResults?.toLowerCase()) ? <span className="text-gray-400 font-normal">(Optional)</span> : <span className="text-red-500">*</span>}
+                                    </label>
                                     <input
                                         type="datetime-local"
                                         className="mt-1 block w-full border p-2 rounded-md" min={getMinDateTime()}
