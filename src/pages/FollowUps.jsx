@@ -528,7 +528,7 @@ const FollowUps = () => {
                                         <p>
                                             <span className="font-semibold">Enquiry:</span> {(() => {
                                                 const firstCar = currentFollowUp.enquiry?.carDetails?.[0];
-                                                if (firstCar) return `${firstCar.carBrand} - ${firstCar.carType} - ${firstCar.carModel} ${firstCar.carVariant}`;
+                                                if (firstCar) return `${firstCar.carBrand} - ${firstCar.carModel} ${firstCar.carVariant}`;
                                                 return currentFollowUp.enquiry?.carInterest || 'N/A';
                                             })()}
                                             <span className="mx-2 text-gray-300">|</span>
