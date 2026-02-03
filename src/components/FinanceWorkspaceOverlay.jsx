@@ -21,10 +21,13 @@ const FinanceWorkspaceOverlay = () => {
     const activeTab = financeTabs.find(tab => tab.id === activeTabId) || financeTabs[0];
 
     return (
-        <div className={clsx(
-            "fixed bottom-0 right-4 z-[9997] bg-white shadow-2xl rounded-t-xl border border-gray-300 transition-all duration-300 flex flex-col overflow-hidden",
-            isFinanceMinimized ? "h-12 w-80" : "h-[85vh] w-[95vw] lg:w-[80vw] xl:w-[70vw]"
-        )}>
+        <div
+            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            className={clsx(
+                "fixed bottom-0 right-4 z-[9997] bg-white shadow-2xl rounded-t-xl border border-gray-300 transition-all duration-300 flex flex-col overflow-hidden",
+                isFinanceMinimized ? "h-12 w-80" : "h-[85vh] w-[95vw] lg:w-[80vw] xl:w-[70vw]"
+            )}
+        >
             {/* Header / Tab Bar */}
             <div
                 className="bg-indigo-700 text-white flex items-center px-2 pt-1 gap-1 overflow-x-auto shrink-0 cursor-default"

@@ -97,8 +97,13 @@ const Layout = () => {
     return (
         <IdleMonitor>
             <div className="flex flex-col h-screen bg-gray-100">
-                {/* Top Header - Gmail Style */}
-                <header className="flex items-center justify-between h-16 px-4 bg-white shadow-sm z-40 shrink-0">
+                <header
+                    style={{
+                        paddingTop: 'env(safe-area-inset-top, 0px)',
+                        height: 'calc(4rem + env(safe-area-inset-top, 0px))'
+                    }}
+                    className="flex items-center justify-between px-4 bg-white shadow-sm z-40 shrink-0 border-b border-gray-100"
+                >
                     <div className="flex items-center gap-4">
                         {/* Hamburger Menu */}
                         <button
@@ -200,11 +205,14 @@ const Layout = () => {
 
                 <div className="flex flex-1 overflow-hidden">
                     {/* Sidebar - Gmail Style */}
-                    <aside className={clsx(
-                        "fixed inset-y-0 left-0 top-16 z-30 bg-white shadow-md transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto overflow-hidden",
-                        isSidebarOpen ? "translate-x-0" : "-translate-x-full",
-                        isSidebarExpanded ? "w-64" : "lg:w-16"
-                    )}>
+                    <aside
+                        style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}
+                        className={clsx(
+                            "fixed inset-y-0 left-0 z-30 bg-white shadow-md transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto overflow-hidden",
+                            isSidebarOpen ? "translate-x-0" : "-translate-x-full",
+                            isSidebarExpanded ? "w-64" : "lg:w-16"
+                        )}
+                    >
                         {/* Mobile Close Button */}
                         <div className="lg:hidden flex justify-end p-2 border-b">
                             <button onClick={() => setIsSidebarOpen(false)} className="text-gray-500 hover:text-gray-700">
@@ -314,7 +322,8 @@ const Layout = () => {
                     {/* Mobile Overlay */}
                     {isSidebarOpen && (
                         <div
-                            className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden top-16"
+                            style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}
+                            className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
                             onClick={() => setIsSidebarOpen(false)}
                         />
                     )}

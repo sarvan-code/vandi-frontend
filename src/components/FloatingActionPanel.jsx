@@ -37,7 +37,20 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
 
     // Important actions to show on the mobile bar
     const callAction = actions.find(a => a.label.toLowerCase().includes('call'));
-    const primaryAction = actions.find(a => !a.label.toLowerCase().includes('call') && a.color !== 'red');
+    const workspaceAction = actions.find(a => a.label.toLowerCase().includes('workspace'));
+
+    // Primary action if no workspace action found, or as third priority
+    const primaryAction = actions.find(a =>
+        !a.label.toLowerCase().includes('call') &&
+        !a.label.toLowerCase().includes('workspace') &&
+        a.color !== 'red'
+    );
+
+    // Final icons to display in the collapsed bottom bar
+    const barIcons = [];
+    if (callAction) barIcons.push(callAction);
+    if (workspaceAction) barIcons.push(workspaceAction);
+    if (barIcons.length < 2 && primaryAction) barIcons.push(primaryAction);
 
     return (
         <>
@@ -49,17 +62,20 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
                 />
             )}
 
-            <div className={`
-                fixed transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] bg-white shadow-[0_-12px_40px_rgba(0,0,0,0.25)] z-[70]
-                /* Mobile: Bottom position with safe area padding */
-                bottom-0 left-0 right-0 border-t border-gray-200 rounded-t-[2.5rem] pb-[safe-area-inset-bottom]
-                /* Desktop: Right side position */
-                md:bottom-auto md:top-1/2 md:right-8 md:left-auto md:transform md:-translate-y-1/2 md:rounded-[2rem] md:border md:w-auto
-                ${isExpanded
-                    ? 'h-auto max-h-[85vh] w-full md:w-80'
-                    : 'h-[96px] md:h-auto md:w-[84px]'
-                }
-            `}>
+            <div
+                style={{
+                    paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+                    height: isExpanded ? 'auto' : 'calc(96px + env(safe-area-inset-bottom, 0px))'
+                }}
+                className={`
+                    fixed transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] bg-white shadow-[0_-12px_40px_rgba(0,0,0,0.25)] z-[70]
+                    /* Mobile: Bottom position */
+                    bottom-0 left-0 right-0 border-t border-gray-200 rounded-t-[2.5rem]
+                    /* Desktop: Right side position */
+                    md:bottom-auto md:top-1/2 md:right-8 md:left-auto md:transform md:-translate-y-1/2 md:rounded-[2rem] md:border md:w-auto
+                    ${isExpanded ? 'max-h-[85vh] w-full md:w-80' : 'md:h-auto md:w-[84px]'}
+                `}
+            >
 
                 <div className="flex flex-col h-full w-full overflow-hidden">
                     {/* Header Bar / Mobile Bottom Bar */}
@@ -79,22 +95,19 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
                         {/* Mobile Quick Actions (Visualized when collapsed) */}
                         {!isExpanded && (
                             <div className="flex items-center gap-3 md:hidden">
-                                {callAction && (
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleActionClick(callAction); }}
-                                        className="w-11 h-11 flex items-center justify-center rounded-2xl bg-green-50 text-green-600 shadow-sm active:scale-90 transition-transform"
-                                    >
-                                        <callAction.icon size={22} />
-                                    </button>
-                                )}
-                                {primaryAction && (
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleActionClick(primaryAction); }}
-                                        className="w-11 h-11 flex items-center justify-center rounded-2xl bg-blue-50 text-blue-600 shadow-sm active:scale-90 transition-transform"
-                                    >
-                                        <primaryAction.icon size={22} />
-                                    </button>
-                                )}
+                                {barIcons.map((action, i) => {
+                                    const Icon = action.icon;
+                                    const colors = colorClasses[action.color] || colorClasses.gray;
+                                    return (
+                                        <button
+                                            key={i}
+                                            onClick={(e) => { e.stopPropagation(); handleActionClick(action); }}
+                                            className={`w-11 h-11 flex items-center justify-center rounded-2xl ${colors.bg} ${colors.icon} shadow-sm active:scale-90 transition-transform`}
+                                        >
+                                            <Icon size={22} />
+                                        </button>
+                                    );
+                                })}
                                 <div className="w-px h-8 bg-gray-100 mx-1" />
                             </div>
                         )}
