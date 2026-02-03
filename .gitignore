@@ -1,6 +1,7 @@
 node_modules/
 dist/
 build/
+android/
 .env*
 npm-debug.log*
 .DS_Store
