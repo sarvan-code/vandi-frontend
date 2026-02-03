@@ -7,6 +7,7 @@ import { useWorkspace } from '../context/WorkspaceContext';
 import { useFinanceWorkspace } from '../context/FinanceWorkspaceContext';
 import LeadWorkspace from '../pages/LeadWorkspace';
 import FinanceWorkspaceOverlay from '../components/FinanceWorkspaceOverlay';
+import Logo from '../components/Logo';
 
 import IdleMonitor from '../components/IdleMonitor';
 import '../components/Loading.css';
@@ -122,17 +123,8 @@ const Layout = () => {
 
                         {/* Logo and Name */}
                         <Link to="/" className="flex items-center gap-3 group">
-                            <div className="w-12 h-10 shrink-0 -ml-1 overflow-hidden">
-                                <div className="car-loader mini">
-                                    <div className="car-body">
-                                        <div className="car-top">
-                                            <div className="car-window"></div>
-                                            <div className="car-window rear"></div>
-                                        </div>
-                                    </div>
-                                    <div className="car-wheel rear"></div>
-                                    <div className="car-wheel front"></div>
-                                </div>
+                            <div className="w-12 h-10 shrink-0 -ml-1 flex items-center">
+                                <Logo size={42} animateOnHover={true} />
                             </div>
                             <span className="text-2xl font-bold text-blue-600 hidden sm:block tracking-tighter group-hover:text-blue-700 transition-colors">VANDI</span>
                         </Link>
