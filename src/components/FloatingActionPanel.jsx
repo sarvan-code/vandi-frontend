@@ -38,19 +38,15 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
     // Important actions to show on the mobile bar
     const callAction = actions.find(a => a.label.toLowerCase().includes('call'));
     const workspaceAction = actions.find(a => a.label.toLowerCase().includes('workspace'));
-
-    // Primary action if no workspace action found, or as third priority
-    const primaryAction = actions.find(a =>
-        !a.label.toLowerCase().includes('call') &&
-        !a.label.toLowerCase().includes('workspace') &&
-        a.color !== 'red'
-    );
+    const editAction = actions.find(a => a.label.toLowerCase().includes('edit'));
+    const primaryAction = actions.find(a => !a.label.toLowerCase().includes('call') && !a.label.toLowerCase().includes('workspace') && a.color !== 'red');
 
     // Final icons to display in the collapsed bottom bar
     const barIcons = [];
     if (callAction) barIcons.push(callAction);
     if (workspaceAction) barIcons.push(workspaceAction);
-    if (barIcons.length < 2 && primaryAction) barIcons.push(primaryAction);
+    if (editAction) barIcons.push(editAction);
+    if (barIcons.length < 3 && primaryAction) barIcons.push(primaryAction);
 
     return (
         <>
@@ -65,15 +61,15 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
             <div
                 style={{
                     paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-                    height: isExpanded ? 'auto' : 'calc(96px + env(safe-area-inset-bottom, 0px))'
+                    height: isExpanded ? 'auto' : (window.innerWidth < 768 ? 'calc(72px + env(safe-area-inset-bottom, 0px))' : 'auto')
                 }}
                 className={`
                     fixed transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] bg-white shadow-[0_-12px_40px_rgba(0,0,0,0.25)] z-[70]
                     /* Mobile: Bottom position */
                     bottom-0 left-0 right-0 border-t border-gray-200 rounded-t-[2.5rem]
                     /* Desktop: Right side position */
-                    md:bottom-auto md:top-1/2 md:right-8 md:left-auto md:transform md:-translate-y-1/2 md:rounded-[2rem] md:border md:w-auto
-                    ${isExpanded ? 'max-h-[85vh] w-full md:w-80' : 'md:h-auto md:w-[84px]'}
+                    md:bottom-auto md:top-1/2 md:right-6 md:left-auto md:transform md:-translate-y-1/2 md:rounded-[2rem] md:border md:w-auto
+                    ${isExpanded ? 'max-h-[80vh] w-full md:w-80' : 'md:w-[64px] md:h-auto'}
                 `}
             >
 
@@ -81,20 +77,20 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
                     {/* Header Bar / Mobile Bottom Bar */}
                     <div
                         className={`
-                            flex items-center justify-between px-6 py-5 cursor-pointer md:cursor-default
-                            ${isExpanded ? 'border-b border-gray-100' : ''}
+                            flex items-center justify-between px-5 py-3 cursor-pointer md:cursor-default
+                            ${isExpanded ? 'border-b border-gray-100' : 'md:border-none'}
                         `}
                         onClick={() => !isExpanded && window.innerWidth < 768 && setIsExpanded(true)}
                     >
-                        {/* Title Section */}
-                        <div className="flex-1 min-w-0 pr-4">
-                            <h3 className="text-[15px] font-black text-gray-900 truncate uppercase tracking-tighter leading-none">{title}</h3>
-                            {subtitle && <p className="text-[10px] text-gray-400 truncate font-bold uppercase tracking-widest mt-1.5">{subtitle}</p>}
+                        {/* Title Section - Only visible when expanded */}
+                        <div className={`flex-1 min-w-0 pr-4 transition-all duration-300 ${!isExpanded ? 'hidden' : 'opacity-100'}`}>
+                            <h3 className="text-[14px] font-black text-gray-900 truncate uppercase tracking-tighter leading-none">{title}</h3>
+                            {subtitle && <p className="text-[10px] text-gray-400 truncate font-bold uppercase tracking-widest mt-1">{subtitle}</p>}
                         </div>
 
                         {/* Mobile Quick Actions (Visualized when collapsed) */}
                         {!isExpanded && (
-                            <div className="flex items-center gap-3 md:hidden">
+                            <div className="flex items-center gap-2 md:hidden">
                                 {barIcons.map((action, i) => {
                                     const Icon = action.icon;
                                     const colors = colorClasses[action.color] || colorClasses.gray;
@@ -102,49 +98,49 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
                                         <button
                                             key={i}
                                             onClick={(e) => { e.stopPropagation(); handleActionClick(action); }}
-                                            className={`w-11 h-11 flex items-center justify-center rounded-2xl ${colors.bg} ${colors.icon} shadow-sm active:scale-90 transition-transform`}
+                                            className={`w-10 h-10 flex items-center justify-center rounded-xl ${colors.bg} ${colors.icon} shadow-sm active:scale-90 transition-transform`}
                                         >
-                                            <Icon size={22} />
+                                            <Icon size={20} />
                                         </button>
                                     );
                                 })}
-                                <div className="w-px h-8 bg-gray-100 mx-1" />
                             </div>
                         )}
 
                         {/* Controls */}
-                        <div className="flex items-center gap-2">
+                        <div className={`flex items-center gap-2 ${!isExpanded && 'md:flex-col md:w-full md:py-1'}`}>
                             <button
                                 onClick={toggleExpand}
-                                className="p-2.5 text-gray-400 hover:text-gray-900 bg-gray-50 rounded-2xl transition-all"
+                                className="p-2 text-gray-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-all"
                             >
-                                {isExpanded ? <ChevronDown size={24} /> : <MoreVertical size={24} />}
+                                {isExpanded ? <ChevronDown size={22} className="md:rotate-90" /> : <MoreVertical size={22} />}
                             </button>
 
                             <button
                                 onClick={handleClose}
-                                className="p-2.5 text-gray-400 hover:text-red-600 bg-red-50/0 hover:bg-red-50 rounded-2xl transition-all"
+                                className="p-2 text-gray-400 hover:text-red-600 bg-red-50/0 hover:bg-red-50 rounded-xl transition-all"
                             >
-                                <X size={24} />
+                                <X size={22} />
                             </button>
                         </div>
                     </div>
 
-                    {/* Full Actions List (Visible when expanded or on desktop) */}
+                    {/* Full Actions List / Desktop Vertical Icons */}
                     <div className={`
                         overflow-y-auto custom-scrollbar transition-all duration-300
                         ${isExpanded
-                            ? 'opacity-100 p-6 space-y-3 pb-10 animate-slide-up'
-                            : 'h-0 opacity-0 md:h-auto md:opacity-100 md:p-5 md:flex md:flex-col md:items-center md:space-y-6'
+                            ? 'opacity-100 p-5 space-y-2 pb-12 animate-slide-up h-auto max-h-[70vh]'
+                            : 'h-0 opacity-0 md:h-auto md:opacity-100 md:p-2 md:flex md:flex-col md:items-center md:space-y-2'
                         }
                     `}>
+
                         {/* Desktop Collapsed Toggle */}
                         {!isExpanded && (
                             <button
                                 onClick={() => setIsExpanded(true)}
-                                className="hidden md:flex items-center justify-center w-14 h-14 text-indigo-500 bg-indigo-50 hover:bg-indigo-100 rounded-2xl transition-all hover:scale-110"
+                                className="hidden md:flex items-center justify-center w-11 h-11 text-indigo-500 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all hover:scale-110"
                             >
-                                <ChevronRight size={32} />
+                                <ChevronRight size={24} />
                             </button>
                         )}
 
@@ -157,24 +153,24 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
                                     key={index}
                                     onClick={() => handleActionClick(action)}
                                     className={`
-                                        flex items-center transition-all duration-300 rounded-2xl group
+                                        flex items-center transition-all duration-300 rounded-xl group
                                         ${isExpanded
-                                            ? `w-full p-4 gap-5 ${colors.text} hover:bg-gray-50 bg-white border border-gray-100 shadow-sm hover:shadow-md active:scale-[0.97]`
-                                            : `justify-center ${colors.icon} md:w-14 md:h-14 hover:bg-gray-100 rounded-2xl hover:scale-110`
+                                            ? `w-full p-3 gap-4 ${colors.text} hover:bg-gray-50 bg-white border border-gray-100 shadow-sm hover:shadow-md active:scale-[0.97]`
+                                            : `justify-center ${colors.icon} md:w-11 md:h-11 hover:bg-gray-100 rounded-xl hover:scale-110`
                                         }
                                         /* Hide on mobile if collapsed */
                                         ${!isExpanded && 'hidden md:flex'}
                                     `}
                                 >
                                     <div className={`
-                                        flex items-center justify-center rounded-2xl transition-all
-                                        ${isExpanded ? 'w-12 h-12 ' + colors.bg + ' group-hover:rotate-6' : ''}
+                                        flex items-center justify-center rounded-xl transition-all
+                                        ${isExpanded ? 'w-10 h-10 ' + colors.bg + ' group-hover:rotate-6' : ''}
                                     `}>
-                                        <Icon size={isExpanded ? 20 : 28} className={colors.icon} />
+                                        <Icon size={isExpanded ? 18 : 24} className={colors.icon} />
                                     </div>
                                     {isExpanded && (
                                         <div className="flex flex-col text-left">
-                                            <span className="font-extrabold text-[15px] tracking-tight">{action.label}</span>
+                                            <span className="font-extrabold text-[14px] tracking-tight leading-tight">{action.label}</span>
                                             {action.title && action.title !== action.label && (
                                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{action.title}</span>
                                             )}
@@ -184,20 +180,23 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
                             );
                         })}
 
-                        {/* Desktop Collapsed Close */}
+                        {/* Desktop Collapsed Close (Thinner) */}
+                        {!isExpanded && (
+                            <div className="w-8 h-px bg-gray-100 my-1 hidden md:block" />
+                        )}
                         {!isExpanded && (
                             <button
                                 onClick={handleClose}
-                                className="hidden md:flex w-14 h-14 items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all active:scale-90"
+                                className="hidden md:flex w-11 h-11 items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all active:scale-90"
                             >
-                                <X size={28} />
+                                <X size={22} />
                             </button>
                         )}
                     </div>
 
                     {/* Mobile Drag Indicator */}
-                    <div className="md:hidden flex flex-col items-center py-3 shrink-0">
-                        <div className="w-14 h-1.5 bg-gray-200 rounded-full" />
+                    <div className="md:hidden flex flex-col items-center py-2 shrink-0">
+                        <div className="w-12 h-1 bg-gray-200 rounded-full" />
                     </div>
                 </div>
             </div>
