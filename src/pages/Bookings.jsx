@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DollarSign, Eye, Clock, CheckCircle, Building, Phone } from 'lucide-react';
+import clsx from 'clsx';
 import api from '../api';
 import Table from '../components/Table';
 import { AuthContext } from '../context/AuthContext';
@@ -72,7 +73,7 @@ const Bookings = () => {
         { label: 'Customer', key: 'customer', render: (row) => row.customer?.fullName || 'N/A' },
         { label: 'Phone', key: 'phone', render: (row) => row.customer?.phone || 'N/A' },
         {
-            label: 'Selected Car',
+            label: 'Car',
             key: 'selectedCar',
             render: (row) => {
                 const handoverFollowUp = row.followUps?.find(f => f.followupResults === 'booking-handedover');
@@ -82,46 +83,68 @@ const Bookings = () => {
                 return 'N/A';
             }
         },
-        { label: 'Handover Date', key: 'updatedAt', render: (row) => new Date(row.updatedAt).toLocaleDateString('en-IN') }
+        { label: 'Date', key: 'updatedAt', render: (row) => new Date(row.updatedAt).toLocaleDateString('en-IN') }
     ];
 
     const activeColumns = [
-        { label: 'Booking ID', key: 'id', render: (row) => row.id.substring(0, 8).toUpperCase() },
-        { label: 'Customer', key: 'customer', render: (row) => row.enquiry?.customer?.fullName || 'N/A' },
-        { label: 'Vehicle', key: 'vehicle', render: (row) => `${row.car?.make} ${row.car?.model}` },
         {
-            label: 'Status', key: 'status', render: (row) => (
-                <span className={`px-2 py-1 rounded-full text-xs font-bold ${row.status === 'completed' ? 'bg-green-100 text-green-700' :
-                    row.status === 'ready_for_delivery' ? 'bg-blue-100 text-blue-700' :
-                        'bg-yellow-100 text-yellow-700'
-                    }`}>
+            label: 'Booking ID',
+            key: 'id',
+            render: (row) => <span className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider">{row.id.substring(0, 8)}</span>
+        },
+        {
+            label: 'Customer Name',
+            key: 'customer',
+            render: (row) => <span className="font-semibold text-[var(--text-primary)]">{row.enquiry?.customer?.fullName || 'N/A'}</span>
+        },
+        {
+            label: 'Vehicle',
+            key: 'vehicle',
+            render: (row) => <span className="text-sm font-medium text-[var(--text-secondary)]">{`${row.car?.make} ${row.car?.model}`}</span>
+        },
+        {
+            label: 'Status',
+            key: 'status',
+            render: (row) => (
+                <span className={clsx(
+                    "rounded-full px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest border shadow-sm",
+                    row.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                        row.status === 'ready_for_delivery' ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' :
+                            'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                )}>
                     {row.status.replace(/_/g, ' ')}
                 </span>
             )
         },
         {
-            label: 'Balance', key: 'balance', render: (row) => (
-                <span className={row.balanceAmount > 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>
-                    {formatCurrency(row.balanceAmount)}
-                </span>
+            label: 'Balance Amount',
+            key: 'balance',
+            render: (row) => (
+                <div className="flex flex-col items-end">
+                    <span className={clsx("font-bold text-base", row.balanceAmount > 0 ? 'text-rose-600' : 'text-emerald-600')}>
+                        {formatCurrency(row.balanceAmount)}
+                    </span>
+                    <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-tight">Remaining Balance</span>
+                </div>
             )
         }
     ];
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <DollarSign size={24} className="text-blue-600" />
-                    Finance & Bookings
-                </h2>
+        <div className="animate-fade-in">
+            {/* Header Section */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 mb-10">
+                <div>
+                    <h1 className="text-4xl font-semibold mb-2 text-[var(--text-primary)]">Bookings</h1>
+                    <p className="text-sm font-medium text-[var(--text-secondary)]">Manage vehicle sales, payments, and delivery tracking.</p>
+                </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                     {isSuperUser && (
-                        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
-                            <Building size={16} className="text-gray-400" />
+                        <div className="search-box !w-auto">
+                            <Building size={18} className="search-icon" />
                             <select
-                                className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer"
+                                className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-bold text-[var(--text-primary)] min-w-[160px] cursor-pointer outline-none pl-10 h-10 shadow-sm"
                                 value={selectedBranchId}
                                 onChange={(e) => setSelectedBranchId(e.target.value)}
                             >
@@ -132,43 +155,55 @@ const Bookings = () => {
                             </select>
                         </div>
                     )}
+
                     {view === 'active' && (
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="bg-white border rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 shadow-sm outline-none"
-                        >
-                            <option value="active">Active</option>
-                            <option value="ready_for_delivery">Ready for Delivery</option>
-                            <option value="completed">Completed</option>
-                        </select>
+                        <div className="search-box !w-auto">
+                            <Clock size={18} className="search-icon" />
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-bold text-[var(--text-primary)] min-w-[160px] cursor-pointer outline-none pl-10 h-10 shadow-sm"
+                            >
+                                <option value="active">Active Bookings</option>
+                                <option value="ready_for_delivery">Ready for Delivery</option>
+                                <option value="completed">Completed Bookings</option>
+                            </select>
+                        </div>
                     )}
-                    <div className="flex bg-white p-1 rounded-xl shadow-sm border">
-                        <button
-                            onClick={() => setView('pending')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${view === 'pending' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'
-                                }`}
-                        >
-                            <Clock size={18} />
-                            Ready for Booking
-                        </button>
-                        <button
-                            onClick={() => setView('active')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${view === 'active' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'
-                                }`}
-                        >
-                            <CheckCircle size={18} />
-                            Active Bookings
-                        </button>
-                    </div>
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden relative">
+            {/* Sub Navigation Tabs */}
+            <div className="flex gap-2 p-1.5 bg-[var(--bg-secondary)] rounded-xl w-fit mb-10 border shadow-sm" style={{ borderColor: 'var(--border)' }}>
+                <button
+                    onClick={() => setView('pending')}
+                    className={clsx(
+                        "flex items-center gap-3 px-6 py-2.5 rounded-lg font-bold transition-all text-[10px] uppercase tracking-wider",
+                        view === 'pending'
+                            ? 'bg-[var(--accent)] text-white shadow-md'
+                            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                    )}
+                >
+                    <Clock size={14} /> New Handovers
+                </button>
+                <button
+                    onClick={() => setView('active')}
+                    className={clsx(
+                        "flex items-center gap-3 px-6 py-2.5 rounded-lg font-bold transition-all text-[10px] uppercase tracking-wider",
+                        view === 'active'
+                            ? 'bg-[var(--accent)] text-white shadow-md'
+                            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                    )}
+                >
+                    <CheckCircle size={14} /> Global Bookings
+                </button>
+            </div>
+
+            <div className="relative">
                 {loading ? (
-                    <div className="p-12 flex flex-col items-center justify-center space-y-4">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                        <p className="text-gray-500 font-medium">Loading {view} listings...</p>
+                    <div className="card py-20 flex flex-col items-center justify-center space-y-4">
+                        <div className="w-10 h-10 border-2 border-[var(--border)] border-t-[var(--accent)] rounded-full animate-spin"></div>
+                        <p className="text-[var(--text-muted)] font-bold text-[10px] uppercase tracking-widest">Synchronizing Records...</p>
                     </div>
                 ) : (
                     <>
@@ -189,40 +224,40 @@ const Bookings = () => {
                             actions={view === 'pending' ? [
                                 {
                                     icon: Phone,
-                                    label: 'Call Customer',
+                                    label: 'Call',
                                     onClick: (row) => {
                                         const phone = row.customer?.phone;
                                         if (phone) window.open(`tel:${phone}`, '_self');
                                         else showToast("No phone number available.", "warning");
                                     },
                                     color: 'green',
-                                    title: 'Call Customer'
+                                    title: 'Call'
                                 },
                                 {
                                     icon: DollarSign,
-                                    label: 'Start Booking',
+                                    label: 'Book',
                                     onClick: (row) => openFinanceTab(row.enquiryId, row.customer?.fullName || 'New Lead'),
                                     color: 'blue',
-                                    title: 'Start Booking'
+                                    title: 'Create Booking'
                                 }
                             ] : [
                                 {
                                     icon: Phone,
-                                    label: 'Call Customer',
+                                    label: 'Call',
                                     onClick: (row) => {
                                         const phone = row.enquiry?.customer?.phone;
                                         if (phone) window.open(`tel:${phone}`, '_self');
                                         else showToast("No phone number available.", "warning");
                                     },
                                     color: 'green',
-                                    title: 'Call Customer'
+                                    title: 'Call'
                                 },
                                 {
                                     icon: Eye,
-                                    label: 'Open Workspace',
+                                    label: 'Finance',
                                     onClick: (row) => openFinanceTab(row.enquiryId, row.enquiry?.customer?.fullName || 'Booking'),
-                                    color: 'blue',
-                                    title: 'Open Workspace'
+                                    color: 'indigo',
+                                    title: 'Finance & Payments'
                                 }
                             ]}
                         />

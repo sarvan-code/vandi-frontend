@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Eye, Edit, Trash, X, Plus, Calendar, Building, Briefcase, ClipboardList, Phone } from 'lucide-react';
+import { Eye, Edit, Trash, X, Plus, Calendar, Building, Briefcase, ClipboardList, Phone, ChevronLeft, ChevronRight } from 'lucide-react';
+import clsx from 'clsx';
 import api from '../api';
 import Table from '../components/Table';
 import CustomerSearch from '../components/CustomerSearch';
@@ -115,7 +116,7 @@ const Enquiries = () => {
 
     const searchCustomers = async (searchTerm) => {
         try {
-            const response = await api.get(`/customers?search=${searchTerm}`);
+            const response = await api.get(`/customers?search=${searchTerm}`, { hideLoader: true });
             if (response.data.data) {
                 setCustomers(response.data.data);
             } else {
@@ -270,113 +271,127 @@ const Enquiries = () => {
     };
 
     const columns = [
-        { key: 'customer', label: 'Customer', render: (row) => row.customer?.fullName || 'N/A' },
         {
-            key: 'contact', label: 'Contact', render: (row) => (
-                <div className="flex flex-col text-xs">
-                    <span>{row.customer?.phone}</span>
-                    <span className="text-gray-400">{row.customer?.email}</span>
+            key: 'customer', label: 'Customer', render: (row) => (
+                <div className="flex flex-col">
+                    <span className="font-semibold text-[var(--text-primary)]">{row.customer?.fullName || 'N/A'}</span>
+                    <span className="text-[10px] text-[var(--text-secondary)]">{row.customer?.phone}</span>
                 </div>
             )
         },
         {
-            key: 'status', label: 'Status', render: (row) => (
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                    ${row.status === 'new' ? 'bg-blue-100 text-blue-800' : ''}
-                    ${row.status === 'in-followup' ? 'bg-yellow-100 text-yellow-800' : ''}
-                    ${row.status === 'booking-pending' ? 'bg-purple-100 text-purple-800' : ''}
-                    ${row.status === 'closed' ? 'bg-gray-100 text-gray-800' : ''}
-                    ${!['new', 'in-followup', 'booking-pending', 'closed'].includes(row.status) ? 'bg-gray-100 text-gray-800' : ''}
-`}>
-                    {row.status}
-                </span>
-            )
-        },
-        {
-            key: 'carDetails', label: 'Car Interest',
+            key: 'carDetails', label: 'Interested Vehicles',
             render: (row) => {
-                if (!row.carDetails || row.carDetails.length === 0) return 'Any';
+                if (!row.carDetails || row.carDetails.length === 0) return <span className="text-[var(--text-muted)] italic">General Interest</span>;
                 const first = row.carDetails[0];
-                const more = row.carDetails.length > 1 ? ` + ${row.carDetails.length - 1} ` : '';
-                return `${first.carBrand || ''} ${first.carModel || ''} ${first.carVariant ? `(${first.carVariant})` : ''}${more} `;
+                const more = row.carDetails.length > 1 ? ` + ${row.carDetails.length - 1} more` : '';
+                return (
+                    <div className="flex flex-col">
+                        <span className="font-medium text-[var(--text-primary)]">
+                            {first.carBrand} {first.carModel}
+                        </span>
+                        <span className="text-[10px] text-[var(--text-secondary)]">
+                            {first.carVariant}{more} {row.carDetailRemarks}
+                        </span>
+                    </div>
+                );
             }
         },
-        { key: 'budgetRange', label: 'Budget' },
-
         {
-            key: 'lastFollowUp', label: 'Last Update',
+            key: 'lastFollowUp', label: 'Last Follow-up',
             render: (row) => {
-                if (!row.followUps || row.followUps.length === 0) return <span className="text-gray-400 text-xs">-</span>;
+                if (!row.followUps || row.followUps.length === 0) return <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider">No Activity</span>;
                 const last = row.followUps[0];
                 return (
-                    <div className="text-xs">
-                        <div className="font-semibold text-gray-700">{last.agent?.fullName || 'Unknown'}</div>
-                        <div className="text-gray-600 truncate max-w-[150px]" title={`${last.followupActionDone} (${last.followupResults})`}>
-                            {last.followupActionDone} <span className={`font - medium ${last.followupResults === 'in-price-negotiation' ? 'text-green-600' :
-                                last.followupResults === 'booking-handedover' ? 'text-red-600' : 'text-blue-600'
-                                } `}>({last.followupResults})</span>
+                    <div className="text-[10px] space-y-0.5">
+                        <div className="font-bold text-[var(--text-primary)] uppercase tracking-tight">{last.agent?.fullName || 'Unknown'}</div>
+                        <div className="text-[var(--text-secondary)] truncate max-w-[150px]" title={`${last.followupActionDone} (${last.followupResults})`}>
+                            {last.followupActionDone}
                         </div>
-                        <div className="text-gray-400 text-[10px]">
-                            <span className={`font - medium  text-green-600`}>
-                                {last.car?.registrationNumber}</span> {new Date(last.createdAt).toLocaleDateString()}</div>
+
                     </div>
                 )
             }
         },
         {
-            key: 'nextVisitDate', label: 'Next Visit', render: (row) => {
-                if (!row.followUps || row.followUps.length === 0) return <span className="text-gray-400 text-xs">-</span>;
+            key: 'nextVisitDate',
+            label: 'Next Follow-up',
+            render: (row) => {
+                if (!row.followUps || row.followUps.length === 0) return <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider">No Activity</span>;
                 const last = row.followUps[0];
-                return new Date(last.nextVisitDate).toLocaleDateString()
+                return last.nextVisitDate ? (
+                    <div className="text-[10px] space-y-0.5">
+                        <div className="flex items-center gap-2 text-[var(--accent)] font-bold">
+                            <span className="text-xs">{new Date(last.nextVisitDate).toLocaleDateString() + ' ' + new Date(last.nextVisitDate).toLocaleTimeString()}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[var(--text-muted)] font-semibold">{new Date(last.createdAt).toLocaleDateString()}</span>
+                            {last.car?.registrationNumber && <span className="text-[var(--success)] font-bold">{last.car.registrationNumber}</span>}
+                        </div>
+                    </div>
+                ) : <span className="text-[var(--text-muted)]">—</span>
             }
         },
-        { key: 'createdAt', label: 'Created', render: (row) => new Date(row.createdAt).toLocaleDateString() }
+        { key: 'createdAt', label: 'Added Date', render: (row) => <span className="text-[10px] font-medium text-[var(--text-muted)]">{new Date(row.createdAt).toLocaleDateString()}</span> }
     ];
 
     return (
-        <div>
+        <div className="animate-fade-in">
             {(isViewMode || isEditMode) && (
-                <div id="modal-container" className="mb-6 animate-fade-in-down scroll-mt-20 space-y-4">
-                    {/* 1. Enquiry Details Card - NOW AT TOP */}
+                <div id="modal-container" className="mb-12 animate-fade-in space-y-8 scroll-mt-20">
+                    {/* Enquiry Intake/Summary Block */}
                     {currentEnquiry && (
-                        <div className={`bg-white rounded-lg shadow-lg p-6 relative border-l-4 ${currentEnquiry.enquiryId ? 'border-blue-500' : 'border-green-500'}`}>
+                        <div className="card p-8 border border-[var(--border)] shadow-xl relative overflow-visible animate-fade-in">
                             <button
                                 onClick={closeEnquiryBlock}
-                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-                                title="Close Enquiry Details"
+                                className="absolute top-6 right-6 p-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors text-[var(--text-muted)]"
+                                title="Close"
                             >
-                                <X size={24} />
+                                <X size={20} />
                             </button>
 
-                            <h2 className="text-xl font-semibold mb-4 text-gray-800">
-                                {isViewMode ? 'Enquiry Details' : (currentEnquiry.enquiryId ? 'Edit Enquiry' : 'New Enquiry')}
-                            </h2>
+                            <div className="flex items-center gap-4 mb-10 pb-6 border-b" style={{ borderColor: 'var(--border)' }}>
+                                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-sm" style={{ background: 'var(--accent)' }}>
+                                    <ClipboardList size={24} />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                                        {isViewMode ? 'Enquiry Overview' : (currentEnquiry.enquiryId ? 'Update Enquiry' : 'New Enquiry')}
+                                    </h2>
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1" style={{ color: 'var(--text-secondary)' }}>
+                                        {isViewMode ? 'View enquiry summary' : 'Enter vehicle and customer details'}
+                                    </p>
+                                </div>
+                            </div>
 
                             {isViewMode ? (
                                 <>
-                                    <EnquirySnapshot
-                                        enquiry={currentEnquiry}
-                                        customer={selectedCustomer || customerProfile}
-                                        getOptionList={getOptionList}
-                                        showCustomer={false} // Hide repeated customer info
-                                    />
-                                    <div className="flex justify-end gap-3 pt-4 border-t mt-4">
+                                    <div className="rounded-2xl p-6 mb-6 bg-[var(--bg-tertiary)] border border-[var(--border)]">
+                                        <EnquirySnapshot
+                                            enquiry={currentEnquiry}
+                                            customer={selectedCustomer || customerProfile}
+                                            getOptionList={getOptionList}
+                                            showCustomer={false}
+                                        />
+                                    </div>
+                                    <div className="flex justify-end pt-6 border-t border-[var(--border)]">
                                         <button
                                             type="button"
                                             onClick={closeEnquiryBlock}
-                                            className="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-50 bg-white"
+                                            className="btn-secondary px-8"
                                         >
-                                            Close
+                                            Dismiss
                                         </button>
                                     </div>
                                 </>
                             ) : (
-                                <form onSubmit={handleSave} className="space-y-4">
-                                    <fieldset disabled={isViewMode} className="contents">
+                                <form onSubmit={handleSave} className="space-y-10">
+                                    <fieldset disabled={isViewMode} className="contents text-left">
                                         {/* 1. Customer Selection */}
-                                        <div className="bg-gray-50 rounded mb-3">
-                                            <div className="flex justify-between items-end">
+                                        <div className="p-6 rounded-lg mb-8 bg-[var(--bg-tertiary)] border" style={{ borderColor: 'var(--border)' }}>
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
                                                 <div className="flex-grow">
+                                                    <label className="form-label mb-3 block">Select Customer</label>
                                                     <CustomerSearch
                                                         customers={customers}
                                                         onSearch={searchCustomers}
@@ -385,258 +400,287 @@ const Enquiries = () => {
                                                         disabled={!!currentEnquiry?.enquiryId || isViewMode || (!!filterCustomerId && !currentEnquiry?.enquiryId)}
                                                     />
                                                 </div>
-                                                {isViewMode && currentEnquiry?.enquiryId && (
-                                                    <div className="ml-4 text-right">
-                                                        <p className="text-xs text-blue-600 uppercase font-semibold">Enquiry ID</p>
-                                                        <p className="text-sm text-gray-600">{currentEnquiry.enquiryId}</p>
+                                                {currentEnquiry?.enquiryId && (
+                                                    <div className="text-right">
+                                                        <label className="form-label mb-2 block">Ref ID</label>
+                                                        <p className="text-sm font-bold px-4 py-2 rounded-md border shadow-sm" style={{ color: 'var(--text-primary)', background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                                                            {currentEnquiry.enquiryId}
+                                                        </p>
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
 
                                         {/* 2. Basic Enquiry Info */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700">Enquiry Type</label>
-                                                <div className="flex gap-4 mt-2">
-                                                    <label className="flex items-center">
-                                                        <input
-                                                            type="radio" name="enquiryType" value="Buy"
-                                                            checked={currentEnquiry?.enquiryType === 'Buy'}
-                                                            onChange={e => setCurrentEnquiry({ ...currentEnquiry, enquiryType: e.target.value })}
-                                                            className="mr-2"
-                                                        /> Buy
-                                                    </label>
-                                                    <label className="flex items-center">
-                                                        <input
-                                                            type="radio" name="enquiryType" value="Sell"
-                                                            checked={currentEnquiry?.enquiryType === 'Sell'}
-                                                            onChange={e => setCurrentEnquiry({ ...currentEnquiry, enquiryType: e.target.value })}
-                                                            className="mr-2"
-                                                        /> Sell
-                                                    </label>
+                                                <label className="form-label mb-3 block">Enquiry Type</label>
+                                                <div className="flex gap-4 p-1 bg-[var(--bg-tertiary)] rounded-md border" style={{ borderColor: 'var(--border)' }}>
+                                                    {['Buy', 'Sell'].map(type => (
+                                                        <label key={type} className={clsx(
+                                                            "flex-1 flex items-center justify-center gap-3 py-2 rounded cursor-pointer transition-all font-bold text-sm",
+                                                            currentEnquiry?.enquiryType === type
+                                                                ? 'bg-[var(--bg-secondary)] text-[var(--accent)] shadow-sm'
+                                                                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                                                        )}>
+                                                            <input
+                                                                type="radio" name="enquiryType" value={type}
+                                                                checked={currentEnquiry?.enquiryType === type}
+                                                                onChange={e => setCurrentEnquiry({ ...currentEnquiry, enquiryType: e.target.value })}
+                                                                className="sr-only"
+                                                            />
+                                                            {type === 'Buy' ? <Plus size={16} /> : <Eye size={16} />}
+                                                            {type === 'Buy' ? 'Buy' : 'Sell'}
+                                                        </label>
+                                                    ))}
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700">Status</label>
-                                                <input
-                                                    className="mt-1 block w-full border p-2 rounded-md bg-gray-50 text-gray-600 font-semibold uppercase cursor-not-allowed"
-                                                    value={currentEnquiry?.status || 'new'}
-                                                    readOnly
+                                                <label className="form-label mb-3 block">Enquiry Status</label>
+                                                <div className="input-field h-10 flex items-center justify-center font-bold text-center capitalize bg-[var(--bg-tertiary)] cursor-not-allowed">
+                                                    {currentEnquiry?.status || 'new'}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* 3. Vehicle Requirements */}
+                                        <div className="p-6 rounded-lg mb-10 bg-[var(--bg-tertiary)] border" style={{ borderColor: 'var(--border)' }}>
+                                            <div className="flex justify-between items-center mb-8">
+                                                <div>
+                                                    <label className="form-label block !mb-1">Vehicle Details</label>
+                                                    <p className="text-[10px] text-[var(--text-muted)] font-medium italic">Brand, Model, and Variant preferences</p>
+                                                </div>
+                                                {!isViewMode && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const mk = [...(currentEnquiry.carDetails || [])];
+                                                            mk.push({ carType: '', carBrand: '', carModel: '', carVariant: '' });
+                                                            setCurrentEnquiry({ ...currentEnquiry, carDetails: mk });
+                                                        }}
+                                                        className="btn-primary text-xs"
+                                                    >
+                                                        <Plus size={14} /> Add Vehicle
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="space-y-6">
+                                                {(currentEnquiry.carDetails || []).map((car, idx) => {
+                                                    const typeTerm = (car.carType || '').trim().toLowerCase();
+                                                    const selectedTypeObj = vehicleTypes.find(t => t.name.toLowerCase() === typeTerm);
+
+                                                    const brandTerm = (car.carBrand || '').trim().toLowerCase();
+                                                    const selectedBrandObj = vehicleBrands.find(b => {
+                                                        if (!brandTerm) return false;
+                                                        const bn = b.name.toLowerCase();
+                                                        return bn === brandTerm || bn.includes(brandTerm) || brandTerm.includes(bn);
+                                                    });
+
+                                                    const typesForBrand = selectedBrandObj
+                                                        ? new Set(vehicleModels.filter(m => m.brandId === selectedBrandObj.id).map(m => m.typeId))
+                                                        : null;
+                                                    const availableTypes = typesForBrand
+                                                        ? vehicleTypes.filter(t => typesForBrand.has(t.id))
+                                                        : vehicleTypes;
+
+                                                    const filteredModels = vehicleModels.filter(m => {
+                                                        if (!selectedBrandObj || !selectedTypeObj) return false;
+                                                        return m.brandId === selectedBrandObj.id && m.typeId === selectedTypeObj.id;
+                                                    });
+
+                                                    const modelTerm = (car.carModel || '').trim().toLowerCase();
+                                                    const selectedModelObj = filteredModels.find(m => {
+                                                        if (!modelTerm) return false;
+                                                        const mn = m.name.toLowerCase();
+                                                        return mn === modelTerm;
+                                                    });
+
+                                                    const filteredVariants = vehicleVariants.filter(v => {
+                                                        if (!selectedModelObj) return false;
+                                                        return v.modelId === selectedModelObj.id;
+                                                    });
+
+                                                    const variantTerm = (car.carVariant || '').trim().toLowerCase();
+                                                    const selectedVariantObj = filteredVariants.find(v => {
+                                                        if (!variantTerm) return false;
+                                                        const vn = v.name.toLowerCase();
+                                                        return vn === variantTerm;
+                                                    });
+
+                                                    return (
+                                                        <div key={idx} className="card p-4 flex flex-wrap md:flex-nowrap gap-4 items-center bg-[var(--bg-secondary)] border shadow-sm" style={{ borderColor: 'var(--border)' }}>
+                                                            <div className="flex-1 min-w-[150px]">
+                                                                <select className="input-field text-xs h-9 py-0 font-semibold"
+                                                                    value={selectedBrandObj?.name || car.carBrand || ''}
+                                                                    onChange={e => {
+                                                                        const mk = [...currentEnquiry.carDetails];
+                                                                        mk[idx].carBrand = e.target.value;
+                                                                        mk[idx].carType = '';
+                                                                        mk[idx].carModel = '';
+                                                                        mk[idx].carVariant = '';
+                                                                        setCurrentEnquiry({ ...currentEnquiry, carDetails: mk });
+                                                                    }}>
+                                                                    <option value="">Select Brand</option>
+                                                                    {vehicleBrands.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
+                                                                </select>
+                                                            </div>
+                                                            <div className="flex-1 min-w-[150px]">
+                                                                <select className="input-field text-xs h-9 py-0 font-semibold"
+                                                                    value={selectedTypeObj?.name || car.carType || ''}
+                                                                    onChange={e => {
+                                                                        const mk = [...currentEnquiry.carDetails];
+                                                                        mk[idx].carType = e.target.value;
+                                                                        mk[idx].carModel = '';
+                                                                        mk[idx].carVariant = '';
+                                                                        setCurrentEnquiry({ ...currentEnquiry, carDetails: mk });
+                                                                    }}>
+                                                                    <option value="">Body Type</option>
+                                                                    {availableTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+                                                                </select>
+                                                            </div>
+                                                            <div className="flex-1 min-w-[150px]">
+                                                                <select className="input-field text-xs h-9 py-0 font-semibold"
+                                                                    value={selectedModelObj?.name || car.carModel || ''}
+                                                                    onChange={e => {
+                                                                        const mk = [...currentEnquiry.carDetails];
+                                                                        mk[idx].carModel = e.target.value;
+                                                                        mk[idx].carVariant = '';
+                                                                        setCurrentEnquiry({ ...currentEnquiry, carDetails: mk });
+                                                                    }}>
+                                                                    <option value="">Technical Model</option>
+                                                                    {filteredModels.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+                                                                </select>
+                                                            </div>
+                                                            <div className="flex-1 min-w-[150px]">
+                                                                <select className="input-field text-xs h-9 py-0 font-semibold"
+                                                                    value={selectedVariantObj?.name || car.carVariant || ''}
+                                                                    onChange={e => {
+                                                                        const mk = [...currentEnquiry.carDetails]; mk[idx].carVariant = e.target.value; setCurrentEnquiry({ ...currentEnquiry, carDetails: mk });
+                                                                    }}>
+                                                                    <option value="">Technical Specification</option>
+                                                                    {filteredVariants.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+                                                                </select>
+                                                            </div>
+
+                                                            {!isViewMode && (
+                                                                <button type="button" onClick={() => {
+                                                                    const mk = currentEnquiry.carDetails.filter((_, i) => i !== idx);
+                                                                    setCurrentEnquiry({ ...currentEnquiry, carDetails: mk });
+                                                                }} className="p-2 text-[var(--danger)] hover:bg-[var(--danger)]/10 rounded transition-colors"><Trash size={16} /></button>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            <div className="mt-10">
+                                                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3 block">Remarks</label>
+                                                <textarea
+                                                    className="input-field min-h-[100px] p-4 text-sm font-medium"
+                                                    placeholder="Capture additional context or specific customization requests..."
+                                                    value={currentEnquiry.carDetailRemarks || ''}
+                                                    onChange={e => setCurrentEnquiry({ ...currentEnquiry, carDetailRemarks: e.target.value })}
                                                 />
                                             </div>
                                         </div>
 
-                                        {/* 3. Vehicle Details */}
-                                        <div className="bg-blue-50 p-3 rounded mb-4 mt-4">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <label className="font-semibold text-gray-700 text-sm">Vehicle Details</label>
-                                                {!isViewMode && (
-                                                    <button type="button" onClick={() => {
-                                                        const mk = [...(currentEnquiry.carDetails || [])];
-                                                        mk.push({ carType: '', carBrand: '', carModel: '', carVariant: '' });
-                                                        setCurrentEnquiry({ ...currentEnquiry, carDetails: mk });
-                                                    }} className="text-xs bg-blue-600 text-white px-2 py-1 rounded flex items-center gap-1"> <Plus size={14} /> Add </button>
-                                                )}
-                                            </div>
-                                            {(currentEnquiry.carDetails || []).map((car, idx) => {
-                                                const typeTerm = (car.carType || '').trim().toLowerCase();
-                                                const selectedTypeObj = vehicleTypes.find(t => t.name.toLowerCase() === typeTerm);
-
-                                                const brandTerm = (car.carBrand || '').trim().toLowerCase();
-                                                const selectedBrandObj = vehicleBrands.find(b => {
-                                                    if (!brandTerm) return false;
-                                                    const bn = b.name.toLowerCase();
-                                                    return bn === brandTerm || bn.includes(brandTerm) || brandTerm.includes(bn);
-                                                });
-
-                                                const typesForBrand = selectedBrandObj
-                                                    ? new Set(vehicleModels.filter(m => m.brandId === selectedBrandObj.id).map(m => m.typeId))
-                                                    : null;
-                                                const availableTypes = typesForBrand
-                                                    ? vehicleTypes.filter(t => typesForBrand.has(t.id))
-                                                    : vehicleTypes;
-
-                                                const filteredModels = vehicleModels.filter(m => {
-                                                    if (!selectedBrandObj || !selectedTypeObj) return false;
-                                                    return m.brandId === selectedBrandObj.id && m.typeId === selectedTypeObj.id;
-                                                });
-
-                                                const modelTerm = (car.carModel || '').trim().toLowerCase();
-                                                const selectedModelObj = filteredModels.find(m => {
-                                                    if (!modelTerm) return false;
-                                                    const mn = m.name.toLowerCase();
-                                                    return mn === modelTerm;
-                                                });
-
-                                                const filteredVariants = vehicleVariants.filter(v => {
-                                                    if (!selectedModelObj) return false;
-                                                    return v.modelId === selectedModelObj.id;
-                                                });
-
-                                                const variantTerm = (car.carVariant || '').trim().toLowerCase();
-                                                const selectedVariantObj = filteredVariants.find(v => {
-                                                    if (!variantTerm) return false;
-                                                    const vn = v.name.toLowerCase();
-                                                    return vn === variantTerm;
-                                                });
-
-                                                return (
-                                                    <div key={idx} className="flex gap-2 mb-2 items-end">
-                                                        <select className="flex-1 border p-1 rounded text-sm"
-                                                            value={selectedBrandObj?.name || car.carBrand || ''}
-                                                            onChange={e => {
-                                                                const mk = [...currentEnquiry.carDetails];
-                                                                mk[idx].carBrand = e.target.value;
-                                                                mk[idx].carType = '';
-                                                                mk[idx].carModel = '';
-                                                                mk[idx].carVariant = '';
-                                                                setCurrentEnquiry({ ...currentEnquiry, carDetails: mk });
-                                                            }}>
-                                                            <option value="">Brand...</option>
-                                                            {vehicleBrands.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
-                                                        </select>
-                                                        <select className="flex-1 border p-1 rounded text-sm"
-                                                            value={selectedTypeObj?.name || car.carType || ''}
-                                                            onChange={e => {
-                                                                const mk = [...currentEnquiry.carDetails];
-                                                                mk[idx].carType = e.target.value;
-                                                                mk[idx].carModel = '';
-                                                                mk[idx].carVariant = '';
-                                                                setCurrentEnquiry({ ...currentEnquiry, carDetails: mk });
-                                                            }}>
-                                                            <option value="">Type...</option>
-                                                            {availableTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
-                                                        </select>
-                                                        <select className="flex-1 border p-1 rounded text-sm"
-                                                            value={selectedModelObj?.name || car.carModel || ''}
-                                                            onChange={e => {
-                                                                const mk = [...currentEnquiry.carDetails];
-                                                                mk[idx].carModel = e.target.value;
-                                                                mk[idx].carVariant = '';
-                                                                setCurrentEnquiry({ ...currentEnquiry, carDetails: mk });
-                                                            }}>
-                                                            <option value="">Model...</option>
-                                                            {filteredModels.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
-                                                        </select>
-                                                        <select className="flex-1 border p-1 rounded text-sm"
-                                                            value={selectedVariantObj?.name || car.carVariant || ''}
-                                                            onChange={e => {
-                                                                const mk = [...currentEnquiry.carDetails]; mk[idx].carVariant = e.target.value; setCurrentEnquiry({ ...currentEnquiry, carDetails: mk });
-                                                            }}>
-                                                            <option value="">Variant...</option>
-                                                            {filteredVariants.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
-                                                        </select>
-
-                                                        {!isViewMode && (
-                                                            <button type="button" onClick={() => {
-                                                                const mk = currentEnquiry.carDetails.filter((_, i) => i !== idx);
-                                                                setCurrentEnquiry({ ...currentEnquiry, carDetails: mk });
-                                                            }} className="text-red-500 p-2 hover:bg-red-50 rounded"><Trash size={16} /></button>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-
-                                            <input
-                                                className="w-full border p-2 text-sm rounded mt-1"
-                                                placeholder="Car Detail Remarks..."
-                                                value={currentEnquiry.carDetailRemarks || ''}
-                                                onChange={e => setCurrentEnquiry({ ...currentEnquiry, carDetailRemarks: e.target.value })}
-                                            />
-                                        </div>
-
-                                        {/* 4. Additional Info */}
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {/* 4. Financial Parameters */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mb-12">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700">Budget Range</label>
+                                                <label className="form-label mb-3 block">Budget Range</label>
                                                 <select
-                                                    className="mt-1 block w-full border p-2 rounded-md"
+                                                    className="input-field h-10 cursor-pointer font-semibold shadow-sm"
                                                     value={currentEnquiry?.budgetRange || ''}
                                                     onChange={(e) => setCurrentEnquiry({ ...currentEnquiry, budgetRange: e.target.value })}
                                                 >
-                                                    <option value="">Select...</option>
+                                                    <option value="">Select Range</option>
                                                     {getOpt('BUDGET_RANGES').map(b => <option key={b.value} value={b.value}>{b.label}</option>)}
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700">Budget Remarks</label>
+                                                <label className="form-label">Budget Notes</label>
                                                 <input
-                                                    className="mt-1 block w-full border p-2 rounded-md"
-                                                    placeholder="Any specific budget details..."
+                                                    className="input-field"
+                                                    placeholder="Flexible budget, loan needed..."
                                                     value={currentEnquiry?.budgetRemarks || ''}
                                                     onChange={e => setCurrentEnquiry({ ...currentEnquiry, budgetRemarks: e.target.value })}
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700">Fuel Type</label>
+                                                <label className="form-label">Fuel Preference</label>
                                                 <select
-                                                    className="mt-1 block w-full border p-2 rounded-md"
+                                                    className="input-field cursor-pointer"
                                                     value={currentEnquiry?.fuelType || ''}
                                                     onChange={(e) => setCurrentEnquiry({ ...currentEnquiry, fuelType: e.target.value })}
                                                 >
-                                                    <option value="">Select...</option>
+                                                    <option value="">Select Fuel</option>
                                                     {getOpt('FUEL_TYPES').map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700">Usage Type</label>
+                                                <label className="form-label">Usage Purpose</label>
                                                 <select
-                                                    className="mt-1 block w-full border p-2 rounded-md"
+                                                    className="input-field cursor-pointer"
                                                     value={currentEnquiry?.usageType || ''}
                                                     onChange={(e) => setCurrentEnquiry({ ...currentEnquiry, usageType: e.target.value })}
                                                 >
-                                                    <option value="">Select...</option>
+                                                    <option value="">Select Usage</option>
                                                     {getOpt('USAGE_TYPES').map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700">Payment Mode</label>
+                                                <label className="form-label">Payment Method</label>
                                                 <select
-                                                    className="mt-1 block w-full border p-2 rounded-md"
+                                                    className="input-field cursor-pointer"
                                                     value={currentEnquiry?.payment || ''}
                                                     onChange={(e) => setCurrentEnquiry({ ...currentEnquiry, payment: e.target.value })}
                                                 >
-                                                    <option value="">Select...</option>
+                                                    <option value="">Select Payment</option>
                                                     {getOpt('PAYMENT_MODES').map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                                                 </select>
                                             </div>
                                         </div>
 
-                                        <div className="border-t pt-4 mt-4">
-                                            <label className="flex items-center gap-2 font-medium text-gray-700">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={currentEnquiry.exchange || false}
-                                                    onChange={e => setCurrentEnquiry({ ...currentEnquiry, exchange: e.target.checked })}
-                                                /> Exchange Vehicle?
-                                            </label>
+                                        <div className="p-4 rounded-lg" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)' }}>
+                                            <div className="flex items-center gap-4">
+                                                <div
+                                                    onClick={() => setCurrentEnquiry({ ...currentEnquiry, exchange: !currentEnquiry.exchange })}
+                                                    className={`
+                                                        w-14 h-8 rounded-full p-1 cursor-pointer transition-all duration-300
+                                                        ${currentEnquiry.exchange ? 'bg-indigo-600' : 'bg-slate-300'}
+                                                    `}
+                                                >
+                                                    <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300 transform ${currentEnquiry.exchange ? 'translate-x-6' : ''}`}></div>
+                                                </div>
+                                                <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Exchange Vehicle Included?</span>
+                                            </div>
                                             {currentEnquiry.exchange && (
-                                                <input
-                                                    className="mt-2 w-full border p-2 rounded"
-                                                    placeholder="Exchange Vehicle Details"
-                                                    value={currentEnquiry.exchangeDetail || ''}
-                                                    onChange={e => setCurrentEnquiry({ ...currentEnquiry, exchangeDetail: e.target.value })}
-                                                />
+                                                <div className="mt-6 animate-fade-in-up">
+                                                    <textarea
+                                                        className="input-field min-h-[100px]"
+                                                        placeholder="Provide details of the vehicle to be exchanged (Year, Model, Condition)..."
+                                                        value={currentEnquiry.exchangeDetail || ''}
+                                                        onChange={e => setCurrentEnquiry({ ...currentEnquiry, exchangeDetail: e.target.value })}
+                                                    />
+                                                </div>
                                             )}
                                         </div>
-
                                     </fieldset>
 
-                                    <div className="flex justify-end gap-3 pt-4 border-t mt-4">
+                                    <div className="flex flex-col sm:flex-row-reverse gap-3 pt-5" style={{ borderTop: '1px solid var(--border)' }}>
                                         {!isViewMode && (
                                             <button
                                                 type="submit"
-                                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                                className="btn-primary w-full sm:w-auto"
                                             >
-                                                Save
+                                                {currentEnquiry.enquiryId ? 'Update Enquiry' : 'Save Enquiry'}
                                             </button>
                                         )}
                                         <button
                                             type="button"
                                             onClick={closeEnquiryBlock}
-                                            className="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-50 bg-white"
+                                            className="btn-secondary w-full sm:w-auto"
                                         >
                                             {isViewMode ? 'Close' : 'Cancel'}
                                         </button>
@@ -646,20 +690,27 @@ const Enquiries = () => {
                         </div>
                     )}
 
-                    {/* 2. Customer Profile - NOW AT BOTTOM */}
+                    {/* 2. Customer Profile */}
                     {(customerProfile || selectedCustomer) && (
-                        <CustomerProfile customer={selectedCustomer || customerProfile} />
+                        <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                            <CustomerProfile customer={selectedCustomer || customerProfile} />
+                        </div>
                     )}
                 </div>
             )}
 
-            <div className="flex flex-col md:flex-row md:items-center justify-between my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-10 gap-6">
+                <div>
+                    <h1 className="text-4xl font-semibold mb-2 text-[var(--text-primary)]">Enquiries</h1>
+                    <p className="text-sm font-medium text-[var(--text-secondary)]">Manage customer vehicle interests and purchase intentions.</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
                     {isSuperUser && (
-                        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
-                            <Building size={16} className="text-gray-400" />
+                        <div className="search-box !w-auto">
+                            <Building size={18} className="search-icon" />
                             <select
-                                className="flex-1 text-sm bg-transparent border-none focus:ring-0 text-gray-700 min-w-[120px]"
+                                className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-semibold text-[var(--text-primary)] min-w-[160px] cursor-pointer outline-none pl-10 h-10 shadow-sm"
                                 value={selectedBranchId}
                                 onChange={(e) => setSelectedBranchId(e.target.value)}
                             >
@@ -671,52 +722,53 @@ const Enquiries = () => {
                         </div>
                     )}
 
-                    <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
-                        <ClipboardList size={16} className="text-gray-400" />
+                    <div className="search-box !w-auto">
+                        <ClipboardList size={18} className="search-icon" />
                         <select
-                            className="flex-1 bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer min-w-[120px]"
+                            className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-semibold text-[var(--text-primary)] min-w-[160px] cursor-pointer outline-none pl-10 h-10 shadow-sm"
                             value={selectedStatus}
                             onChange={(e) => {
                                 setSelectedStatus(e.target.value);
                                 setPage(1);
                             }}
                         >
-                            <option value="" disabled>Select Status...</option>
+                            <option value="" disabled>Status Filter...</option>
                             {getOpt('ENQUIRY_STATUSES').map(s => (
                                 <option key={s.value} value={s.value}>{s.label}</option>
                             ))}
                         </select>
                     </div>
-                </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                    {filterCustomerId && (
+                    <div className="flex items-center gap-3">
+                        {filterCustomerId && (
+                            <button
+                                onClick={() => {
+                                    setSelectedStatus('new');
+                                    navigate('/enquiries');
+                                }}
+                                className="btn-secondary px-6"
+                            >
+                                Clear
+                            </button>
+                        )}
                         <button
                             onClick={() => {
-                                setSelectedStatus('new');
-                                navigate('/enquiries');
+                                setCurrentEnquiry({ status: 'new', enquiryType: 'Buy', carDetails: [] });
+                                if (filterCustomerId && customerProfile) {
+                                    setSelectedCustomer(customerProfile);
+                                    setCurrentEnquiry(prev => ({ ...prev, customerId: customerProfile.customerId }));
+                                } else {
+                                    setSelectedCustomer(null);
+                                }
+                                setIsViewMode(false);
+                                setIsEditMode(true);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
                             }}
-                            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors whitespace-nowrap text-sm font-medium"
+                            className="btn-primary !py-2 !px-6"
                         >
-                            Display All Enquiry
+                            <Plus size={18} /> New Enquiry
                         </button>
-                    )}
-                    <button
-                        onClick={() => {
-                            setCurrentEnquiry({ status: 'new', enquiryType: 'Buy', carDetails: [] });
-                            if (filterCustomerId && customerProfile) {
-                                setSelectedCustomer(customerProfile);
-                                setCurrentEnquiry(prev => ({ ...prev, customerId: customerProfile.customerId }));
-                            } else {
-                                setSelectedCustomer(null);
-                            }
-                            setIsViewMode(false);
-                            setIsEditMode(true);
-                        }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium"
-                    >
-                        <Plus size={18} /> New Enquiry
-                    </button>
+                    </div>
                 </div>
             </div>
 
@@ -767,7 +819,7 @@ const Enquiries = () => {
                         ...((['SALES_REP', 'SALES_MGR', 'EXECUTIVE'].includes(user?.role) || isSuperUser) && ['new', 'in-followup'].includes(selectedEnquiry?.status) ? [{
                             icon: Briefcase,
                             label: 'Lead Workspace',
-                            onClick: (enq) => openWorkspaceWithEnquiry(enq.enquiryId, enq.customerId, enq.customer?.phone, enq.branchId),
+                            onClick: (enq) => openWorkspaceWithEnquiry(enq.enquiryId, enq.customerId, enq.customer?.phone, enq.branchId, enq),
                             color: 'indigo',
                             title: 'Open in Lead Workspace'
                         }] : []),
@@ -792,74 +844,52 @@ const Enquiries = () => {
             </div>
 
             {/* Pagination Controls */}
-            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-lg shadow">
-                <div className="flex flex-1 justify-between sm:hidden">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 mt-8 mb-12 animate-fade-in">
+                <div className="flex items-center gap-4">
+                    <div className="text-sm text-[var(--text-secondary)] bg-[var(--bg-secondary)] px-4 py-2 rounded-lg border border-[var(--border)] shadow-sm">
+                        <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                            Showing: <span className="text-[var(--accent)]">{(page - 1) * pageSize + 1}</span> — <span className="text-[var(--accent)]">{Math.min(page * pageSize, totalEnquiries)}</span>
+                            <span className="mx-2 text-[var(--border)]">|</span>
+                            Total Records: <span className="text-[var(--text-primary)]">{totalEnquiries}</span>
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label htmlFor="pageSize" className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Page Size</label>
+                        <select
+                            id="pageSize"
+                            value={pageSize}
+                            onChange={(e) => {
+                                setPageSize(Number(e.target.value));
+                                setPage(1);
+                            }}
+                            className="input-field py-1.5 px-3 text-sm w-20"
+                        >
+                            <option value={5}>5</option>
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                            <option value={50}>50</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
                     <button
                         onClick={() => setPage(prev => Math.max(prev - 1, 1))}
                         disabled={page === 1}
-                        className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400"
+                        className="btn-secondary p-2.5 disabled:opacity-30 disabled:cursor-not-allowed border border-[var(--border)]"
                     >
-                        Previous
+                        <ChevronLeft size={18} />
                     </button>
+                    <div className="bg-[var(--bg-secondary)] border border-[var(--border)] px-4 py-2 rounded-lg text-sm font-semibold text-[var(--text-primary)] min-w-[80px] text-center shadow-sm">
+                        {page} / {totalPages}
+                    </div>
                     <button
                         onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
                         disabled={page === totalPages}
-                        className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400"
+                        className="btn-secondary p-2.5 disabled:opacity-30 disabled:cursor-not-allowed border border-[var(--border)]"
                     >
-                        Next
+                        <ChevronRight size={18} />
                     </button>
-                </div>
-                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                    <div>
-                        <p className="text-sm text-gray-700">
-                            Showing <span className="font-medium">{(page - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(page * pageSize, totalEnquiries)}</span> of{' '}
-                            <span className="font-medium">{totalEnquiries}</span> results
-                        </p>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center">
-                            <label htmlFor="pageSize" className="mr-2 text-sm text-gray-700">Rows per page:</label>
-                            <select
-                                id="pageSize"
-                                value={pageSize}
-                                onChange={(e) => {
-                                    setPageSize(Number(e.target.value));
-                                    setPage(1); // Reset to first page on size change
-                                }}
-                                className="block w-full rounded-md border-gray-300 py-1.5 text-base leading-5 text-gray-900 focus:border-blue-500 focus:placeholder-gray-400 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                            >
-                                <option value={5}>5</option>
-                                <option value={10}>10</option>
-                                <option value={20}>20</option>
-                                <option value={50}>50</option>
-                            </select>
-                        </div>
-                        <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                            <button
-                                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                                disabled={page === 1}
-                                className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:bg-gray-100"
-                            >
-                                <span className="sr-only">Previous</span>
-                                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
-                                </svg>
-                            </button>
-                            <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
-                                {page} / {totalPages}
-                            </span>
-                            <button
-                                onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-                                disabled={page === totalPages}
-                                className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:bg-gray-100"
-                            >
-                                <span className="sr-only">Next</span>
-                                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                                </svg>
-                            </button>
-                        </nav>
-                    </div>
                 </div>
             </div>
 

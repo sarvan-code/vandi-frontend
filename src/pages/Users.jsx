@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Edit, Trash, Filter } from 'lucide-react';
+import { Eye, Edit, Trash, UserPlus, X, Shield, Mail, Phone, MapPin, Calendar, Building, Briefcase, Tag, Filter, ChevronLeft, ChevronRight, Users as UsersIcon, Save } from 'lucide-react';
+import clsx from 'clsx';
 import api from '../api';
 import Table from '../components/Table';
 import { useToast } from '../context/ToastContext';
@@ -90,37 +91,56 @@ const Users = () => {
     };
 
     const columns = [
-        { key: 'fullName', label: 'Name' },
-        { key: 'email', label: 'Email' },
+        {
+            key: 'fullName', label: 'User Name', render: (row) => (
+                <div className="flex flex-col">
+                    <span className="font-bold text-[var(--text-primary)]">{row.fullName}</span>
+                    <span className="text-[10px] text-[var(--text-muted)] font-bold tracking-tight">{row.email}</span>
+                </div>
+            )
+        },
         {
             key: 'role', label: 'Role', render: (row) => (
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(row.role) ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'}`}>
+                <span className={clsx(
+                    "badge py-1 px-3 rounded-full text-[10px] font-bold tracking-[0.1em] shadow-sm",
+                    ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(row.role) ? 'bg-indigo-600 text-white' : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border border-[var(--border)]'
+                )}>
                     {row.role}
                 </span>
             )
         },
         {
             key: 'userStatus', label: 'Status', render: (row) => (
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${row.userStatus === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                    row.userStatus === 'NEW' ? 'bg-blue-100 text-blue-800' :
-                        'bg-red-100 text-red-800'
-                    }`}>
-                    {row.userStatus}
+                <span className={clsx(
+                    "badge py-1 px-3 rounded-full text-[10px] font-bold tracking-[0.1em] shadow-sm border",
+                    row.userStatus === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                        row.userStatus === 'NEW' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                            'bg-rose-50 text-rose-600 border-rose-100'
+                )}>
+                    {row.userStatus === 'ACTIVE' ? 'ACTIVE' : row.userStatus === 'NEW' ? 'NEW' : 'INACTIVE'}
                 </span>
             )
         },
     ];
 
     return (
-        <div>
-            <div className="flex flex-col md:flex-row md:items-center justify-between my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                    <h1 className="text-xl font-bold text-gray-800">Users</h1>
+        <div className="animate-fade-in">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+                <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-[var(--accent)]/10 rounded-2xl flex items-center justify-center text-[var(--accent)] shadow-sm border border-[var(--accent)]/20">
+                        <UsersIcon size={32} />
+                    </div>
+                    <div>
+                        <h2 className="text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">Security & Governance</h2>
+                        <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.3em] mt-2">Manage system users, access levels and organizational hierarchy.</p>
+                    </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
                     {isGlobalUser && (
-                        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-200">
-                            <Filter size={16} className="text-gray-400" />
+                        <div className="search-box !w-auto">
+                            <Filter size={18} className="search-icon" />
                             <select
-                                className="flex-1 text-sm border-none focus:ring-0 bg-transparent min-w-[150px]"
+                                className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-bold text-[var(--text-primary)] min-w-[160px] cursor-pointer outline-none pl-10 h-10 shadow-sm"
                                 value={selectedBranchId}
                                 onChange={(e) => {
                                     setSelectedBranchId(e.target.value);
@@ -134,16 +154,16 @@ const Users = () => {
                             </select>
                         </div>
                     )}
+                    <button
+                        onClick={() => { setCurrentUser({}); setIsModalOpen(true); }}
+                        className="btn-primary flex items-center gap-3 !py-2 !px-6"
+                    >
+                        <UserPlus size={18} /> New Identity
+                    </button>
                 </div>
-                <button
-                    onClick={() => { setCurrentUser({}); setIsModalOpen(true); }}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap text-sm font-medium"
-                >
-                    Add User
-                </button>
             </div>
 
-            <div className="relative">
+            <div className="relative mb-8">
                 <Table
                     columns={columns}
                     data={users}
@@ -160,88 +180,65 @@ const Users = () => {
                     actions={[
                         {
                             icon: Edit,
-                            label: 'Edit User',
+                            label: 'Edit',
                             onClick: handleEdit,
                             color: 'blue',
-                            title: 'Edit User'
+                            title: 'Update user details'
                         },
                         {
                             icon: Trash,
-                            label: 'Delete User',
+                            label: 'Delete',
                             onClick: handleDelete,
                             color: 'red',
-                            title: 'Delete User'
+                            title: 'Remove user from system'
                         }
                     ]}
                 />
             </div>
 
             {/* Pagination Controls */}
-            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-lg shadow">
+            <div className="flex items-center justify-between border-t bg-[var(--surface)] px-6 py-4 mt-8 rounded-lg border shadow-sm" style={{ borderColor: 'var(--border)' }}>
                 <div className="flex flex-1 justify-between sm:hidden">
-                    <button
-                        onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                        disabled={page === 1}
-                        className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400"
-                    >
-                        Previous
-                    </button>
-                    <button
-                        onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={page === totalPages}
-                        className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400"
-                    >
-                        Next
-                    </button>
+                    <button onClick={() => setPage(prev => Math.max(prev - 1, 1))} disabled={page === 1} className="btn-secondary px-4 !py-1">Previous</button>
+                    <button onClick={() => setPage(prev => Math.min(prev + 1, totalPages))} disabled={page === totalPages} className="btn-secondary px-4 !py-1">Next</button>
                 </div>
                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                     <div>
-                        <p className="text-sm text-gray-700">
-                            Showing <span className="font-medium">{(page - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(page * pageSize, totalUsers)}</span> of{' '}
-                            <span className="font-medium">{totalUsers}</span> results
+                        <p className="text-xs font-medium text-[var(--text-secondary)]">
+                            Showing <span className="font-bold text-[var(--text-primary)]">{(page - 1) * pageSize + 1}</span> to <span className="font-bold text-[var(--text-primary)]">{Math.min(page * pageSize, totalUsers)}</span> of <span className="font-bold text-[var(--text-primary)]">{totalUsers}</span> results
                         </p>
                     </div>
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center">
-                            <label htmlFor="pageSize" className="mr-2 text-sm text-gray-700">Rows per page:</label>
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                            <label htmlFor="pageSize" className="text-xs font-medium text-[var(--text-secondary)]">Rows per page:</label>
                             <select
                                 id="pageSize"
                                 value={pageSize}
-                                onChange={(e) => {
-                                    setPageSize(Number(e.target.value));
-                                    setPage(1); // Reset to first page on size change
-                                }}
-                                className="block w-full rounded-md border-gray-300 py-1.5 text-base leading-5 text-gray-900 focus:border-blue-500 focus:placeholder-gray-400 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                                className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-md px-2 py-1 text-xs font-semibold text-[var(--text-primary)] outline-none focus:ring-1 focus:ring-[var(--accent)]"
                             >
-                                <option value={5}>5</option>
                                 <option value={10}>10</option>
                                 <option value={20}>20</option>
                                 <option value={50}>50</option>
                             </select>
                         </div>
-                        <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                        <nav className="flex items-center gap-2" aria-label="Pagination">
                             <button
                                 onClick={() => setPage(prev => Math.max(prev - 1, 1))}
                                 disabled={page === 1}
-                                className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:bg-gray-100"
+                                className="p-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--bg-tertiary)] disabled:opacity-30 transition-colors"
                             >
-                                <span className="sr-only">Previous</span>
-                                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
-                                </svg>
+                                <ChevronLeft size={16} />
                             </button>
-                            <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                            <div className="text-xs font-bold text-[var(--text-primary)] px-2">
                                 {page} / {totalPages}
-                            </span>
+                            </div>
                             <button
                                 onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={page === totalPages}
-                                className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:bg-gray-100"
+                                className="p-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--bg-tertiary)] disabled:opacity-30 transition-colors"
                             >
-                                <span className="sr-only">Next</span>
-                                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                                </svg>
+                                <ChevronRight size={16} />
                             </button>
                         </nav>
                     </div>
@@ -251,68 +248,74 @@ const Users = () => {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={currentUser?.userId ? 'Edit User' : 'Add User'}
+                title={currentUser?.userId ? 'Update User' : 'Add New User'}
             >
-                <form onSubmit={handleSave} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                        <input
-                            type="text"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
-                            value={currentUser?.fullName || ''}
-                            onChange={(e) => setCurrentUser({ ...currentUser, fullName: e.target.value })}
-                            required
-                            minLength={2}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Email</label>
-                        <input
-                            type="email"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
-                            value={currentUser?.email || ''}
-                            onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Role</label>
-                        <select
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 text-gray-700"
-                            value={currentUser?.role || 'AUTH_USER'}
-                            onChange={(e) => setCurrentUser({ ...currentUser, role: e.target.value })}
-                        >
-                            {roles.map(role => (
-                                <option key={role.code} value={role.code}>{role.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Status</label>
-                        <select
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
-                            value={currentUser?.userStatus || 'NEW'}
-                            onChange={(e) => setCurrentUser({ ...currentUser, userStatus: e.target.value })}
-                        >
-                            <option value="NEW">NEW</option>
-                            <option value="ACTIVE">ACTIVE</option>
-                            <option value="INACTIVE">INACTIVE</option>
-                        </select>
-                    </div>
-                    <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                        <button
-                            type="submit"
-                            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                        >
-                            Save
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setIsModalOpen(false)}
-                            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
-                        >
-                            Cancel
-                        </button>
+                <form onSubmit={handleSave} className="space-y-8 pt-6">
+                    <div className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="form-label font-bold uppercase tracking-wider text-[10px]">Credential Identity</label>
+                            <input
+                                required
+                                className="input-field font-bold text-lg"
+                                placeholder="Legal Full Name"
+                                value={currentUser?.fullName || ''}
+                                onChange={(e) => setCurrentUser({ ...currentUser, fullName: e.target.value })}
+                                minLength={2}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="form-label font-bold uppercase tracking-wider text-[10px]">Communication Channel</label>
+                            <input
+                                required
+                                type="email"
+                                className="input-field font-semibold"
+                                placeholder="Corporate Email Address"
+                                value={currentUser?.email || ''}
+                                onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="form-label font-bold uppercase tracking-wider text-[10px]">System Access Level</label>
+                                <select
+                                    className="input-field font-bold text-xs"
+                                    value={currentUser?.role || 'AUTH_USER'}
+                                    onChange={(e) => setCurrentUser({ ...currentUser, role: e.target.value })}
+                                >
+                                    {roles.map(role => (
+                                        <option key={role.code} value={role.code}>{role.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="form-label font-bold uppercase tracking-wider text-[10px]">Operational State</label>
+                                <select
+                                    className="input-field font-bold text-xs"
+                                    value={currentUser?.userStatus || 'NEW'}
+                                    onChange={(e) => setCurrentUser({ ...currentUser, userStatus: e.target.value })}
+                                >
+                                    <option value="NEW">PROVISIONAL (NEW)</option>
+                                    <option value="ACTIVE">ACTIVE TRANSIT</option>
+                                    <option value="INACTIVE">DECOMMISSIONED</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 pt-10 border-t" style={{ borderColor: 'var(--border)' }}>
+                            <button
+                                type="submit"
+                                className="flex-1 btn-primary py-3 flex items-center justify-center gap-3 text-white"
+                            >
+                                <Save size={18} /> Save Profile
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsModalOpen(false)}
+                                className="btn-secondary px-10 py-3"
+                            >
+                                Abort
+                            </button>
+                        </div>
                     </div>
                 </form>
             </Modal>

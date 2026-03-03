@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, Eye, Edit, Trash, Calendar, User, Phone, MapPin, Briefcase, Info, Car, Wallet, ArrowRightLeft, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Eye, Edit, Trash, Calendar, User, Phone, MapPin, Briefcase, Info, Car, Wallet, ArrowRightLeft, X, Plus } from 'lucide-react';
+import clsx from 'clsx';
 import api from '../api';
 import Table from '../components/Table';
 import CustomerSearch from '../components/CustomerSearch';
@@ -122,7 +123,7 @@ const FollowUps = () => {
 
     const searchCustomers = async (searchTerm) => {
         try {
-            const response = await api.get(`/customers?search=${searchTerm}`);
+            const response = await api.get(`/customers?search=${searchTerm}`, { hideLoader: true });
             if (response.data.data) {
                 setCustomers(response.data.data);
             } else {
@@ -283,174 +284,168 @@ const FollowUps = () => {
     };
 
     const columns = [
-        { key: 'agent', label: 'Done By', render: (row) => row.agent?.fullName || 'N/A' },
         {
-            key: 'followupMode', label: 'Mode', render: (row) => (
-                <span className="capitalize">{row.followupMode}</span>
+            key: 'customer',
+            label: 'Stakeholder Identity',
+            render: (row) => (
+                <div className="flex flex-col">
+                    <span className="font-semibold text-[var(--text-primary)]">{row.enquiry?.customer?.fullName || 'N/A'}</span>
+                    <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider">{row.enquiry?.customer?.phone}</span>
+                </div>
             )
         },
-        { key: 'followupType', label: 'Type' },
-        { key: 'followupActionDone', label: 'Action' },
-        { key: 'followupCar', label: 'Vehicle', render: (row) => row.car?.registrationNumber || 'N/A' },
         {
-            key: 'followupResults', label: 'Results', render: (row) => (
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                    ${row.followupResults === 'Booked' ? 'bg-green-100 text-green-800' : ''}
-                    ${row.followupResults === 'Closed' ? 'bg-gray-100 text-gray-800' : ''}
-                    ${row.followupResults === 'Pending' ? 'bg-yellow-100 text-yellow-800' : ''}
-                    ${!row.followupResults || row.followupResults === '' ? 'bg-gray-50 text-gray-500' : ''}
-                `}>
-                    {row.followupResults || 'N/A'}
+            key: 'followupMode',
+            label: 'Interaction Channel',
+            render: (row) => (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border border-[var(--border)]">
+                    {row.followupMode}
                 </span>
             )
         },
-        { key: 'followupRemarks', label: 'Remarks', render: (row) => <span className="text-xs text-gray-500 truncate block max-w-[150px]">{row.followupRemarks}</span> },
-        { key: 'nextVisitDate', label: 'Next Visit', render: (row) => row.nextVisitDate ? <span className="text-blue-600 font-medium">{new Date(row.nextVisitDate).toLocaleDateString()}</span> : '-' },
-        { key: 'updatedAt', label: 'Updated At', render: (row) => new Date(row.updatedAt).toLocaleString() }
+        {
+            key: 'followupActionDone',
+            label: 'Follow-up Action',
+            render: (row) => (
+                <span className="text-sm font-medium text-[var(--text-primary)]">{row.followupActionDone}</span>
+            )
+        },
+        {
+            key: 'followupResults',
+            label: 'Engagement Outcome',
+            render: (row) => (
+                <span className={clsx(
+                    "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider",
+                    row.followupResults === 'Interested' ? 'bg-emerald-100 text-emerald-700' :
+                        row.followupResults === 'Pending' ? 'bg-amber-100 text-amber-700' :
+                            'bg-slate-100 text-slate-600'
+                )}>
+                    {row.followupResults || 'UNDETERMINED'}
+                </span>
+            )
+        },
+        {
+            key: 'followupRemarks',
+            label: 'Discussion Notes',
+            render: (row) => <span className="text-xs text-[var(--text-secondary)] truncate block max-w-[200px] italic">"{row.followupRemarks}"</span>
+        },
+        {
+            key: 'nextVisitDate',
+            label: 'Next Follow-up',
+            render: (row) => (
+                row.nextVisitDate ? (
+                    <div className="flex items-center gap-2 text-[var(--accent)] font-bold">
+                        <Calendar size={14} />
+                        <span className="text-xs">{new Date(row.nextVisitDate).toLocaleDateString()}</span>
+                    </div>
+                ) : <span className="text-[var(--text-muted)]">—</span>
+            )
+        }
     ];
 
     return (
         <div>
-            {/* Details Section */}
+            {/* Summary Details Section */}
             {enquiryDetails && (
-                <div className="bg-white shadow-lg rounded-xl mb-6 overflow-hidden border border-indigo-50">
+                <div className="mb-10 animate-fade-in-up">
                     <div
-                        className="bg-indigo-50 px-6 py-4 border-b border-indigo-100 flex justify-between items-center cursor-pointer hover:bg-indigo-100 transition-colors"
-                        onClick={() => setIsDetailsExpanded(!isDetailsExpanded)}
+                        className="p-8 bg-[var(--surface)] border border-[var(--border)] rounded-[2rem] shadow-md overflow-hidden relative group"
                     >
-                        <div className="flex items-center gap-2 text-indigo-900">
-                            <Info size={20} />
-                            <h2 className="text-lg font-semibold">Enquiry & Customer Snapshot</h2>
-                        </div>
-                        {isDetailsExpanded ? <ChevronUp className="h-5 w-5 text-indigo-500" /> : <ChevronDown className="h-5 w-5 text-indigo-500" />}
-                    </div>
+                        <div className="absolute top-0 left-0 w-2 h-full bg-[var(--accent)]/10 group-hover:bg-[var(--accent)]/20 transition-all"></div>
 
-                    {isDetailsExpanded && (
-                        <div className="px-6 py-6 sm:p-8">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 relative">
-                                {/* Divider for large screens */}
-                                <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-gray-200 transform -translate-x-1/2"></div>
-
-                                {/* Customer Section */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-2 pb-2 mb-2 border-b border-gray-100">
-                                        <User className="text-blue-500" size={18} />
-                                        <h3 className="text-md font-bold text-gray-800">Customer Details</h3>
+                        <div className="flex flex-col lg:flex-row gap-10">
+                            {/* Client Identification */}
+                            <div className="flex-1 space-y-6">
+                                <div className="flex items-center gap-3 pb-4 border-b border-[var(--border)]">
+                                    <div className="p-2 bg-[var(--accent)]/10 rounded-xl text-[var(--accent)]">
+                                        <User size={18} />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-y-4 gap-x-6">
-                                        <div>
-                                            <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Full Name</dt>
-                                            <dd className="mt-1 text-sm font-medium text-gray-900">{enquiryDetails.customer?.fullName}</dd>
-                                        </div>
-                                        <div>
-                                            <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Type</dt>
-                                            <dd className={`mt-1 text-xs inline-flex font-semibold px-2 py-0.5 rounded-full ${enquiryDetails.customer?.customerType === 'Customer' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                                {enquiryDetails.customer?.customerType}
-                                            </dd>
-                                        </div>
-                                        <div className="col-span-2">
-                                            <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                                                <Phone size={12} /> Contact
-                                            </dt>
-                                            <dd className="mt-1 text-sm text-gray-900">
-                                                {enquiryDetails.customer?.phone}
-                                                {enquiryDetails.customer?.altPhone && <span className="text-gray-500"> / {enquiryDetails.customer?.altPhone}</span>}
-                                            </dd>
-                                        </div>
-                                        <div className="col-span-2">
-                                            <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                                                <MapPin size={12} /> Address
-                                            </dt>
-                                            <dd className="mt-1 text-sm text-gray-900 truncate">
-                                                {enquiryDetails.customer?.address || 'N/A'}, {enquiryDetails.customer?.city}
-                                            </dd>
-                                        </div>
-                                        {enquiryDetails.customer?.profession && (
-                                            <div>
-                                                <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                                                    <Briefcase size={12} /> Profession
-                                                </dt>
-                                                <dd className="mt-1 text-sm text-gray-900">{enquiryDetails.customer?.profession}</dd>
-                                            </div>
-                                        )}
-                                        {enquiryDetails.customer?.source && (
-                                            <div>
-                                                <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Source</dt>
-                                                <dd className="mt-1 text-sm text-gray-900">{enquiryDetails.customer?.source}</dd>
-                                            </div>
-                                        )}
+                                    <div>
+                                        <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--text-secondary)]">Stakeholder Identity</h3>
+                                        <p className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-widest">Primary Contact & Classification</p>
                                     </div>
                                 </div>
 
-                                {/* Enquiry Section */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-2 pb-2 mb-2 border-b border-gray-100">
-                                        <Car className="text-purple-500" size={18} />
-                                        <h3 className="text-md font-bold text-gray-800">Enquiry Info</h3>
+                                <div className="grid grid-cols-2 gap-8">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Full Legal Name</p>
+                                        <p className="text-lg font-semibold text-[var(--text-primary)]">{enquiryDetails.customer?.fullName}</p>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-y-4 gap-x-6">
-                                        <div className="col-span-2">
-                                            <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Car Interest</dt>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Business Classification</p>
+                                        <span className={clsx(
+                                            "inline-flex items-center px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider",
+                                            enquiryDetails.customer?.customerType === 'Customer' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                                        )}>
+                                            {enquiryDetails.customer?.customerType || 'PROSPECT'}
+                                        </span>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Communication Channel</p>
+                                        <p className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-3">
+                                            {enquiryDetails.customer?.phone}
+                                            {enquiryDetails.customer?.altPhone && <span className="text-[var(--text-muted)] font-normal text-xs"> / {enquiryDetails.customer?.altPhone}</span>}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
 
-                                            <dd className="mt-1 text-sm font-bold text-indigo-700">
-                                                {enquiryDetails.carDetails && enquiryDetails.carDetails.length > 0
-                                                    ? enquiryDetails.carDetails
-                                                        .map(car => `${car.carBrand} - ${car.carType} - ${car.carModel} ${car.carVariant}`)
-                                                        .join(' | ') // Joins all strings with ' | ' as a separator
-                                                    : 'ANY'
-                                                }
-                                            </dd>
-                                        </div>
-                                        <div>
-                                            <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                                                <Wallet size={12} /> Budget
-                                            </dt>
-                                            <dd className="mt-1 text-sm text-gray-900">{enquiryDetails.budgetRange || 'N/A'}</dd>
-                                        </div>
-                                        <div>
-                                            <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</dt>
-                                            <dd className={`mt-1 text-xs inline-flex font-semibold px-2 py-0.5 rounded-full 
-                                                ${enquiryDetails.status === 'new' ? 'bg-blue-100 text-blue-800' : ''}
-                                                ${enquiryDetails.status === 'purchased' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
-                                                            `}>
-                                                {enquiryDetails.status}
-                                            </dd>
-                                        </div>
-                                        <div>
-                                            <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Enquiry Type</dt>
-                                            <dd className="mt-1 text-sm text-gray-900">{enquiryDetails.enquiryType || 'Buy'}</dd>
-                                        </div>
-                                        <div>
-                                            <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Payment Mode</dt>
-                                            <dd className="mt-1 text-sm text-gray-900">{enquiryDetails.paymentMode || 'N/A'}</dd>
-                                        </div>
-                                        {enquiryDetails.exchange && (
-                                            <div className="col-span-2 bg-yellow-50 p-2 rounded border border-yellow-100">
-                                                <dt className="text-xs font-semibold text-yellow-700 uppercase tracking-wider flex items-center gap-1">
-                                                    <ArrowRightLeft size={12} /> Exchange
-                                                </dt>
-                                                <dd className="mt-1 text-sm text-yellow-900">{enquiryDetails.exchangeDetail}</dd>
-                                            </div>
-                                        )}
+                            {/* Acquisition Context */}
+                            <div className="flex-1 space-y-6">
+                                <div className="flex items-center gap-3 pb-4 border-b border-[var(--border)]">
+                                    <div className="p-2 bg-[var(--accent)]/10 rounded-xl text-[var(--accent)]">
+                                        <Car size={18} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--text-secondary)]">Acquisition Context</h3>
+                                        <p className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-widest">Requirement Profile & lifecycle</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-8">
+                                    <div className="col-span-2">
+                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Vehicle Match</p>
+                                        <p className="text-sm font-bold text-[var(--accent)] lg:truncate" title={enquiryDetails.carDetails?.map(car => car.carModel).join(' • ')}>
+                                            {enquiryDetails.carDetails && enquiryDetails.carDetails.length > 0
+                                                ? enquiryDetails.carDetails.map(car => car.carModel).join(' • ')
+                                                : 'UNSPECIFIED ASSET'
+                                            }
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Current Lifecycle</p>
+                                        <span className={clsx(
+                                            "inline-flex items-center px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider",
+                                            enquiryDetails.status === 'new' ? 'bg-indigo-100 text-indigo-700' :
+                                                enquiryDetails.status === 'purchased' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                                        )}>
+                                            {enquiryDetails.status?.replace(/-/g, ' ')}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Allocated Budget</p>
+                                        <p className="text-sm font-bold">{enquiryDetails.budgetRange || 'OPEN BUDGET'}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    )}
+                    </div>
                 </div>
             )}
 
-            <div className="flex flex-col md:flex-row md:items-center justify-between my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                <h1 className="text-xl font-bold text-gray-800">
-                    {filterEnquiryId ? 'Enquiry Follow Ups' : 'Follow Ups'}
-                </h1>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-8 animate-fade-in">
+                <div>
+                    <h1 className="text-4xl font-semibold mb-2 text-[var(--text-primary)]">Follow-ups</h1>
+                    <p className="text-sm font-medium text-[var(--text-secondary)]">Traceable communication logs and customer engagement history.</p>
+                </div>
+
+                <div className="flex items-center gap-3">
                     {filterEnquiryId && (
                         <button
                             onClick={() => navigate('/follow-ups')}
-                            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors whitespace-nowrap text-sm font-medium"
+                            className="btn-secondary px-6"
                         >
-                            Display All Followups
+                            Global View
                         </button>
                     )}
                     <button
@@ -470,188 +465,188 @@ const FollowUps = () => {
                             setIsViewMode(false);
                             setIsModalOpen(true);
                         }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium"
+                        className="btn-primary flex items-center gap-3 !py-2 !px-6"
                     >
-                        <Calendar size={18} /> Schedule Follow-up
+                        <Plus size={18} /> New Interaction
                     </button>
                 </div>
             </div>
 
-            {/* Form Block (Collapsible) */}
             {isModalOpen && (
-                <div className="bg-white rounded-lg shadow-lg p-6 mb-6 relative animate-fade-in-down border-l-4 border-amber-500">
-                    <button
-                        onClick={() => setIsModalOpen(false)}
-                        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-                    >
-                        <X size={24} />
-                    </button>
-
-                    <h2 className="text-xl font-semibold mb-4 text-gray-800">
-                        {isViewMode ? 'Follow-up Details' : (currentFollowUp?.followUpId ? 'Edit Follow-up' : 'Schedule Follow-up')}
-                    </h2>
-
-                    <form onSubmit={handleSave} className="space-y-4">
-                        <fieldset disabled={isViewMode} className="contents">
-                            {/* In Add Mode, show selection. If context is locked, we still show them but disabled */}
-                            {!currentFollowUp?.followUpId && !isViewMode && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 rounded">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Customer</label>
-                                        <CustomerSearch
-                                            customers={customers}
-                                            onSearch={searchCustomers}
-                                            onSelect={handleCustomerSelect}
-                                            selectedCustomer={selectedCustomer}
-                                            disabled={!!filterEnquiryId}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Enquiry</label>
-                                        <EnquirySearch
-                                            enquiries={filterEnquiryId ? [enquiryDetails] : customerEnquiries} // Show only the active enquiry if filtered
-                                            onSelect={handleEnquirySelect}
-                                            selectedEnquiry={selectedEnquiry}
-                                            disabled={!selectedCustomer || !!filterEnquiryId}
-                                        />
-                                    </div>
+                <div className="mb-12 animate-fade-in-up">
+                    <div className="bg-[var(--surface)] p-1 rounded-[2.5rem] shadow-2xl border border-[var(--border)] overflow-hidden relative group">
+                        <div className="absolute top-0 left-0 w-2 h-full bg-[var(--accent)] transition-all"></div>
+                        <div className="p-8 space-y-10">
+                            <div className="flex justify-between items-start pb-6 border-b" style={{ borderColor: 'var(--border)' }}>
+                                <div>
+                                    <h2 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">
+                                        {isViewMode ? 'Interaction Details' : (currentFollowUp?.followUpId ? 'Update Interaction' : 'New Interaction')}
+                                    </h2>
+                                    <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em] mt-1">Logged communication and engagement outcomes</p>
                                 </div>
-                            )}
+                                <button
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="p-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors text-[var(--text-muted)]"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
 
-                            {(currentFollowUp?.followUpId || isViewMode) && (
-                                <div className="bg-blue-50 p-3 rounded text-sm text-blue-800 mb-2 border border-blue-100 flex justify-between items-center">
-                                    <div>
-                                        <p>
-                                            <span className="font-semibold">Customer:</span> {currentFollowUp.enquiry?.customer?.fullName || 'N/A'}
-                                            {currentFollowUp.enquiry?.customer?.phone && <span className="ml-1 text-gray-500 text-xs">({currentFollowUp.enquiry.customer.phone})</span>}
-                                        </p>
-                                        <p>
-                                            <span className="font-semibold">Enquiry:</span> {(() => {
-                                                const firstCar = currentFollowUp.enquiry?.carDetails?.[0];
-                                                if (firstCar) return `${firstCar.carBrand} - ${firstCar.carModel} ${firstCar.carVariant}`;
-                                                return currentFollowUp.enquiry?.carInterest || 'N/A';
-                                            })()}
-                                            <span className="mx-2 text-gray-300">|</span>
-                                            <span className="font-semibold">Status:</span>
-                                            <span className="ml-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] uppercase font-bold">
-                                                {currentFollowUp.enquiry?.status || 'N/A'}
-                                            </span>
-                                        </p>
-                                    </div>
-                                    {isViewMode && (
-                                        <div className="text-right">
-                                            <p className="text-xs text-blue-600 uppercase font-semibold">Follow-up ID</p>
-                                            <p>{currentFollowUp.followUpId}</p>
+                            <form onSubmit={handleSave} className="space-y-8">
+                                <fieldset disabled={isViewMode} className="contents">
+                                    {/* Enquiry Selection */}
+                                    {!currentFollowUp?.followUpId && !isViewMode && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-[var(--bg-tertiary)] rounded-lg border shadow-sm" style={{ borderColor: 'var(--border)' }}>
+                                            <div className="space-y-3">
+                                                <label className="form-label">Select Customer</label>
+                                                <CustomerSearch
+                                                    customers={customers}
+                                                    onSearch={searchCustomers}
+                                                    onSelect={handleCustomerSelect}
+                                                    selectedCustomer={selectedCustomer}
+                                                    disabled={!!filterEnquiryId}
+                                                />
+                                            </div>
+                                            <div className="space-y-3">
+                                                <label className="form-label">Select Enquiry</label>
+                                                <EnquirySearch
+                                                    enquiries={filterEnquiryId ? [enquiryDetails] : customerEnquiries}
+                                                    onSelect={handleEnquirySelect}
+                                                    selectedEnquiry={selectedEnquiry}
+                                                    disabled={!selectedCustomer || !!filterEnquiryId}
+                                                />
+                                            </div>
                                         </div>
                                     )}
-                                </div>
-                            )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Mode <span className="text-red-500">*</span></label>
-                                    <select
-                                        className="mt-1 block w-full border p-2 rounded-md"
-                                        value={currentFollowUp?.followupMode || ''}
-                                        onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, followupMode: e.target.value })}
+                                    {(currentFollowUp?.followUpId || isViewMode) && (
+                                        <div className="flex flex-col md:flex-row items-center justify-between p-8 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-3xl gap-6">
+                                            <div className="flex items-center gap-6">
+                                                <div className="w-16 h-16 bg-[var(--accent)] text-white rounded-2xl flex items-center justify-center font-bold text-xl shadow-lg shadow-[var(--accent)]/20">
+                                                    {currentFollowUp.enquiry?.customer?.fullName?.charAt(0) || 'S'}
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--accent)] mb-2">Authenticated Stakeholder</p>
+                                                    <h4 className="text-xl font-semibold tracking-tight text-[var(--text-primary)] leading-none">{currentFollowUp.enquiry?.customer?.fullName || 'UNREGISTERED'}</h4>
+                                                    <p className="text-xs font-bold text-[var(--text-muted)] mt-2 uppercase tracking-widest">{currentFollowUp.enquiry?.customer?.phone}</p>
+                                                </div>
+                                            </div>
+                                            <div className="md:text-right px-6 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-sm">
+                                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)] mb-1">Portfolio Lifecycle</p>
+                                                <span className="text-xs font-bold text-[var(--accent)] uppercase tracking-widest">
+                                                    {currentFollowUp.enquiry?.status || 'N/A'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-2">
+                                            <label className="form-label">Interaction Mode <span className="text-red-500">*</span></label>
+                                            <select
+                                                className="input-field"
+                                                value={currentFollowUp?.followupMode || ''}
+                                                onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, followupMode: e.target.value })}
+                                            >
+                                                <option value="">Select Mode...</option>
+                                                {getOpt('FOLLOWUP_MODES').map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="form-label">Interaction Type <span className="text-red-500">*</span></label>
+                                            <select
+                                                className="input-field disabled:opacity-50"
+                                                value={currentFollowUp?.followupType || ''}
+                                                onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, followupType: e.target.value })}
+                                                disabled={!currentFollowUp?.followupMode}
+                                            >
+                                                <option value="">{currentFollowUp?.followupMode ? 'Select Type...' : 'Select Mode First...'}</option>
+                                                {filteredFollowupTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-2">
+                                            <label className="form-label">Action Performed <span className="text-red-500">*</span></label>
+                                            <select
+                                                className="input-field"
+                                                value={currentFollowUp?.followupActionDone || ''}
+                                                onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, followupActionDone: e.target.value })}
+                                            >
+                                                <option value="">Select Action...</option>
+                                                {getOpt('FOLLOWUP_ACTIONS').map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="form-label">
+                                                Vehicle Number {VEHICLE_ACTIONS.includes(currentFollowUp?.followupActionDone?.toLowerCase()) ? <span className="text-[var(--text-muted)] font-normal font-sans ml-1">(Optional)</span> : <span className="text-red-500">*</span>}
+                                            </label>
+                                            <VehicleAutocomplete
+                                                className="!mt-0"
+                                                placeholder="Search by registration number..."
+                                                value={currentFollowUp?.car?.registrationNumber || ''}
+                                                onChange={(car) => setCurrentFollowUp({ ...currentFollowUp, car: car || null })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        <div className="space-y-2">
+                                            <label className="form-label">Follow-up Result <span className="text-red-500">*</span></label>
+                                            <select
+                                                className="input-field"
+                                                value={currentFollowUp?.followupResults || ''}
+                                                onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, followupResults: e.target.value })}
+                                            >
+                                                <option value="">Select Result...</option>
+                                                {getOpt('FOLLOWUP_RESULTS').map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="form-label">Next Visit/Follow-up Date
+                                                {NEXT_VISIT_ACTIONS.includes(currentFollowUp?.followupResults?.toLowerCase()) ? <span className="text-[var(--text-muted)] font-normal font-sans ml-1">(Optional)</span> : <span className="text-red-500">*</span>}
+                                            </label>
+                                            <input
+                                                type="datetime-local"
+                                                className="input-field"
+                                                min={getMinDateTime()}
+                                                value={currentFollowUp?.nextVisitDate ? new Date(currentFollowUp.nextVisitDate).toISOString().slice(0, 16) : ''}
+                                                onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, nextVisitDate: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="form-label">Interaction Remarks</label>
+                                            <textarea
+                                                className="input-field min-h-[42px] py-2 resize-none"
+                                                placeholder="Key discussion points..."
+                                                value={currentFollowUp?.followupRemarks || ''}
+                                                onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, followupRemarks: e.target.value })}
+                                            ></textarea>
+                                        </div>
+                                    </div>
+                                </fieldset>
+
+                                <div className="flex justify-end gap-5 pt-10 border-t border-[var(--border)]">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsModalOpen(false)}
+                                        className="px-8 py-3 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl text-[10px] font-bold uppercase tracking-widest text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-all shadow-sm"
                                     >
-                                        <option value="">Select...</option>
-                                        {getOpt('FOLLOWUP_MODES').map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-                                    </select>
+                                        {isViewMode ? 'Exit Transcript' : 'Discard Record'}
+                                    </button>
+                                    {!isViewMode && (
+                                        <button
+                                            type="submit"
+                                            className="btn-primary px-10 py-3 shadow-lg shadow-[var(--accent)]/20"
+                                        >
+                                            Authenticate & Save Record
+                                        </button>
+                                    )}
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Type <span className="text-red-500">*</span></label>
-                                    <select
-                                        className="mt-1 block w-full border p-2 rounded-md"
-                                        value={currentFollowUp?.followupType || ''}
-                                        onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, followupType: e.target.value })}
-                                        disabled={!currentFollowUp?.followupMode}
-                                    >
-                                        <option value="">{currentFollowUp?.followupMode ? 'Select Type...' : 'Select Mode First...'}</option>
-                                        {filteredFollowupTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Action Done <span className="text-red-500">*</span></label>
-                                    <select
-                                        className="mt-1 block w-full border p-2 rounded-md"
-                                        value={currentFollowUp?.followupActionDone || ''}
-                                        onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, followupActionDone: e.target.value })}
-                                    >
-                                        <option value="">Select...</option>
-                                        {getOpt('FOLLOWUP_ACTIONS').map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Vehicle (Used for Visit) {VEHICLE_ACTIONS.includes(currentFollowUp?.followupActionDone?.toLowerCase()) ? <span className="text-gray-400 font-normal">(Optional)</span> : <span className="text-red-500">*</span>}
-                                    </label>
-                                    <VehicleAutocomplete
-                                        className="mt-1"
-                                        placeholder="Enter vehicle number"
-                                        value={currentFollowUp?.car?.registrationNumber || ''}
-                                        onChange={(car) => setCurrentFollowUp({ ...currentFollowUp, car: car || null })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Results <span className="text-red-500">*</span></label>
-                                    <select
-                                        className="mt-1 block w-full border p-2 rounded-md"
-                                        value={currentFollowUp?.followupResults || ''}
-                                        onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, followupResults: e.target.value })}
-                                    >
-                                        <option value="">Select...</option>
-                                        {getOpt('FOLLOWUP_RESULTS').map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Next Visit Date
-                                        {NEXT_VISIT_ACTIONS.includes(currentFollowUp?.followupResults?.toLowerCase()) ? <span className="text-gray-400 font-normal">(Optional)</span> : <span className="text-red-500">*</span>}
-                                    </label>
-                                    <input
-                                        type="datetime-local"
-                                        className="mt-1 block w-full border p-2 rounded-md" min={getMinDateTime()}
-                                        value={currentFollowUp?.nextVisitDate ? new Date(currentFollowUp.nextVisitDate).toISOString().slice(0, 16) : ''}
-                                        onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, nextVisitDate: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Remarks</label>
-                                <textarea
-                                    className="mt-1 block w-full border p-2 rounded-md"
-                                    rows="3"
-                                    value={currentFollowUp?.followupRemarks || ''}
-                                    onChange={(e) => setCurrentFollowUp({ ...currentFollowUp, followupRemarks: e.target.value })}
-                                ></textarea>
-                            </div>
-                        </fieldset>
-
-                        <div className="flex justify-end gap-3 pt-4 border-t">
-                            {!isViewMode && (
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                >
-                                    Save Follow-up
-                                </button>
-                            )}
-                            <button
-                                type="button"
-                                onClick={() => setIsModalOpen(false)}
-                                className="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-50 bg-white"
-                            >
-                                {isViewMode ? 'Close' : 'Cancel'}
-                            </button>
+                            </form>
                         </div>
-                    </form>
+                    </div>
                 </div>
             )}
 
@@ -717,29 +712,50 @@ const FollowUps = () => {
             </div>
 
             {/* Pagination Controls */}
-            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-lg shadow">
+            <div className="flex items-center justify-between border-t bg-[var(--surface)] px-6 py-4 mt-8 rounded-lg border shadow-sm" style={{ borderColor: 'var(--border)' }}>
                 <div className="flex flex-1 justify-between sm:hidden">
-                    <button onClick={() => setPage(prev => Math.max(prev - 1, 1))} disabled={page === 1} className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400">Previous</button>
-                    <button onClick={() => setPage(prev => Math.min(prev + 1, totalPages))} disabled={page === totalPages} className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400">Next</button>
+                    <button onClick={() => setPage(prev => Math.max(prev - 1, 1))} disabled={page === 1} className="btn-secondary px-4 !py-1">Previous</button>
+                    <button onClick={() => setPage(prev => Math.min(prev + 1, totalPages))} disabled={page === totalPages} className="btn-secondary px-4 !py-1">Next</button>
                 </div>
                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                     <div>
-                        <p className="text-sm text-gray-700">Showing <span className="font-medium">{(page - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(page * pageSize, totalFollowUps)}</span> of <span className="font-medium">{totalFollowUps}</span> results</p>
+                        <p className="text-xs font-medium text-[var(--text-secondary)]">
+                            Showing <span className="font-bold text-[var(--text-primary)]">{(page - 1) * pageSize + 1}</span> to <span className="font-bold text-[var(--text-primary)]">{Math.min(page * pageSize, totalFollowUps)}</span> of <span className="font-bold text-[var(--text-primary)]">{totalFollowUps}</span> results
+                        </p>
                     </div>
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center">
-                            <label htmlFor="pageSize" className="mr-2 text-sm text-gray-700">Rows per page:</label>
-                            <select id="pageSize" value={pageSize || 10} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="block w-full rounded-md border-gray-300 py-1.5 text-base leading-5 text-gray-900 focus:border-blue-500 focus:placeholder-gray-400 focus:outline-none focus:ring-blue-500 sm:text-sm">
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                            <label htmlFor="pageSize" className="text-xs font-medium text-[var(--text-secondary)]">Rows per page:</label>
+                            <select
+                                id="pageSize"
+                                value={pageSize || 10}
+                                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                                className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-md px-2 py-1 text-xs font-semibold text-[var(--text-primary)] outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                            >
                                 <option value={5}>5</option>
                                 <option value={10}>10</option>
                                 <option value={20}>20</option>
                                 <option value={50}>50</option>
                             </select>
                         </div>
-                        <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                            <button onClick={() => setPage(prev => Math.max(prev - 1, 1))} disabled={page === 1} className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:bg-gray-100"><span className="sr-only">Previous</span><svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" /></svg></button>
-                            <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">{page} / {totalPages}</span>
-                            <button onClick={() => setPage(prev => Math.min(prev + 1, totalPages))} disabled={page === totalPages} className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:bg-gray-100"><span className="sr-only">Next</span><svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" /></svg></button>
+                        <nav className="flex items-center gap-2" aria-label="Pagination">
+                            <button
+                                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                                disabled={page === 1}
+                                className="p-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--bg-tertiary)] disabled:opacity-30 transition-colors"
+                            >
+                                <ChevronDown size={16} className="rotate-90" />
+                            </button>
+                            <div className="text-xs font-bold text-[var(--text-primary)] px-2">
+                                {page} / {totalPages}
+                            </div>
+                            <button
+                                onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={page === totalPages}
+                                className="p-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--bg-tertiary)] disabled:opacity-30 transition-colors"
+                            >
+                                <ChevronDown size={16} className="-rotate-90" />
+                            </button>
                         </nav>
                     </div>
                 </div>

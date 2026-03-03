@@ -102,10 +102,12 @@
 }
 
 /* Hover effects for speed */
-.logo-animate-hover:hover .car-body {
+.logo-animate-hover:hover .car-body,
+.logo-animating .car-body {
     animation-duration: 0.3s;
 }
 
-.logo-animate-hover:hover .car-wheel {
+.logo-animate-hover:hover .car-wheel,
+.logo-animating .car-wheel {
     animation-duration: 0.4s;
 }

@@ -1,37 +1,78 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
-const Modal = ({ isOpen, onClose, title, children }) => {
+const Modal = ({
+    isOpen,
+    onClose,
+    title,
+    subtitle,
+    icon: Icon,
+    children,
+    footer,
+    maxWidth = 'max-w-xl'
+}) => {
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" aria-hidden="true" onClick={onClose}></div>
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div className="flex items-center justify-center min-h-screen p-4 text-center">
+                <div
+                    className="fixed inset-0 transition-opacity bg-black/60 backdrop-blur-sm animate-fade-in"
+                    aria-hidden="true"
+                    onClick={onClose}
+                ></div>
 
+                {/* This element is to trick the browser into centering the modal contents. */}
                 <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-                <div className="relative z-10 inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border-l-4 border-blue-600">
-                    <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div className="sm:flex sm:items-start">
-                            <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                                        {title}
-                                    </h3>
-                                    <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
-                                        <X size={20} />
-                                    </button>
-                                </div>
-                                <div className="mt-2">
-                                    {children}
-                                </div>
-                            </div>
+                <div className={`relative z-10 inline-block align-middle bg-[var(--surface)] w-full ${maxWidth} rounded-[2rem] shadow-2xl border border-[var(--border)] overflow-hidden transform transition-all animate-in zoom-in-95 duration-200 text-left`}>
+                    {/* Header */}
+                    <div className="p-8 border-b border-[var(--border)] bg-[var(--bg-secondary)]/30 flex justify-between items-center">
+                        <div>
+                            <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight flex items-center gap-4" id="modal-title">
+                                {Icon && (
+                                    <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-xl flex items-center justify-center text-[var(--accent)]">
+                                        <Icon size={20} />
+                                    </div>
+                                )}
+                                {title}
+                            </h3>
+                            {subtitle && (
+                                <p className="text-[10px] font-bold mt-2 uppercase tracking-[0.3em] text-[var(--accent)] opacity-60">
+                                    {subtitle}
+                                </p>
+                            )}
                         </div>
+                        <button
+                            onClick={onClose}
+                            className="p-3 hover:bg-[var(--bg-secondary)] rounded-2xl transition-all"
+                        >
+                            <X size={24} className="text-[var(--text-muted)]" />
+                        </button>
                     </div>
+
+                    {/* Content */}
+                    <div className="p-8">
+                        {children}
+                    </div>
+
+                    {/* Footer */}
+                    {footer && (
+                        <div
+                            className="px-8 bg-[var(--bg-secondary)]/30 border-t border-[var(--border)] flex justify-end gap-6"
+                            style={{
+                                paddingTop: '2rem',
+                                paddingBottom: 'calc(2rem + var(--safe-area-bottom))'
+                            }}
+                        >
+                            {footer}
+                        </div>
+                    )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

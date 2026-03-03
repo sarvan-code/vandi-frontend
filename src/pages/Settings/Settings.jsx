@@ -12,15 +12,13 @@ const Settings = () => {
     }
 
     return (
-        <div className="flex flex-col h-full bg-gray-50 animate-fade-in">
-            <div className="bg-white border-b px-6 py-4 flex items-center shadow-sm shrink-0">
-                <SettingsIcon className="w-6 h-6 text-blue-600 mr-3" />
-                <h1 className="text-xl font-bold text-gray-800">Settings & Configuration</h1>
-            </div>
+        <div className="flex flex-col h-full animate-fade-in">
+            {/* Header section is already handled by individual sub-pages for more control, 
+                but we can add a subtle shared context here if needed. 
+                For now, let's keep it clean since AppConfig and RoleConfig have their own titles. */}
 
             <div className="flex flex-1 overflow-hidden">
-                {/* Content Area - Now full width since sub-menu is in main sidebar */}
-                <div className="flex-1 overflow-auto p-6 no-scrollbar">
+                <div className="flex-1 overflow-auto p-2 md:p-8 no-scrollbar">
                     <Outlet />
                 </div>
             </div>

@@ -26,49 +26,52 @@ import { OptionsProvider } from './context/OptionsContext';
 import { WorkspaceProvider } from './context/WorkspaceContext';
 import { FinanceWorkspaceProvider } from './context/FinanceWorkspaceContext';
 import Loading from './components/Loading';
+import { ThemeProvider } from './context/ThemeContext';
 
 function App() {
   return (
-    <AuthProvider>
-      <Loading />
-      <OptionsProvider>
-        <WorkspaceProvider>
-          <FinanceWorkspaceProvider>
-            <ToastProvider>
-              <Router>
-                <Routes>
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <Loading />
+        <OptionsProvider>
+          <WorkspaceProvider>
+            <FinanceWorkspaceProvider>
+              <ToastProvider>
+                <Router>
+                  <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
 
-                  <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                    <Route index element={<Dashboard />} />
-                    <Route path="enquiries" element={<ProtectedRoute allowedRoles={['SALES_REP', 'SALES_MGR', 'EXECUTIVE']}><Enquiries /></ProtectedRoute>} />
-                    <Route path="profile" element={<UserProfile />} />
+                    <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                      <Route index element={<Dashboard />} />
+                      <Route path="enquiries" element={<ProtectedRoute allowedRoles={['SALES_REP', 'SALES_MGR', 'EXECUTIVE']}><Enquiries /></ProtectedRoute>} />
+                      <Route path="profile" element={<UserProfile />} />
 
-                    {/* Admin/Super User Only Pages */}
-                    <Route path="customers" element={<ProtectedRoute allowedRoles={['EXECUTIVE']}><Customers /></ProtectedRoute>} />
-                    <Route path="follow-ups" element={<ProtectedRoute allowedRoles={['EXECUTIVE']}><FollowUps /></ProtectedRoute>} />
-                    <Route path="cars" element={<ProtectedRoute allowedRoles={['EXECUTIVE', 'SALES_REP', 'SALES_MGR']}><Cars /></ProtectedRoute>} />
-                    <Route path="users" element={<ProtectedRoute allowedRoles={['HR_MGR', 'HR_ASSIS', 'EXECUTIVE']}><Users /></ProtectedRoute>} />
+                      {/* Admin/Super User Only Pages */}
+                      <Route path="customers" element={<ProtectedRoute allowedRoles={['EXECUTIVE']}><Customers /></ProtectedRoute>} />
+                      <Route path="follow-ups" element={<ProtectedRoute allowedRoles={['EXECUTIVE']}><FollowUps /></ProtectedRoute>} />
+                      <Route path="cars" element={<ProtectedRoute allowedRoles={['EXECUTIVE', 'SALES_REP', 'SALES_MGR']}><Cars /></ProtectedRoute>} />
+                      <Route path="users" element={<ProtectedRoute allowedRoles={['HR_MGR', 'HR_ASSIS', 'EXECUTIVE']}><Users /></ProtectedRoute>} />
 
-                    {/* Finance Routes */}
-                    <Route path="bookings" element={<ProtectedRoute allowedRoles={['ACCOUNTANT', 'EXECUTIVE']}><Bookings /></ProtectedRoute>} />
+                      {/* Finance Routes */}
+                      <Route path="bookings" element={<ProtectedRoute allowedRoles={['ACCOUNTANT', 'EXECUTIVE']}><Bookings /></ProtectedRoute>} />
 
-                    <Route path="settings" element={<ProtectedRoute allowedRoles={['HR_MGR', 'HR_ASSIS']}><Settings /></ProtectedRoute>}>
-                      <Route index element={<SettingsRedirect />} />
-                      <Route path="app-config" element={<ProtectedRoute allowedRoles={['APP_OWNER', 'SYS_ADMIN', 'DEV']}><AppConfig /></ProtectedRoute>} />
-                      <Route path="role-config" element={<ProtectedRoute allowedRoles={['APP_OWNER', 'SYS_ADMIN', 'DEV']}><RoleConfig /></ProtectedRoute>} />
-                      <Route path="user-config" element={<ProtectedRoute allowedRoles={['HR_MGR', 'HR_ASSIS']}><UserConfig /></ProtectedRoute>} />
-                      <Route path="branch-config" element={<ProtectedRoute allowedRoles={['APP_OWNER', 'SYS_ADMIN', 'DEV']}><BranchConfig /></ProtectedRoute>} />
+                      <Route path="settings" element={<ProtectedRoute allowedRoles={['HR_MGR', 'HR_ASSIS']}><Settings /></ProtectedRoute>}>
+                        <Route index element={<SettingsRedirect />} />
+                        <Route path="app-config" element={<ProtectedRoute allowedRoles={['APP_OWNER', 'SYS_ADMIN', 'DEV']}><AppConfig /></ProtectedRoute>} />
+                        <Route path="role-config" element={<ProtectedRoute allowedRoles={['APP_OWNER', 'SYS_ADMIN', 'DEV']}><RoleConfig /></ProtectedRoute>} />
+                        <Route path="user-config" element={<ProtectedRoute allowedRoles={['HR_MGR', 'HR_ASSIS']}><UserConfig /></ProtectedRoute>} />
+                        <Route path="branch-config" element={<ProtectedRoute allowedRoles={['APP_OWNER', 'SYS_ADMIN', 'DEV']}><BranchConfig /></ProtectedRoute>} />
+                      </Route>
                     </Route>
-                  </Route>
-                </Routes>
-              </Router>
-            </ToastProvider>
-          </FinanceWorkspaceProvider>
-        </WorkspaceProvider>
-      </OptionsProvider>
-    </AuthProvider>
+                  </Routes>
+                </Router>
+              </ToastProvider>
+            </FinanceWorkspaceProvider>
+          </WorkspaceProvider>
+        </OptionsProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
+import clsx from 'clsx';
 import { DollarSign, Plus, FileText, Phone, X } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../context/ToastContext';
@@ -182,66 +183,77 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
     ];
 
     return (
-        <div className="space-y-6">
-            {/* Status Override */}
+        <div className="space-y-12 animate-fade-in">
+            {/* Status Transition Action */}
             {booking.status !== 'ready_for_delivery' && booking.status !== 'COMPLETED' && (
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-center justify-between">
-                    <div>
-                        <h4 className="font-semibold text-orange-800">Ready for Delivery?</h4>
-                        <p className="text-sm text-orange-700">
-                            Move to delivery phase even if payment is pending (e.g., balance to be paid at RTO).
-                        </p>
+                <div className="card p-6 border border-[var(--border)] bg-[var(--bg-tertiary)] flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-amber-600/10 rounded-lg flex items-center justify-center text-amber-600">
+                            <Plus size={24} className="rotate-45" />
+                        </div>
+                        <div>
+                            <h4 className="text-lg font-bold tracking-tight text-[var(--text-primary)]">Workflow Progression</h4>
+                            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mt-0.5">
+                                Transition Asset to Delivery Readiness
+                            </p>
+                        </div>
                     </div>
                     <button
                         onClick={handleMoveToDelivery}
                         disabled={submitting}
-                        className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 font-medium whitespace-nowrap"
+                        className="btn-primary !bg-slate-900 !text-white hover:!bg-black px-8 py-3 rounded-lg text-xs font-bold uppercase tracking-widest shadow-lg transition-all active:scale-95"
                     >
-                        Move to Delivery
+                        Mark Ready for Delivery
                     </button>
                 </div>
             )}
 
-            {/* Section A: Payment Collection Block */}
-            <div className="bg-white rounded-lg shadow-lg border-2 border-blue-200">
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <DollarSign size={24} />
-                        <h3 className="text-lg font-semibold">Collect Payment</h3>
+            {/* Payment Registry */}
+            <div className="card overflow-hidden border border-[var(--border)] shadow-sm">
+                <div className="px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-tertiary)] flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center text-[var(--accent)]">
+                            <DollarSign size={16} />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Transaction Ledger</h3>
+                        </div>
                     </div>
                     <button
                         onClick={() => setShowPaymentForm(!showPaymentForm)}
-                        className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium flex items-center gap-2"
+                        className={clsx(
+                            "btn-secondary !px-4 !py-2 !text-[10px] uppercase tracking-widest flex items-center gap-2",
+                            showPaymentForm ? "bg-rose-50 text-rose-600 border-rose-100" : ""
+                        )}
                     >
-                        <Plus size={18} />
-                        {showPaymentForm ? 'Cancel' : 'Add Payment'}
+                        {showPaymentForm ? (
+                            <><X size={12} /> Cancel</>
+                        ) : (
+                            <><Plus size={12} /> Record Receipt</>
+                        )}
                     </button>
                 </div>
 
                 {showPaymentForm && (
-                    <form onSubmit={handlePaymentSubmit} className="p-6 bg-blue-50 border-t-2 border-blue-200">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Amount (₹) *
-                                </label>
+                    <form onSubmit={handlePaymentSubmit} className="p-8 bg-[var(--bg-secondary)] border-b border-[var(--border)] animate-in slide-in-from-top-4 duration-300">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div className="space-y-2">
+                                <label className="form-label ml-1">Receipt Amount (₹)</label>
                                 <input
                                     type="number"
                                     value={paymentData.amount}
                                     onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Enter amount"
+                                    className="input-field p-3 font-bold"
+                                    placeholder="0.00"
                                     required
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Payment Mode *
-                                </label>
+                            <div className="space-y-2">
+                                <label className="form-label ml-1">Payment Mode</label>
                                 <select
                                     value={paymentData.mode}
                                     onChange={(e) => setPaymentData({ ...paymentData, mode: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    className="input-field p-3 font-bold"
                                 >
                                     <option value="cash">Cash</option>
                                     <option value="upi">UPI</option>
@@ -250,106 +262,86 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                                     <option value="cheque">Cheque</option>
                                 </select>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Transaction/Ref ID
-                                </label>
+                            <div className="space-y-2">
+                                <label className="form-label ml-1">Ref ID / Remarks</label>
                                 <input
                                     type="text"
                                     value={paymentData.referenceId}
                                     onChange={(e) => setPaymentData({ ...paymentData, referenceId: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Optional"
+                                    className="input-field p-3 font-bold uppercase text-[10px] tracking-wider"
+                                    placeholder="TRACE ID..."
                                 />
                             </div>
                             <div className="flex items-end">
                                 <button
                                     type="submit"
                                     disabled={submitting}
-                                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                                    className="w-full btn-primary !py-3 flex items-center justify-center gap-2 disabled:opacity-50 transition-all font-bold text-xs uppercase tracking-widest"
                                 >
-                                    {submitting ? 'Recording...' : 'Record Payment & Generate Receipt'}
+                                    {submitting ? 'RECORDING...' : 'COMMIT RECEIPT'}
                                 </button>
                             </div>
                         </div>
                     </form>
                 )}
-            </div>
-
-            {/* Section B: Transaction History Ledger */}
-            <div className="bg-white rounded-lg shadow">
-                <div className="p-4 border-b flex items-center gap-2">
-                    <FileText size={20} className="text-gray-600" />
-                    <h3 className="text-lg font-semibold">Transaction History</h3>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Date
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Type
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Mode
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Amount
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Reference
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Receipt
-                                </th>
+                <div className="overflow-x-auto no-scrollbar">
+                    <table className="w-full text-xs">
+                        <thead>
+                            <tr className="bg-[var(--bg-tertiary)]">
+                                <th className="px-6 py-4 text-left text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Timestamp</th>
+                                <th className="px-6 py-4 text-left text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Type</th>
+                                <th className="px-6 py-4 text-left text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Mode</th>
+                                <th className="px-6 py-4 text-left text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Amount</th>
+                                <th className="px-6 py-4 text-left text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Reference</th>
+                                <th className="px-6 py-4 text-right text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Receipt</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="divide-y border-[var(--border)]">
                             {booking.transactions && booking.transactions.length > 0 ? (
                                 booking.transactions.map((transaction) => (
-                                    <tr key={transaction.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <tr key={transaction.id} className="group hover:bg-[var(--bg-tertiary)] transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap font-bold text-[var(--text-muted)] uppercase text-[9px]">
                                             {formatDate(transaction.date)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${transaction.type === 'advance' ? 'bg-blue-100 text-blue-800' :
-                                                transaction.type === 'part_payment' ? 'bg-green-100 text-green-800' :
-                                                    'bg-purple-100 text-purple-800'
-                                                }`}>
+                                            <span className={clsx(
+                                                "badge py-0.5 px-2 rounded-md font-bold uppercase tracking-wider text-[9px] border",
+                                                transaction.type === 'advance' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                                    transaction.type === 'part_payment' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                        'bg-[var(--bg-tertiary)] text-[var(--text-muted)] border-[var(--border)]'
+                                            )}>
                                                 {transaction.type.replace(/_/g, ' ')}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-[10px] font-bold text-[var(--text-muted)] uppercase">
                                             {transaction.mode}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                                        <td className="px-6 py-4 whitespace-nowrap font-extrabold text-[var(--text-primary)]">
                                             {formatCurrency(transaction.amount)}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {transaction.referenceId || '-'}
+                                        <td className="px-6 py-4 whitespace-nowrap text-[9px] font-mono font-bold text-[var(--text-muted)] uppercase">
+                                            {transaction.referenceId || '--'}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-[var(--accent)]">
                                             {transaction.receiptUrl ? (
                                                 <a
                                                     href={transaction.receiptUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-blue-600 hover:text-blue-800"
+                                                    className="inline-flex items-center gap-1 font-bold uppercase tracking-widest hover:underline"
                                                 >
-                                                    View PDF
+                                                    Receipt <FileText size={10} />
                                                 </a>
                                             ) : (
-                                                <span className="text-gray-400">Pending</span>
+                                                <span className="opacity-30">N/A</span>
                                             )}
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
-                                        No transactions yet
+                                    <td colSpan="6" className="px-6 py-12 text-center">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">No transactions found</p>
                                     </td>
                                 </tr>
                             )}
@@ -358,227 +350,202 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                 </div>
             </div>
 
-            {/* Section C: Follow-up Activity Stream */}
-            <div className="bg-white rounded-lg shadow">
-                <div className="p-4 border-b flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Phone size={20} className="text-gray-600" />
-                        <h3 className="text-lg font-semibold">Follow-up Activity</h3>
+            {/* Activities & Logistics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Interaction Registry */}
+                <div className="card flex flex-col border border-[var(--border)] overflow-hidden shadow-sm">
+                    <div className="px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-tertiary)] flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center text-[var(--accent)]">
+                                <Phone size={16} />
+                            </div>
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Communication Stream</h3>
+                        </div>
+                        <button
+                            onClick={() => setShowFollowUpForm(!showFollowUpForm)}
+                            className={clsx(
+                                "btn-secondary !px-4 !py-2 !text-[10px] uppercase tracking-widest",
+                                showFollowUpForm ? "bg-rose-50 text-rose-600" : ""
+                            )}
+                        >
+                            {showFollowUpForm ? 'Cancel' : 'Add Insight'}
+                        </button>
                     </div>
-                    <button
-                        onClick={() => setShowFollowUpForm(!showFollowUpForm)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
-                    >
-                        <Plus size={18} />
-                        {showFollowUpForm ? 'Cancel' : 'Log Call / Update'}
-                    </button>
-                </div>
-
-                {showFollowUpForm && (
-                    <form onSubmit={handleFollowUpSubmit} className="p-6 bg-gray-50 border-b">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Follow-up Type *
-                                </label>
-                                <select
-                                    value={followUpData.type}
-                                    onChange={(e) => setFollowUpData({ ...followUpData, type: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    required
-                                >
-                                    <option value="">Select type</option>
-                                    {followUpTypes.map(type => (
-                                        <option key={type} value={type}>{type}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Remarks
-                                </label>
-                                <input
-                                    type="text"
-                                    value={followUpData.remarks}
-                                    onChange={(e) => setFollowUpData({ ...followUpData, remarks: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Optional notes"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Next Action Date
-                                </label>
-                                <div className="relative group">
+                    {showFollowUpForm && (
+                        <form onSubmit={handleFollowUpSubmit} className="p-6 bg-[var(--bg-secondary)] border-b border-[var(--border)] space-y-4 animate-in slide-in-from-top-4">
+                            <div className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <label className="form-label ml-1">Engagement Objective</label>
+                                    <select
+                                        value={followUpData.type}
+                                        onChange={(e) => setFollowUpData({ ...followUpData, type: e.target.value })}
+                                        className="input-field p-3 font-bold text-[10px] uppercase"
+                                        required
+                                    >
+                                        <option value="">Select Category...</option>
+                                        {followUpTypes.map(type => (
+                                            <option key={type} value={type}>{type}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="form-label ml-1">Interaction Transcript</label>
+                                    <textarea
+                                        value={followUpData.remarks}
+                                        onChange={(e) => setFollowUpData({ ...followUpData, remarks: e.target.value })}
+                                        className="input-field p-3 font-bold text-[10px] h-20 resize-none"
+                                        placeholder="Enter detailed observation..."
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="form-label ml-1">Scheduled Follow-up</label>
                                     <input
                                         type="date"
                                         value={followUpData.nextActionDate}
                                         onChange={(e) => setFollowUpData({ ...followUpData, nextActionDate: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 pr-10"
+                                        className="input-field p-3 font-bold text-[10px]"
                                     />
-                                    {followUpData.nextActionDate && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setFollowUpData({ ...followUpData, nextActionDate: '' })}
-                                            className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    )}
                                 </div>
                             </div>
-                        </div>
-                        <div className="mt-4 flex justify-end">
-                            <button
-                                type="submit"
-                                disabled={submitting}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                            >
-                                {submitting ? 'Adding...' : 'Add Follow-up'}
-                            </button>
-                        </div>
-                    </form>
-                )}
-
-                <div className="p-6">
-                    {booking.followUps && booking.followUps.length > 0 ? (
-                        <div className="space-y-4">
-                            {booking.followUps.map((followUp) => (
-                                <div key={followUp.id} className="border-l-4 border-blue-500 pl-4 py-2">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <p className="font-medium text-gray-900">{followUp.type}</p>
+                            <div className="flex justify-end pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={submitting}
+                                    className="btn-primary !px-8 !py-2.5 !text-[10px] uppercase tracking-widest"
+                                >
+                                    COMMIT ENTRY
+                                </button>
+                            </div>
+                        </form>
+                    )}
+                    <div className="p-6 flex-1 overflow-auto max-h-[500px] no-scrollbar">
+                        {booking.followUps && booking.followUps.length > 0 ? (
+                            <div className="space-y-8 relative before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-[1px] before:bg-[var(--border)]">
+                                {booking.followUps.map((followUp) => (
+                                    <div key={followUp.id} className="relative pl-10">
+                                        <div className="absolute left-0 top-1 w-8 h-8 bg-[var(--bg-primary)] border border-[var(--border)] rounded-full flex items-center justify-center z-10">
+                                            <div className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full"></div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="text-[11px] font-extrabold tracking-tight uppercase text-[var(--text-primary)]">{followUp.type}</p>
                                             {followUp.remarks && (
-                                                <p className="text-sm text-gray-600 mt-1">{followUp.remarks}</p>
+                                                <p className="text-[10px] font-bold text-[var(--text-muted)] italic bg-[var(--bg-tertiary)] p-3 rounded-lg border border-[var(--border)]">
+                                                    {followUp.remarks}
+                                                </p>
                                             )}
-                                            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                                                <span>By: {followUp.agent.fullName}</span>
-                                                <span>•</span>
+                                            <div className="flex flex-wrap items-center gap-3 text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-tighter">
+                                                <span>BY: {followUp.agent.fullName}</span>
+                                                <span className="w-1 h-1 bg-[var(--border)] rounded-full"></span>
                                                 <span>{formatDate(followUp.createdAt)}</span>
                                                 {followUp.nextActionDate && (
-                                                    <>
-                                                        <span>•</span>
-                                                        <span className="text-orange-600 font-medium">
-                                                            Next: {new Date(followUp.nextActionDate).toLocaleDateString('en-IN')}
-                                                        </span>
-                                                    </>
+                                                    <span className="badge py-0.5 px-2 bg-rose-50 text-rose-600 rounded-md border border-rose-100">
+                                                        RE-ENGAGE: {new Date(followUp.nextActionDate).toLocaleDateString('en-IN')}
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-center text-gray-500 py-8">No follow-ups yet</p>
-                    )}
-                </div>
-            </div>
-
-            {/* RTO Details Block (Backup) */}
-            <div className="bg-white rounded-lg shadow-lg p-6 border-2 border-orange-100">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <FileText className="text-orange-600" size={24} />
-                        RTO / Registration Details
-                    </h3>
-                    <button
-                        onClick={handleRTOUpdate}
-                        disabled={submitting}
-                        className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 font-medium transition-colors"
-                    >
-                        {submitting ? 'Updating...' : 'Update RTO Details'}
-                    </button>
-                </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Registration Type *
-                        </label>
-                        <div className="flex gap-4">
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    value="SELF"
-                                    checked={rtoData.registrationType === 'SELF'}
-                                    onChange={(e) => setRtoData({ ...rtoData, registrationType: e.target.value })}
-                                    className="mr-2"
-                                />
-                                Self (Customer)
-                            </label>
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    value="OTHER"
-                                    checked={rtoData.registrationType === 'OTHER'}
-                                    onChange={(e) => setRtoData({ ...rtoData, registrationType: e.target.value })}
-                                    className="mr-2"
-                                />
-                                Other (Nominee)
-                            </label>
-                        </div>
+                                    </div>))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-20 opacity-20">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">No active interactions</p>
+                            </div>
+                        )}
                     </div>
-
-                    {rtoData.registrationType === 'OTHER' && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-yellow-50 rounded-lg">
+                </div>
+                {/* Compliance Ledger */}
+                <div className="card flex flex-col border border-[var(--border)] overflow-hidden shadow-sm bg-[var(--bg-tertiary)]/30">
+                    <div className="px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-tertiary)] flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-orange-600/10 rounded-lg flex items-center justify-center text-orange-600">
+                                <FileText size={16} />
+                            </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Nominee Name *
-                                </label>
+                                <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Legal Provisions</h3>
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleRTOUpdate}
+                            disabled={submitting}
+                            className="btn-primary !bg-orange-600 !text-white hover:!bg-orange-700 !px-4 !py-2 !text-[10px] uppercase tracking-widest shadow-none"
+                        >
+                            Sync Details
+                        </button>
+                    </div>
+                    <div className="p-6 flex-1 space-y-8">
+                        <div className="flex bg-[var(--bg-primary)] p-1 rounded-xl w-fit border border-[var(--border)]">
+                            <button
+                                type="button"
+                                onClick={() => setRtoData({ ...rtoData, registrationType: 'SELF' })}
+                                className={clsx(
+                                    "px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all rounded-lg",
+                                    rtoData.registrationType === 'SELF' ? "bg-[var(--bg-tertiary)] text-orange-700 shadow-sm" : "text-[var(--text-muted)]"
+                                )}
+                            >
+                                Self
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setRtoData({ ...rtoData, registrationType: 'OTHER' })}
+                                className={clsx(
+                                    "px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all rounded-lg",
+                                    rtoData.registrationType === 'OTHER' ? "bg-[var(--bg-tertiary)] text-orange-700 shadow-sm" : "text-[var(--text-muted)]"
+                                )}
+                            >
+                                Nominee
+                            </button>
+                        </div>
+
+                        {rtoData.registrationType === 'OTHER' && (
+                            <div className="space-y-4 animate-in zoom-in-95">
                                 <input
                                     type="text"
                                     value={rtoData.nomineeName}
                                     onChange={(e) => setRtoData({ ...rtoData, nomineeName: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                    className="input-field p-3 font-bold text-[10px] uppercase"
+                                    placeholder="Nominee Full Name..."
                                     required
                                 />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Nominee Address *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={rtoData.nomineeAddress}
-                                    onChange={(e) => setRtoData({ ...rtoData, nomineeAddress: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Nominee Phone *
-                                </label>
                                 <input
                                     type="tel"
                                     value={rtoData.nomineePhone}
                                     onChange={(e) => setRtoData({ ...rtoData, nomineePhone: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                    className="input-field p-3 font-bold text-[10px]"
+                                    placeholder="Nominee Contact..."
+                                    required
+                                />
+                                <textarea
+                                    value={rtoData.nomineeAddress}
+                                    onChange={(e) => setRtoData({ ...rtoData, nomineeAddress: e.target.value })}
+                                    className="input-field p-3 font-bold text-[10px] h-20 resize-none"
+                                    placeholder="Permanent Address..."
                                     required
                                 />
                             </div>
-                        </div>
-                    )}
-
-                    {/* Documents Checklist */}
-                    <div>
-                        <h4 className="font-medium mb-2">Documents Checklist</h4>
-                        <div className="flex gap-4">
-                            {Object.entries(rtoData.documentsSubmitted).map(([key, value]) => (
-                                <label key={key} className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={value}
-                                        onChange={(e) => setRtoData({
-                                            ...rtoData,
-                                            documentsSubmitted: { ...rtoData.documentsSubmitted, [key]: e.target.checked }
-                                        })}
-                                        className="mr-2"
-                                    />
-                                    {key === 'photos' ? '2 Photos' : key.toUpperCase()}
-                                </label>
-                            ))}
+                        )}
+                        <div className="pt-6 border-t border-[var(--border)]">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-4">Verification Artifacts</p>
+                            <div className="flex flex-wrap gap-4">
+                                {Object.entries(rtoData.documentsSubmitted).map(([key, value]) => (
+                                    <label key={key} className="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            checked={value}
+                                            onChange={(e) => setRtoData({
+                                                ...rtoData,
+                                                documentsSubmitted: { ...rtoData.documentsSubmitted, [key]: e.target.checked }
+                                            })}
+                                            className="w-4 h-4 rounded border-[var(--border)] text-orange-600 focus:ring-orange-500 cursor-pointer"
+                                        />
+                                        <span className={clsx(
+                                            "text-[10px] font-bold uppercase tracking-tight",
+                                            value ? "text-orange-700" : "text-[var(--text-muted)]"
+                                        )}>
+                                            {key === 'photos' ? 'Photos (2 Nos)' : key}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>

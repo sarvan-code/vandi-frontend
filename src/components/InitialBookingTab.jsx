@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { useToast } from '../context/ToastContext';
 import VehicleAutocomplete from './VehicleAutocomplete';
-import { X } from 'lucide-react';
+import { X, Car as CarIcon, DollarSign, Calendar } from 'lucide-react';
+import clsx from 'clsx';
 
 const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
     const { showToast } = useToast();
@@ -133,14 +134,23 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Car Selection */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">Car Selection</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-12 animate-fade-in">
+            {/* Select Vehicle */}
+            <div className="card p-8 relative overflow-hidden group border-[var(--border)]">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center text-[var(--accent)]">
+                        <CarIcon size={20} />
+                    </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Select Car *
+                        <h3 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Asset Selection</h3>
+                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mt-0.5">Identify Vehicle from Inventory</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="space-y-3">
+                        <label className="form-label ml-1">
+                            Search Inventory
                         </label>
                         <VehicleAutocomplete
                             value={formData.carRegistration}
@@ -156,41 +166,42 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                                     setFormData({
                                         ...formData,
                                         carRegistration: val,
-                                        carId: '' // Clear ID if user is typing manually
+                                        carId: ''
                                     });
                                     setSelectedCar(null);
                                 }
                             }}
-                            placeholder="Type registration number, make or model..."
+                            placeholder="Search by ID, make or model..."
                         />
                     </div>
-                    {selectedCar && (
-                        <div className="bg-blue-50 p-4 rounded-lg">
-                            <p className="text-sm text-gray-600 font-semibold mb-2">Selected Vehicle</p>
-                            <p className="font-bold text-blue-900">{selectedCar.make} {selectedCar.model} {selectedCar.variant}</p>
-                            <p className="text-sm text-gray-500 mb-3">{selectedCar.registrationNumber}</p>
 
-                            <div className="grid grid-cols-1 gap-1 pt-2 border-t border-blue-100">
-                                {selectedCar.maximumRetailPrice && (
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">MRP:</span>
-                                        <span className="font-medium text-gray-900">₹{selectedCar.maximumRetailPrice.toLocaleString('en-IN')}</span>
-                                    </div>
-                                )}
-                                {selectedCar.discountAmount && (
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">Reversed Price:</span>
-                                        <span className="font-medium text-red-600">₹{selectedCar.discountAmount.toLocaleString('en-IN')}</span>
-                                    </div>
-                                )}
-                                {selectedCar.maximumRetailPrice && selectedCar.discountAmount && (
-                                    <div className="flex justify-between text-sm pt-1 border-t border-blue-50 mt-1">
-                                        <span className="text-gray-700 font-medium">Net Benefit:</span>
-                                        <span className="font-bold text-green-700">
-                                            ₹{(selectedCar.maximumRetailPrice - selectedCar.discountAmount).toLocaleString('en-IN')}
+                    {selectedCar && (
+                        <div className="bg-[var(--bg-tertiary)] p-6 rounded-xl border border-[var(--border)] shadow-sm animate-in zoom-in-95 duration-300 relative overflow-hidden">
+                            <div className="relative z-10">
+                                <p className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mb-2">Selected Asset</p>
+                                <h4 className="text-xl font-bold tracking-tight text-[var(--text-primary)] mb-1">
+                                    {selectedCar.make} {selectedCar.model}
+                                </h4>
+                                <p className="text-[var(--text-muted)] font-bold mb-4 text-xs">{selectedCar.variant}</p>
+
+                                <div className="space-y-2 pt-4 border-t border-[var(--border)]">
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-[var(--text-muted)] font-bold uppercase tracking-tighter">Registration</span>
+                                        <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-secondary)] px-2 py-1 rounded border border-[var(--border)] uppercase">
+                                            {selectedCar.registrationNumber || 'PENDING'}
                                         </span>
                                     </div>
-                                )}
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-[var(--text-muted)] font-bold uppercase tracking-tighter">Standard Price</span>
+                                        <span className="font-bold text-[var(--text-primary)]">₹{selectedCar.maximumRetailPrice?.toLocaleString('en-IN')}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs pt-2 mt-2 border-t border-[var(--border)]/50">
+                                        <span className="text-emerald-600 font-bold uppercase tracking-tighter">Net Value</span>
+                                        <span className="text-lg font-bold text-emerald-600">
+                                            ₹{(selectedCar.maximumRetailPrice - (selectedCar.discountAmount || 0)).toLocaleString('en-IN')}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -198,283 +209,278 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
             </div>
 
             {/* Financial Details */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">Financial Negotiation</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="card p-8 border border-[var(--border)]">
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="w-10 h-10 bg-emerald-600/10 rounded-lg flex items-center justify-center text-emerald-600">
+                        <DollarSign size={20} />
+                    </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Agreed Price * (₹)
+                        <h3 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Financial Terms</h3>
+                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-0.5">Revenue & Commitment Details</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+                    <div className="space-y-3">
+                        <label className="form-label ml-1">
+                            Agreed Price (₹)
                         </label>
                         <input
                             type="number"
                             value={formData.agreedPrice}
                             onChange={(e) => setFormData({ ...formData, agreedPrice: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                            className="input-field p-3 font-bold text-lg"
+                            placeholder="Final Value..."
                             required
-
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Advance Amount * (₹)
+                    <div className="space-y-3">
+                        <label className="form-label ml-1">
+                            Advance Amount (₹)
                         </label>
                         <input
                             type="number"
                             value={formData.advanceAmount}
                             onChange={(e) => setFormData({ ...formData, advanceAmount: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                            className="input-field p-3 font-bold text-lg"
+                            placeholder="Enter advance amount..."
                             required
-
                         />
                     </div>
-                    <div className="bg-green-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-600">Balance Amount</p>
-                        <p className="text-2xl font-bold text-green-600">
+                    <div className="bg-[var(--bg-tertiary)] p-6 rounded-xl border border-[var(--border)] flex flex-col justify-center">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Balance Amount</p>
+                        <p className="text-3xl font-extrabold tracking-tight text-[var(--text-primary)]">
                             ₹{balanceAmount.toLocaleString('en-IN')}
                         </p>
                     </div>
                 </div>
 
                 {selectedCar && formData.agreedPrice && (
-                    <div className="mt-4 bg-orange-50 p-4 rounded-lg border border-orange-100">
+                    <div className="bg-rose-50 dark:bg-rose-900/10 p-6 rounded-xl border border-rose-100 dark:border-rose-900/20 animate-in fade-in slide-in-from-bottom-2 mb-10">
                         <div className="flex justify-between items-center">
-                            <div>
-                                <p className="text-sm text-orange-700 font-medium">Total Negotiated Discount</p>
-                                <p className="text-xs text-orange-600">(Net Benefit - Agreed Price)</p>
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-rose-500/10 rounded-full flex items-center justify-center text-rose-600">
+                                    <DollarSign size={16} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-rose-900 dark:text-rose-400 uppercase tracking-tight">Negotiated Discount</p>
+                                    <p className="text-[9px] font-bold text-rose-500 uppercase tracking-widest">Reduction from Standard MRP</p>
+                                </div>
                             </div>
-                            <p className="text-2xl font-bold text-orange-700">
+                            <p className="text-2xl font-extrabold text-rose-600 tracking-tight">
                                 ₹{totalNegotiatedDiscount.toLocaleString('en-IN')}
                             </p>
                         </div>
                     </div>
                 )}
 
-                {/* Commitments */}
-                <div className="mt-6">
-                    <h4 className="font-medium mb-3">Responsibility Matrix</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {/* Responsibility Options */}
+                <div className="mt-8">
+                    <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-6 text-center flex items-center justify-center gap-4">
+                        <span className="w-8 h-[1px] bg-[var(--border)]"></span>
+                        Service Responsibilities
+                        <span className="w-8 h-[1px] bg-[var(--border)]"></span>
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                         {Object.entries(formData.commitments).map(([key, value]) => (
-                            <div key={key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <span className="text-sm font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                                <select
-                                    value={value}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        commitments: { ...formData.commitments, [key]: e.target.value }
-                                    })}
-                                    className="ml-2 px-2 py-1 border border-gray-300 rounded text-sm disabled:bg-gray-100"
-                                >
-                                    <option value="COMPANY">Company</option>
-                                    <option value="CUSTOMER">Customer</option>
-                                </select>
+                            <div key={key} className="p-3 card bg-[var(--bg-tertiary)] border-[var(--border)] shadow-none hover:bg-[var(--bg-secondary)] transition-all">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold text-[var(--text-primary)] uppercase tracking-tight">{key.replace(/([A-Z])/g, ' $1')}</span>
+                                    <select
+                                        value={value}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            commitments: { ...formData.commitments, [key]: e.target.value }
+                                        })}
+                                        className="bg-transparent font-bold text-[9px] text-[var(--accent)] uppercase tracking-wider focus:outline-none cursor-pointer"
+                                    >
+                                        <option value="COMPANY">Showroom</option>
+                                        <option value="CUSTOMER">Customer</option>
+                                    </select>
+                                </div>
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
 
-            {/* RTO Details */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">RTO / Registration Details</h3>
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Registration Type *
-                        </label>
-                        <div className="flex gap-4">
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    value="SELF"
-                                    checked={formData.registrationType === 'SELF'}
-                                    onChange={(e) => setFormData({ ...formData, registrationType: e.target.value })}
-                                    className="mr-2"
-                                />
-                                Self (Customer)
-                            </label>
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    value="OTHER"
-                                    checked={formData.registrationType === 'OTHER'}
-                                    onChange={(e) => setFormData({ ...formData, registrationType: e.target.value })}
-                                    className="mr-2"
-                                />
-                                Other (Nominee)
-                            </label>
+            {/* Regulatory & Verification */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* RTO Options */}
+                <div className="card p-8 border border-[var(--border)] flex flex-col">
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-10 h-10 bg-amber-600/10 rounded-lg flex items-center justify-center text-amber-600">
+                            <Calendar size={20} />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Compliance Profile</h3>
+                            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mt-0.5">RTO & Legal Provisioning</p>
                         </div>
                     </div>
 
-                    {formData.registrationType === 'OTHER' && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-yellow-50 rounded-lg">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Nominee Name *
-                                </label>
+                    <div className="space-y-8 flex-1">
+                        <div className="flex bg-[var(--bg-tertiary)] p-1 rounded-xl w-fit border border-[var(--border)]">
+                            <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, registrationType: 'SELF' })}
+                                className={clsx(
+                                    "px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
+                                    formData.registrationType === 'SELF' ? "bg-[var(--bg-primary)] text-[var(--accent)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                                )}
+                            >
+                                Self
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, registrationType: 'OTHER' })}
+                                className={clsx(
+                                    "px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
+                                    formData.registrationType === 'OTHER' ? "bg-[var(--bg-primary)] text-[var(--accent)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                                )}
+                            >
+                                Nominee
+                            </button>
+                        </div>
+
+                        {formData.registrationType === 'OTHER' && (
+                            <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
                                 <input
                                     type="text"
                                     value={formData.nomineeName}
                                     onChange={(e) => setFormData({ ...formData, nomineeName: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                    placeholder="Nominee Full Name"
+                                    className="input-field p-3 font-bold text-xs"
                                     required
                                 />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Nominee Address *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.nomineeAddress}
-                                    onChange={(e) => setFormData({ ...formData, nomineeAddress: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Nominee Phone *
-                                </label>
                                 <input
                                     type="tel"
                                     value={formData.nomineePhone}
                                     onChange={(e) => setFormData({ ...formData, nomineePhone: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                    placeholder="Nominee Contact Number"
+                                    className="input-field p-3 font-bold text-xs"
                                     required
                                 />
+                                <textarea
+                                    value={formData.nomineeAddress}
+                                    onChange={(e) => setFormData({ ...formData, nomineeAddress: e.target.value })}
+                                    placeholder="Nominee Permanent Address"
+                                    className="input-field p-3 font-bold text-xs h-20 resize-none"
+                                    required
+                                ></textarea>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {/* Documents Checklist */}
-                    <div>
-                        <h4 className="font-medium mb-2">Documents Checklist</h4>
-                        <div className="flex gap-4">
-                            {Object.entries(formData.documentsSubmitted).map(([key, value]) => (
-                                <label key={key} className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={value}
-                                        onChange={(e) => setFormData({
-                                            ...formData,
-                                            documentsSubmitted: { ...formData.documentsSubmitted, [key]: e.target.checked }
-                                        })}
-                                        className="mr-2"
-                                    />
-                                    {key === 'photos' ? '2 Photos' : key.toUpperCase()}
-                                </label>
-                            ))}
+                        <div className="pt-6 border-t border-[var(--border)]">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-4">Verification Checklist</p>
+                            <div className="flex flex-wrap gap-4">
+                                {Object.entries(formData.documentsSubmitted).map(([key, value]) => (
+                                    <label key={key} className="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            checked={value}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                documentsSubmitted: { ...formData.documentsSubmitted, [key]: e.target.checked }
+                                            })}
+                                            className="w-4 h-4 rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)] cursor-pointer"
+                                        />
+                                        <span className={clsx(
+                                            "text-[10px] font-bold uppercase tracking-tight",
+                                            value ? "text-[var(--accent)]" : "text-[var(--text-muted)]"
+                                        )}>
+                                            {key === 'photos' ? 'Photos (2 Nos)' : key}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Advance Payment */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">Advance Payment Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Payment Mode *
-                        </label>
-                        <select
-                            value={formData.advanceMode}
-                            onChange={(e) => setFormData({ ...formData, advanceMode: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-                        >
-                            <option value="cash">Cash</option>
-                            <option value="upi">UPI</option>
-                            <option value="bank_transfer">Bank Transfer</option>
-                            <option value="cheque">Cheque</option>
-                        </select>
+                {/* Verification */}
+                <div className="card p-8 border border-[var(--border)]">
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center text-[var(--accent)]">
+                            <X size={20} className="rotate-45" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Asset Validation</h3>
+                            <p className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mt-0.5">Mandatory Inspection Points</p>
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Transaction/Ref ID
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.advanceRefId}
-                            onChange={(e) => setFormData({ ...formData, advanceRefId: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
 
-                        />
+                    <div className="space-y-3">
+                        {Object.entries(formData.legalChecklist).map(([key, value]) => (
+                            <label key={key} className="flex items-center p-3 rounded-xl hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer group border border-[var(--border)]">
+                                <input
+                                    type="checkbox"
+                                    checked={value}
+                                    onChange={(e) => setFormData({
+                                        ...formData,
+                                        legalChecklist: { ...formData.legalChecklist, [key]: e.target.checked }
+                                    })}
+                                    className="w-5 h-5 rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)] cursor-pointer mr-4"
+                                />
+                                <span className={clsx(
+                                    "text-xs font-bold tracking-tight uppercase",
+                                    value ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+                                )}>
+                                    {key === 'testDrive' && 'Test Drive Completed'}
+                                    {key === 'mechanicCheck' && 'Mechanic Verification'}
+                                    {key === 'bodyLine' && 'Body & Paint Inspection'}
+                                    {key === 'stepneyToolkit' && 'Inventory Checklist'}
+                                    {key === 'tireCondition' && 'Wheel Alignment & Wear'}
+                                </span>
+                            </label>
+                        ))}
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Target Delivery Date
-                        </label>
-                        <div className="relative group">
+
+                    <div className="mt-8 pt-8 border-t border-[var(--border)] space-y-6">
+                        <div>
+                            <label className="form-label mb-3 block text-center uppercase tracking-widest text-[9px]">
+                                Proposed Delivery Date
+                            </label>
                             <input
                                 type="date"
                                 value={formData.deliveryDate}
                                 onChange={(e) => setFormData({ ...formData, deliveryDate: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100 pr-10"
+                                className="input-field p-3 font-bold flex justify-center text-[var(--accent)] uppercase tracking-wider text-center mx-auto w-[220px]"
                             />
-                            {formData.deliveryDate && (
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, deliveryDate: '' })}
-                                    className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
-                                >
-                                    <X size={14} />
-                                </button>
-                            )}
                         </div>
-                    </div>
-                </div>
 
-                <div className="mt-4">
-                    <label className="flex items-center">
-                        <input
-                            type="checkbox"
-                            checked={formData.payPartAmountBeforeDelivery}
-                            onChange={(e) => setFormData({ ...formData, payPartAmountBeforeDelivery: e.target.checked })}
-                            className="mr-2"
-                        />
-                        <span className="text-sm">Customer willing to pay part amount before delivery</span>
-                    </label>
-                </div>
-            </div>
-
-            {/* Legal Checklist */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">Customer Delivery Commitment</h3>
-                <div className="space-y-2">
-                    {Object.entries(formData.legalChecklist).map(([key, value]) => (
-                        <label key={key} className="flex items-center">
+                        <label className="flex items-center justify-center gap-3 cursor-pointer p-3 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border)]">
                             <input
                                 type="checkbox"
-                                checked={value}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    legalChecklist: { ...formData.legalChecklist, [key]: e.target.checked }
-                                })}
-                                className="mr-2"
+                                checked={formData.payPartAmountBeforeDelivery}
+                                onChange={(e) => setFormData({ ...formData, payPartAmountBeforeDelivery: e.target.checked })}
+                                className="w-4 h-4 rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)] cursor-pointer"
                             />
-                            <span className="text-sm">
-                                {key === 'testDrive' && 'Test Drive taken?'}
-                                {key === 'mechanicCheck' && 'Own Mechanic checked?'}
-                                {key === 'bodyLine' && 'Body line & Dent/Scratch conditions verified?'}
-                                {key === 'stepneyToolkit' && 'Stepney & Tool kit checked?'}
-                                {key === 'tireCondition' && 'Tire condition verified?'}
-                            </span>
+                            <span className="text-[10px] font-bold uppercase tracking-tight text-[var(--text-primary)]">Pre-Delivery Settlement Agreed</span>
                         </label>
-                    ))}
+                    </div>
                 </div>
             </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-end">
+            {/* Submit Action */}
+            <div className="flex flex-col items-center gap-4 pt-8 border-t border-[var(--border)]">
+                <p className="text-[10px] font-bold text-[var(--text-muted)] max-w-[400px] text-center uppercase tracking-tight leading-relaxed">
+                    By confirming, you authorize the formal booking record and initial financial commitment for this asset.
+                </p>
                 <button
                     type="submit"
                     disabled={submitting}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="btn-primary text-base px-16 py-4 flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
                 >
-                    {submitting
-                        ? 'Creating Booking...'
-                        : 'Submit Advance & Confirm Booking'
-                    }
+                    {submitting ? (
+                        <>
+                            <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                            Processing...
+                        </>
+                    ) : (
+                        <>
+                            <DollarSign size={20} /> Authorize Booking
+                        </>
+                    )}
                 </button>
             </div>
         </form>

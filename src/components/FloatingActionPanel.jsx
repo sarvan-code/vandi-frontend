@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { ChevronDown, X, ChevronUp, ChevronRight, Phone, MoreVertical } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { ChevronDown, X, ChevronRight, MoreVertical } from 'lucide-react';
 
 /**
  * Reusable Floating Action Panel Component
@@ -8,12 +9,44 @@ import { ChevronDown, X, ChevronUp, ChevronRight, Phone, MoreVertical } from 'lu
 const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subtitle }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
+    useEffect(() => {
+        if (!selectedItem) {
+            return;
+        }
+
+        const updatePadding = () => {
+            const mainElem = document.querySelector('main');
+            if (mainElem) {
+                // Determine layout transitions based on breakpoints
+                if (window.innerWidth >= 768) {
+                    mainElem.style.paddingRight = isExpanded ? '340px' : '90px';
+                    mainElem.style.paddingBottom = '';
+                } else {
+                    mainElem.style.paddingRight = '';
+                    mainElem.style.paddingBottom = isExpanded ? '85vh' : '90px';
+                }
+            }
+        };
+
+        updatePadding();
+        window.addEventListener('resize', updatePadding);
+
+        return () => {
+            window.removeEventListener('resize', updatePadding);
+            const mainElem = document.querySelector('main');
+            if (mainElem) {
+                mainElem.style.paddingRight = '';
+                mainElem.style.paddingBottom = '';
+            }
+        };
+    }, [isExpanded, selectedItem]);
+
     if (!selectedItem) return null;
 
     const colorClasses = {
         gray: { icon: 'text-gray-600', bg: 'bg-gray-100', hover: 'hover:bg-gray-200', text: 'text-gray-700' },
-        indigo: { icon: 'text-indigo-600', bg: 'bg-indigo-50', hover: 'hover:bg-indigo-100', text: 'text-indigo-700' },
         blue: { icon: 'text-blue-600', bg: 'bg-blue-50', hover: 'hover:bg-blue-100', text: 'text-blue-700' },
+        indigo: { icon: 'text-blue-600', bg: 'bg-blue-50', hover: 'hover:bg-blue-100', text: 'text-blue-700' },
         red: { icon: 'text-red-600', bg: 'bg-red-50', hover: 'hover:bg-red-100', text: 'text-red-700' },
         green: { icon: 'text-green-600', bg: 'bg-green-50', hover: 'hover:bg-green-100', text: 'text-green-700' }
     };
@@ -35,60 +68,56 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
         setIsExpanded(!isExpanded);
     };
 
-    // Important actions to show on the mobile bar
     const callAction = actions.find(a => a.label.toLowerCase().includes('call'));
     const workspaceAction = actions.find(a => a.label.toLowerCase().includes('workspace'));
     const editAction = actions.find(a => a.label.toLowerCase().includes('edit'));
     const primaryAction = actions.find(a => !a.label.toLowerCase().includes('call') && !a.label.toLowerCase().includes('workspace') && a.color !== 'red');
 
-    // Final icons to display in the collapsed bottom bar
     const barIcons = [];
     if (callAction) barIcons.push(callAction);
     if (workspaceAction) barIcons.push(workspaceAction);
     if (editAction) barIcons.push(editAction);
     if (barIcons.length < 3 && primaryAction) barIcons.push(primaryAction);
 
-    return (
+    return createPortal(
         <>
-            {/* Backdrop for mobile expanded state */}
+            {/* Backdrop for mobile expanded */}
             {isExpanded && (
                 <div
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] md:hidden animate-fade-in"
+                    className="fixed inset-0 z-[60] md:hidden animate-fade-in"
+                    style={{ background: 'var(--overlay)' }}
                     onClick={() => setIsExpanded(false)}
                 />
             )}
 
             <div
                 style={{
-                    paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-                    height: isExpanded ? 'auto' : (window.innerWidth < 768 ? 'calc(72px + env(safe-area-inset-bottom, 0px))' : 'auto')
+                    paddingBottom: 'var(--safe-area-bottom)',
+                    height: isExpanded ? 'auto' : (window.innerWidth < 768 ? 'calc(64px + var(--safe-area-bottom))' : 'auto'),
+                    background: 'var(--surface)',
+                    borderColor: 'var(--border)'
                 }}
                 className={`
-                    fixed transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] bg-white shadow-[0_-12px_40px_rgba(0,0,0,0.25)] z-[70]
-                    /* Mobile: Bottom position */
-                    bottom-0 left-0 right-0 border-t border-gray-200 rounded-t-[2.5rem]
-                    /* Desktop: Right side position */
-                    md:bottom-auto md:top-1/2 md:right-6 md:left-auto md:transform md:-translate-y-1/2 md:rounded-[2rem] md:border md:w-auto
-                    ${isExpanded ? 'max-h-[80vh] w-full md:w-80' : 'md:w-[64px] md:h-auto'}
+                    fixed transition-all duration-300 z-[70]
+                    bottom-0 left-0 right-0 border-t rounded-t-xl
+                    md:bottom-auto md:top-1/2 md:right-4 md:left-auto md:transform md:-translate-y-1/2 md:rounded-lg md:border md:w-auto
+                    shadow-lg
+                    ${isExpanded ? 'max-h-[85vh] w-full md:w-80' : 'md:w-[56px] md:h-auto'}
                 `}
             >
-
                 <div className="flex flex-col h-full w-full overflow-hidden">
-                    {/* Header Bar / Mobile Bottom Bar */}
+                    {/* Header */}
                     <div
-                        className={`
-                            flex items-center justify-between px-5 py-3 cursor-pointer md:cursor-default
-                            ${isExpanded ? 'border-b border-gray-100' : 'md:border-none'}
-                        `}
+                        className="flex items-center justify-between px-4 py-3 cursor-pointer md:cursor-default"
+                        style={isExpanded ? { borderBottom: '1px solid var(--border)' } : {}}
                         onClick={() => !isExpanded && window.innerWidth < 768 && setIsExpanded(true)}
                     >
-                        {/* Title Section - Only visible when expanded */}
-                        <div className={`flex-1 min-w-0 pr-4 transition-all duration-300 ${!isExpanded ? 'hidden' : 'opacity-100'}`}>
-                            <h3 className="text-[14px] font-black text-gray-900 truncate uppercase tracking-tighter leading-none">{title}</h3>
-                            {subtitle && <p className="text-[10px] text-gray-400 truncate font-bold uppercase tracking-widest mt-1">{subtitle}</p>}
+                        <div className={`flex-1 min-w-0 pr-4 ${!isExpanded ? 'hidden' : ''}`}>
+                            <h3 className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+                            {subtitle && <p className="text-xs truncate mt-0.5" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>}
                         </div>
 
-                        {/* Mobile Quick Actions (Visualized when collapsed) */}
+                        {/* Mobile Quick Actions */}
                         {!isExpanded && (
                             <div className="flex items-center gap-2 md:hidden">
                                 {barIcons.map((action, i) => {
@@ -98,9 +127,9 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
                                         <button
                                             key={i}
                                             onClick={(e) => { e.stopPropagation(); handleActionClick(action); }}
-                                            className={`w-10 h-10 flex items-center justify-center rounded-xl ${colors.bg} ${colors.icon} shadow-sm active:scale-90 transition-transform`}
+                                            className={`w-10 h-10 flex items-center justify-center rounded-lg ${colors.bg} ${colors.icon} active:scale-95 transition-all`}
                                         >
-                                            <Icon size={20} />
+                                            <Icon size={18} />
                                         </button>
                                     );
                                 })}
@@ -108,39 +137,40 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
                         )}
 
                         {/* Controls */}
-                        <div className={`flex items-center gap-2 ${!isExpanded && 'md:flex-col md:w-full md:py-1'}`}>
+                        <div className={`flex items-center gap-2 ${!isExpanded ? 'md:hidden' : ''}`}>
                             <button
                                 onClick={toggleExpand}
-                                className="p-2 text-gray-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-all"
+                                className="p-2 rounded-md hover:bg-[var(--bg-tertiary)] transition-colors"
+                                style={{ color: 'var(--text-muted)' }}
                             >
-                                {isExpanded ? <ChevronDown size={22} className="md:rotate-90" /> : <MoreVertical size={22} />}
+                                {isExpanded ? <ChevronDown size={18} className="md:rotate-90" /> : <MoreVertical size={18} />}
                             </button>
-
                             <button
                                 onClick={handleClose}
-                                className="p-2 text-gray-400 hover:text-red-600 bg-red-50/0 hover:bg-red-50 rounded-xl transition-all"
+                                className="p-2 rounded-md hover:bg-[var(--danger-bg)] transition-colors"
+                                style={{ color: 'var(--text-muted)' }}
                             >
-                                <X size={22} />
+                                <X size={18} />
                             </button>
                         </div>
                     </div>
 
-                    {/* Full Actions List / Desktop Vertical Icons */}
+                    {/* Full Actions List */}
                     <div className={`
                         overflow-y-auto custom-scrollbar transition-all duration-300
                         ${isExpanded
-                            ? 'opacity-100 p-5 space-y-2 pb-12 animate-slide-up h-auto max-h-[70vh]'
-                            : 'h-0 opacity-0 md:h-auto md:opacity-100 md:p-2 md:flex md:flex-col md:items-center md:space-y-2'
+                            ? 'opacity-100 p-3 space-y-1 pb-8 h-auto max-h-[75vh]'
+                            : 'h-0 opacity-0 md:h-auto md:opacity-100 md:p-2 md:flex md:flex-col md:items-center md:space-y-1'
                         }
                     `}>
-
-                        {/* Desktop Collapsed Toggle */}
+                        {/* Desktop Collapsed Expand */}
                         {!isExpanded && (
                             <button
                                 onClick={() => setIsExpanded(true)}
-                                className="hidden md:flex items-center justify-center w-11 h-11 text-indigo-500 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all hover:scale-110"
+                                className="hidden md:flex items-center justify-center w-10 h-10 rounded-md hover:bg-[var(--bg-tertiary)] transition-colors"
+                                style={{ color: 'var(--accent)' }}
                             >
-                                <ChevronRight size={24} />
+                                <ChevronRight size={18} />
                             </button>
                         )}
 
@@ -153,26 +183,22 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
                                     key={index}
                                     onClick={() => handleActionClick(action)}
                                     className={`
-                                        flex items-center transition-all duration-300 rounded-xl group
+                                        flex items-center transition-colors rounded-md group
                                         ${isExpanded
-                                            ? `w-full p-3 gap-4 ${colors.text} hover:bg-gray-50 bg-white border border-gray-100 shadow-sm hover:shadow-md active:scale-[0.97]`
-                                            : `justify-center ${colors.icon} md:w-11 md:h-11 hover:bg-gray-100 rounded-xl hover:scale-110`
+                                            ? `w-full px-3 py-2.5 gap-3 hover:bg-[var(--bg-tertiary)]`
+                                            : `justify-center ${colors.icon} md:w-10 md:h-10 hover:bg-[var(--bg-tertiary)] rounded-md`
                                         }
-                                        /* Hide on mobile if collapsed */
                                         ${!isExpanded && 'hidden md:flex'}
                                     `}
                                 >
-                                    <div className={`
-                                        flex items-center justify-center rounded-xl transition-all
-                                        ${isExpanded ? 'w-10 h-10 ' + colors.bg + ' group-hover:rotate-6' : ''}
-                                    `}>
-                                        <Icon size={isExpanded ? 18 : 24} className={colors.icon} />
+                                    <div className={`flex items-center justify-center ${isExpanded ? 'w-9 h-9 rounded-md ' + colors.bg : ''}`}>
+                                        <Icon size={isExpanded ? 16 : 18} className={colors.icon} />
                                     </div>
                                     {isExpanded && (
                                         <div className="flex flex-col text-left">
-                                            <span className="font-extrabold text-[14px] tracking-tight leading-tight">{action.label}</span>
+                                            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{action.label}</span>
                                             {action.title && action.title !== action.label && (
-                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{action.title}</span>
+                                                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{action.title}</span>
                                             )}
                                         </div>
                                     )}
@@ -180,39 +206,28 @@ const FloatingActionPanel = ({ selectedItem, onClose, actions = [], title, subti
                             );
                         })}
 
-                        {/* Desktop Collapsed Close (Thinner) */}
+                        {/* Desktop Close */}
                         {!isExpanded && (
-                            <div className="w-8 h-px bg-gray-100 my-1 hidden md:block" />
-                        )}
-                        {!isExpanded && (
-                            <button
-                                onClick={handleClose}
-                                className="hidden md:flex w-11 h-11 items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all active:scale-90"
-                            >
-                                <X size={22} />
-                            </button>
+                            <>
+                                <div className="w-8 hidden md:block" style={{ height: '1px', background: 'var(--border)', margin: '4px auto' }} />
+                                <button
+                                    onClick={handleClose}
+                                    className="hidden md:flex w-10 h-10 items-center justify-center rounded-md hover:bg-[var(--danger-bg)] transition-colors"
+                                    style={{ color: 'var(--text-muted)' }}
+                                >
+                                    <X size={18} />
+                                </button>
+                            </>
                         )}
                     </div>
 
-                    {/* Mobile Drag Indicator */}
                     <div className="md:hidden flex flex-col items-center py-2 shrink-0">
-                        <div className="w-12 h-1 bg-gray-200 rounded-full" />
+                        <div className="w-12 h-1 rounded-full" style={{ background: 'var(--border)' }} />
                     </div>
                 </div>
             </div>
-
-            <style dangerouslySetInnerHTML={{
-                __html: `
-                @keyframes slide-up {
-                    from { transform: translateY(30px); opacity: 0; }
-                    to { transform: translateY(0); opacity: 1; }
-                }
-                .animate-slide-up { animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
-                .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #f3f4f6; border-radius: 20px; }
-            ` }} />
-        </>
+        </>,
+        document.body
     );
 };
 

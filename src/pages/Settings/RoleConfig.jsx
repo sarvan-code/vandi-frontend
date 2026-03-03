@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import Table from '../../components/Table';
 import FloatingActionPanel from '../../components/FloatingActionPanel';
+import Modal from '../../components/Modal';
 
 const RoleConfig = () => {
     const { showToast } = useToast();
@@ -20,7 +21,7 @@ const RoleConfig = () => {
         code: '',
         name: '',
         description: '',
-        category: 'SYSTEM'
+        category: 'USER'
     });
 
     // Delete confirmation dialog state
@@ -46,7 +47,7 @@ const RoleConfig = () => {
     };
 
     const handleOpenModal = (role = null) => {
-        if (role) {
+        if (role && role.code) { // Handle case where it might be passed from an event
             setFormData({ ...role });
             setIsEditing(true);
         } else {
@@ -66,19 +67,19 @@ const RoleConfig = () => {
         try {
             if (isEditing) {
                 await api.put(`/roles/${formData.code}`, formData);
-                showToast("Role updated successfully", "success");
+                showToast("Role protocol updated", "success");
             } else {
                 await api.post('/roles', formData);
-                showToast("Role created successfully", "success");
+                showToast("Role initialized successfully", "success");
             }
             fetchRoles();
             setIsModalOpen(false);
         } catch (error) {
-            showToast("Failed to save role: " + error.message, "error");
+            showToast("Role save failed: " + error.message, "error");
         }
     };
 
-    const handleDelete = async (role) => {
+    const handleDelete = (role) => {
         setDeleteConfirm({ isOpen: true, role });
     };
 
@@ -87,10 +88,11 @@ const RoleConfig = () => {
 
         try {
             await api.delete(`/roles/${deleteConfirm.role.code}`);
-            showToast("Role deleted successfully", "success");
+            showToast("Role purged from system", "success");
             fetchRoles();
+            setSelectedRole(null);
         } catch (error) {
-            showToast("Failed to delete role: " + error.message, "error");
+            showToast("Purge failed: " + error.message, "error");
         } finally {
             setDeleteConfirm({ isOpen: false, role: null });
         }
@@ -106,20 +108,29 @@ const RoleConfig = () => {
             key: 'code',
             label: 'Role Code',
             render: (row) => (
-                <span className="bg-gray-100 px-2 py-1 rounded text-gray-800 font-mono text-xs">{row.code}</span>
+                <span className="bg-[var(--bg-secondary)] text-[var(--text-primary)] px-4 py-1.5 rounded-lg text-[10px] font-black tracking-tight border border-[var(--border)] shadow-sm">{row.code}</span>
             )
         },
-        { key: 'name', label: 'Name' },
+        {
+            key: 'name',
+            label: 'Organizational Designation',
+            render: (row) => <span className="font-bold text-[var(--text-primary)] tracking-tight">{row.name}</span>
+        },
         {
             key: 'description',
-            label: 'Description',
-            render: (row) => <span className="text-sm text-gray-500">{row.description || '-'}</span>
+            label: 'Functional Mandate',
+            render: (row) => <span className="text-xs text-[var(--text-secondary)] font-medium leading-relaxed">{row.description || '-'}</span>
         },
         {
             key: 'category',
-            label: 'Category',
+            label: 'Domain',
             render: (row) => (
-                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${row.category === 'SYSTEM' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                <span className={clsx(
+                    "inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full border shadow-sm",
+                    row.category === 'SYSTEM'
+                        ? 'text-indigo-600 bg-indigo-50 border-indigo-100'
+                        : 'text-emerald-600 bg-emerald-50 border-emerald-100'
+                )}>
                     {row.category}
                 </span>
             )
@@ -127,37 +138,47 @@ const RoleConfig = () => {
     ];
 
     return (
-        <div>
-            <div className="flex flex-col md:flex-row md:items-center justify-between my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold text-gray-800">Role Management</h2>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-2.5 text-gray-400 h-5 w-5" />
-                        <input
-                            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                            placeholder="Search roles..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                        />
+        <div className="animate-fade-in-up">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+                <div>
+                    <h1 className="text-4xl font-semibold mb-2 text-[var(--text-primary)]">Authorization Hierarchy</h1>
+                    <p className="text-[var(--text-secondary)] font-medium text-sm">System configuration of access tiers and permissions.</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="card flex items-center gap-3 px-4 py-2 border border-[var(--border)] shadow-sm focus-within:ring-2 focus-within:ring-[var(--accent)]/20 transition-all bg-[var(--bg-secondary)]">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] border-r border-[var(--border)] pr-3">Filter Hierarchy</span>
+                        <div className="relative flex-1">
+                            <Search size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                            <input
+                                type="text"
+                                placeholder="Search Roles..."
+                                className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-bold text-[var(--text-primary)] w-full pl-6 outline-none h-10 shadow-sm"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
                     </div>
                     <button
                         onClick={() => handleOpenModal()}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 transition-colors whitespace-nowrap text-sm font-medium"
+                        className="btn-primary flex items-center gap-3 px-8 py-3 text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-[var(--accent)]/30 active:scale-95 transition-all text-white"
                     >
-                        <Plus size={18} /> Add Role
+                        <Plus size={20} /> Provision Authorization tier
                     </button>
                 </div>
             </div>
 
             <div className="relative">
-                <Table
-                    columns={columns}
-                    data={filteredRoles}
-                    onRowClick={(row) => setSelectedRole(row)}
-                    selectedRow={selectedRole?.code}
-                    rowKey="code"
-                    emptyMessage={loading ? "Loading roles..." : "No roles found."}
-                />
+                <div className="card shadow-2xl border border-slate-100 overflow-hidden">
+                    <Table
+                        columns={columns}
+                        data={filteredRoles}
+                        onRowClick={(row) => setSelectedRole(row)}
+                        selectedRow={selectedRole?.code}
+                        rowKey="code"
+                        emptyMessage={loading ? "Synchronizing registry..." : "No protocols identified."}
+                    />
+                </div>
 
                 <FloatingActionPanel
                     selectedItem={selectedRole}
@@ -168,115 +189,110 @@ const RoleConfig = () => {
                         {
                             icon: Edit,
                             label: 'Edit Role',
-                            onClick: handleOpenModal,
-                            color: 'blue',
-                            title: 'Edit Role'
+                            onClick: () => handleOpenModal(selectedRole),
+                            color: 'indigo',
+                            title: 'Modify'
                         },
                         {
                             icon: Trash2,
-                            label: 'Delete Role',
-                            onClick: handleDelete,
+                            label: 'Purge Role',
+                            onClick: () => handleDelete(selectedRole),
                             color: 'red',
-                            title: 'Delete Role'
+                            title: 'Purge'
                         }
                     ]}
                 />
             </div>
 
             {/* Role Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-fade-in-up">
-                        <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                                <ShieldAlert className="text-blue-600" size={20} />
-                                {isEditing ? 'Edit Role' : 'Create New Role'}
-                            </h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSave}>
-                            <div className="p-6 space-y-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Role Code (Unique)</label>
-                                    <input
-                                        className={clsx(
-                                            "w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all uppercase font-mono text-sm",
-                                            isEditing ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white"
-                                        )}
-                                        value={formData.code}
-                                        onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase().replace(/\s/g, '_') })}
-                                        disabled={isEditing}
-                                        placeholder="e.g. SALES_MANAGER"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Display Name</label>
-                                    <input
-                                        className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                                        value={formData.name}
-                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                        placeholder="e.g. Sales Manager"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
-                                    <textarea
-                                        className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all h-24 resize-none"
-                                        value={formData.description || ''}
-                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                        placeholder="Describe the responsibilities for this role..."
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Category</label>
-                                    <select
-                                        className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white"
-                                        value={formData.category}
-                                        onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                    >
-                                        <option value="SYSTEM">SYSTEM</option>
-                                        <option value="USER">USER</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors shadow-sm"
-                                >
-                                    <Save size={18} /> {isEditing ? 'Save Changes' : 'Create Role'}
-                                </button>
-                            </div>
-                        </form>
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title={isEditing ? 'Refine Designation' : 'Provision Authorization Tier'}
+                subtitle="Authorization Specification"
+                icon={ShieldAlert}
+                maxWidth="max-w-lg"
+                footer={
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => setIsModalOpen(false)}
+                            className="px-8 py-3 text-[var(--text-muted)] hover:text-[var(--text-primary)] font-bold text-[10px] uppercase tracking-widest transition-all"
+                        >
+                            Cease Operations
+                        </button>
+                        <button
+                            type="submit"
+                            form="role-form"
+                            className="btn-primary flex items-center gap-3 px-10 py-3 text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-[var(--accent)]/30 active:scale-95 transition-all text-white"
+                        >
+                            <Save size={18} /> {isEditing ? 'Save Role' : 'Create Role'}
+                        </button>
+                    </>
+                }
+            >
+                <form id="role-form" onSubmit={handleSave} className="space-y-6">
+                    <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Reference Code (Unique System ID)</label>
+                        <input
+                            className={clsx(
+                                "input-field font-black uppercase tracking-widest text-sm",
+                                isEditing ? "bg-[var(--bg-tertiary)]/50 text-[var(--text-muted)] cursor-not-allowed opacity-60" : ""
+                            )}
+                            value={formData.code}
+                            onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase().replace(/\s/g, '_') })}
+                            disabled={isEditing}
+                            placeholder="e.g. OPERATIONS_DIRECTOR"
+                            required
+                        />
+                        {!isEditing && <p className="text-[10px] text-[var(--text-muted)] mt-3 font-medium italic pl-1 opacity-70">Auto-formatted to UPPER_SNAKE_CASE</p>}
                     </div>
-                </div>
-            )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Organizational Designation</label>
+                            <input
+                                className="input-field font-bold text-sm"
+                                value={formData.name}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                placeholder="e.g. Director of Operations"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Authority Domain</label>
+                            <select
+                                className="input-field font-bold text-sm cursor-pointer"
+                                value={formData.category}
+                                onChange={e => setFormData({ ...formData, category: e.target.value })}
+                            >
+                                <option value="SYSTEM">SYSTEM (Protected)</option>
+                                <option value="USER">USER (Customizable)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Functional Mandate & Responsibilities</label>
+                        <textarea
+                            className="input-field h-32 resize-none text-sm font-medium leading-relaxed p-5"
+                            value={formData.description || ''}
+                            onChange={e => setFormData({ ...formData, description: e.target.value })}
+                            placeholder="Outline the responsibilities and access privileges for this organizational designation..."
+                        />
+                    </div>
+                </form>
+            </Modal>
 
-            {/* Delete Confirmation Dialog */}
             <ConfirmDialog
                 isOpen={deleteConfirm.isOpen}
                 onClose={() => setDeleteConfirm({ isOpen: false, role: null })}
                 onConfirm={confirmDelete}
                 title="Delete Role"
-                message={`Are you sure you want to delete the role "${deleteConfirm.role?.name}"? Standard roles might be required for system functionality. This action cannot be undone.`}
-                confirmText="Delete"
-                cancelText="Cancel"
+                message={`Are you certain you wish to purge the role "${deleteConfirm.role?.name}"? System-critical authorizations may be disrupted. This action is irrevocable.`}
+                confirmText="Execute Purge"
+                cancelText="Abort"
                 variant="danger"
             />
-        </div>
+        </div >
     );
 };
 

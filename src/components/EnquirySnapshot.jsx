@@ -23,37 +23,37 @@ const EnquirySnapshot = ({ enquiry, customer, getOptionList, showCustomer = true
     return (
         <div className="space-y-6">
             {/* Snapshot Card */}
-            <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
-                <div className="bg-blue-50 px-4 py-3 border-b border-blue-100 flex items-center gap-2 text-blue-800 font-semibold">
+            <div className="card overflow-hidden">
+                <div className="px-4 py-3 border-b flex items-center gap-2 font-semibold" style={{ background: 'var(--bg-tertiary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}>
                     <Info size={18} /> {showCustomer ? 'Enquiry & Customer Snapshot' : 'Enquiry Details'}
                 </div>
                 <div className={`p-4 grid grid-cols-1 ${showCustomer ? 'md:grid-cols-2 gap-8' : 'md:grid-cols-1'}`}>
                     {/* Left: Customer */}
                     {showCustomer && (
                         <div>
-                            <div className="flex items-center gap-2 text-gray-800 font-medium mb-3 border-b pb-2">
+                            <div className="flex items-center gap-2 font-medium mb-3 border-b pb-2" style={{ color: 'var(--text-primary)', borderColor: 'var(--border)' }}>
                                 <User size={16} /> Customer Details
                             </div>
                             <div className="grid grid-cols-2 gap-y-3 text-sm">
                                 <div className="col-span-2 md:col-span-1">
-                                    <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Full Name</p>
-                                    <p className="font-semibold text-gray-900 text-base">{customer?.fullName || 'N/A'}</p>
+                                    <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Full Name</p>
+                                    <p className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>{customer?.fullName || 'N/A'}</p>
                                 </div>
                                 <div className="col-span-2 md:col-span-1">
-                                    <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Type</p>
-                                    <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded text-xs font-semibold">{customer?.customerType || 'Lead'}</span>
+                                    <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Type</p>
+                                    <span className="bg-yellow-500/10 text-yellow-600 px-2 py-0.5 rounded text-xs font-semibold">{customer?.customerType || 'Lead'}</span>
                                 </div>
                                 <div className="col-span-2 md:col-span-1">
-                                    <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Contact</p>
-                                    <p className="font-medium text-gray-900">{customer?.phone || 'N/A'}</p>
+                                    <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Contact</p>
+                                    <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{customer?.phone || 'N/A'}</p>
                                 </div>
                                 <div className="col-span-2">
-                                    <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Address</p>
-                                    <p className="text-gray-900 leading-relaxed">{customer?.address || 'N/A'}</p>
+                                    <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Address</p>
+                                    <p className="leading-relaxed" style={{ color: 'var(--text-primary)' }}>{customer?.address || 'N/A'}</p>
                                 </div>
                                 <div className="col-span-2 md:col-span-1">
-                                    <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Profession</p>
-                                    <p className="text-gray-900">{customer?.profession || 'N/A'}</p>
+                                    <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Profession</p>
+                                    <p style={{ color: 'var(--text-primary)' }}>{customer?.profession || 'N/A'}</p>
                                 </div>
                             </div>
                         </div>
@@ -61,34 +61,35 @@ const EnquirySnapshot = ({ enquiry, customer, getOptionList, showCustomer = true
 
                     {/* Right: Enquiry */}
                     <div>
-                        <div className="flex items-center gap-2 text-gray-800 font-medium mb-3 border-b pb-2">
+                        <div className="flex items-center gap-2 font-medium mb-3 border-b pb-2" style={{ color: 'var(--text-primary)', borderColor: 'var(--border)' }}>
                             <Car size={16} /> Enquiry Info
                         </div>
                         <div className={`grid ${showCustomer ? 'grid-cols-2' : 'grid-cols-3'} gap-y-3 gap-x-4 text-sm`}>
                             <div className="col-span-3 md:col-span-2 lg:col-span-1">
-                                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Car Interest</p>
-                                <p className="font-semibold text-blue-700">{getCarInterest()}</p>
+                                <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Car Interest</p>
+                                <p className="font-semibold text-[var(--accent)]">{getCarInterest()}</p>
                             </div>
                             <div className="col-span-1">
-                                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Budget</p>
-                                <p className="text-gray-900">{getLabel('BUDGET_RANGES', enquiry?.budgetRange)}</p>
+                                <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Budget</p>
+                                <p style={{ color: 'var(--text-primary)' }}>{getLabel('BUDGET_RANGES', enquiry?.budgetRange)}</p>
                             </div>
                             <div className="col-span-1">
-                                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Status</p>
-                                <span className={`px-2 py-0.5 rounded text-xs font-semibold uppercase ${enquiry?.status === 'new' ? 'bg-green-100 text-green-800' :
-                                    enquiry?.status === 'close' ? 'bg-red-100 text-red-800' :
-                                        'bg-gray-100 text-gray-800'
-                                    }`}>
+                                <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Status</p>
+                                <span className={clsx("px-2 py-0.5 rounded text-xs font-semibold uppercase",
+                                    enquiry?.status === 'new' ? 'bg-emerald-500/10 text-emerald-600' :
+                                        enquiry?.status === 'close' ? 'bg-rose-500/10 text-rose-600' :
+                                            'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'
+                                )}>
                                     {enquiry?.status || 'New'}
                                 </span>
                             </div>
                             <div className="col-span-1">
-                                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Enquiry Type</p>
-                                <p className="text-gray-900">{enquiry?.enquiryType || 'Buy'}</p>
+                                <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Enquiry Type</p>
+                                <p style={{ color: 'var(--text-primary)' }}>{enquiry?.enquiryType || 'Buy'}</p>
                             </div>
                             <div className="col-span-1">
-                                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Payment Mode</p>
-                                <p className="text-gray-900">{getLabel('PAYMENT_MODES', enquiry?.payment)}</p>
+                                <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Payment Mode</p>
+                                <p style={{ color: 'var(--text-primary)' }}>{getLabel('PAYMENT_MODES', enquiry?.payment)}</p>
                             </div>
                         </div>
                     </div>
@@ -96,13 +97,13 @@ const EnquirySnapshot = ({ enquiry, customer, getOptionList, showCustomer = true
             </div>
 
             {/* Followups */}
-            <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
-                <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 font-semibold text-gray-700 flex items-center gap-2">
-                    <ClipboardList size={18} className="text-gray-500" /> Follow-up History
+            <div className="card overflow-hidden">
+                <div className="px-4 py-3 border-b font-semibold flex items-center gap-2" style={{ background: 'var(--bg-tertiary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}>
+                    <ClipboardList size={18} style={{ color: 'var(--text-muted)' }} /> Follow-up History
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                        <thead className="bg-gray-50 text-gray-500 font-semibold border-b">
+                        <thead style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)' }} className="font-semibold border-b">
                             <tr>
                                 <th className="p-3">Date / Agent</th>
                                 <th className="p-3">Mode / Type</th>
@@ -111,39 +112,40 @@ const EnquirySnapshot = ({ enquiry, customer, getOptionList, showCustomer = true
                                 <th className="p-3">Next Visit</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
                             {enquiry?.followUps && enquiry.followUps.length > 0 ? (
                                 enquiry.followUps.map((f, i) => (
-                                    <tr key={f.followUpId || i} className="hover:bg-gray-50 transition-colors">
+                                    <tr key={f.followUpId || i} className="transition-colors hover:bg-[var(--bg-tertiary)]">
                                         <td className="p-3 align-top">
-                                            <div className="font-medium text-gray-900">{new Date(f.createdAt).toLocaleDateString()}</div>
-                                            <div className="text-gray-500 text-[10px] truncate max-w-[100px]" title={f.agent?.fullName}>{f.agent?.fullName || 'Unknown'}</div>
+                                            <div className="font-medium" style={{ color: 'var(--text-primary)' }}>{new Date(f.createdAt).toLocaleDateString()}</div>
+                                            <div className="text-[10px] truncate max-w-[100px]" style={{ color: 'var(--text-muted)' }} title={f.agent?.fullName}>{f.agent?.fullName || 'Unknown'}</div>
                                         </td>
                                         <td className="p-3 align-top">
-                                            <div className="font-medium text-gray-900">{getLabel('FOLLOWUP_MODES', f.followupMode)}</div>
-                                            <div className="text-gray-500">{getLabel('FOLLOWUP_TYPES', f.followupType)}</div>
+                                            <div className="font-medium" style={{ color: 'var(--text-primary)' }}>{getLabel('FOLLOWUP_MODES', f.followupMode)}</div>
+                                            <div style={{ color: 'var(--text-muted)' }}>{getLabel('FOLLOWUP_TYPES', f.followupType)}</div>
                                         </td>
                                         <td className="p-3 align-top">
-                                            <div className="font-medium text-gray-900">{getLabel('FOLLOWUP_ACTIONS', f.followupActionDone)}</div>
-                                            {f.followupCar && <div className="text-gray-500 text-[10px]">Car: {f.followupCar}</div>}
+                                            <div className="font-medium" style={{ color: 'var(--text-primary)' }}>{getLabel('FOLLOWUP_ACTIONS', f.followupActionDone)}</div>
+                                            {f.followupCar && <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Car: {f.followupCar}</div>}
                                         </td>
                                         <td className="p-3 align-top">
-                                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase mb-1 ${f.followupResults === 'sale-closed' ? 'bg-green-100 text-green-800' :
-                                                f.followupResults === 'not-interested' ? 'bg-red-100 text-red-800' :
-                                                    'bg-blue-50 text-blue-600'
-                                                }`}>
+                                            <span className={clsx("inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase mb-1",
+                                                f.followupResults === 'sale-closed' ? 'bg-emerald-500/10 text-emerald-600' :
+                                                    f.followupResults === 'not-interested' ? 'bg-rose-500/10 text-rose-600' :
+                                                        'bg-[var(--accent)]/10 text-[var(--accent)]'
+                                            )}>
                                                 {getLabel('FOLLOWUP_RESULTS', f.followupResults)}
                                             </span>
-                                            <div className="text-gray-500 italic leading-tight">{f.followupRemarks}</div>
+                                            <div className="italic leading-tight" style={{ color: 'var(--text-muted)' }}>{f.followupRemarks}</div>
                                         </td>
-                                        <td className="p-3 align-top font-medium text-gray-700">
+                                        <td className="p-3 align-top font-medium" style={{ color: 'var(--text-primary)' }}>
                                             {f.nextVisitDate ? new Date(f.nextVisitDate).toLocaleString() : '-'}
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="5" className="p-8 text-center text-gray-500">
+                                    <td colSpan="5" className="p-8 text-center" style={{ color: 'var(--text-muted)' }}>
                                         No follow-ups recorded for this enquiry.
                                     </td>
                                 </tr>

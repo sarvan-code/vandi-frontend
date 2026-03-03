@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Edit, Filter, Plus, X, Trash2 } from 'lucide-react';
+import clsx from 'clsx';
 import api from '../api';
 import Table from '../components/Table';
 import { useToast } from '../context/ToastContext';
@@ -212,21 +213,49 @@ const Cars = () => {
     };
 
     const columns = [
-        { key: 'registrationNumber', label: 'Reg. Number', render: (row) => row.registrationNumber || '-' },
-        { key: 'make', label: 'Brand' },
-        { key: 'carType', label: 'Type' },
-        { key: 'model', label: 'Model' },
-        { key: 'variant', label: 'Variant' },
-        { key: 'maximumRetailPrice', label: 'MRP', render: (row) => row.maximumRetailPrice ? `₹${row.maximumRetailPrice.toLocaleString()}` : '-' },
-        { key: 'discountAmount', label: 'Discount', render: (row) => row.discountAmount ? `₹${row.discountAmount.toLocaleString()}` : '-' },
         {
-            key: 'finalPrice', label: 'Final Price', render: (row) => {
-                const final = (row.maximumRetailPrice || 0) - (row.discountAmount || 0);
-                return final > 0 ? `₹${final.toLocaleString()}` : '-';
-            }
+            key: 'registrationNumber',
+            label: 'Registration Number',
+            render: (row) => (
+                <div className="flex flex-col">
+                    <span className="font-bold text-[var(--text-primary)]">{row.registrationNumber || 'UNREGISTERED'}</span>
+                    <span className="text-[10px] text-[var(--text-muted)] font-black uppercase tracking-widest">{row.vin || 'NO VIN RECORDED'}</span>
+                </div>
+            )
         },
-        { key: 'inventoryStatus', label: 'Status' },
-        { key: 'branch', label: 'Branch', render: (row) => row.branch?.displayName || '-' }
+        { key: 'make', label: 'Manufacturer' },
+        { key: 'model', label: 'Technical Model' },
+        {
+            key: 'specification',
+            label: 'Specification / Color',
+            render: (row) => (
+                <div className="flex flex-col">
+                    <span className="text-sm font-bold text-[var(--text-primary)]">{row.variant || 'Standard'}</span>
+                    <span className="text-[10px] text-[var(--text-secondary)] font-medium uppercase tracking-tighter">{row.color || 'No Color'} • {row.manufacturingYear}</span>
+                </div>
+            )
+        },
+        {
+            key: 'maximumRetailPrice',
+            label: 'Price',
+            render: (row) => (
+                <span className="font-bold text-[var(--text-secondary)]">{row.maximumRetailPrice ? `₹${row.maximumRetailPrice.toLocaleString('en-IN')}` : '—'}</span>
+            )
+        },
+        {
+            key: 'inventoryStatus',
+            label: 'Status',
+            render: (row) => (
+                <span className={clsx(
+                    "rounded-full px-4 py-1 text-[10px] font-bold uppercase tracking-[0.1em] transition-all border",
+                    row.inventoryStatus === 'Available' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                        row.inventoryStatus === 'Booked' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                            'bg-slate-50 text-slate-600 border-slate-100'
+                )}>
+                    {row.inventoryStatus}
+                </span>
+            )
+        }
     ];
 
     // Helper logic for filtered dropdowns
@@ -280,15 +309,19 @@ const Cars = () => {
     });
 
     return (
-        <div>
-            <div className="flex flex-col md:flex-row md:items-center justify-between my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                    <h1 className="text-xl font-bold text-gray-800">Cars</h1>
+        <div className="animate-fade-in">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-10 gap-8">
+                <div>
+                    <h1 className="text-4xl font-semibold mb-2 text-[var(--text-primary)]">Inventory</h1>
+                    <p className="text-sm font-medium text-[var(--text-secondary)]">Manage your vehicle fleet, specifications, and availability.</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
                     {isGlobalUser && (
-                        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-200">
-                            <Filter size={16} className="text-gray-400" />
+                        <div className="search-box !w-auto">
+                            <Filter size={18} className="search-icon" />
                             <select
-                                className="flex-1 text-sm border-none focus:ring-0 bg-transparent min-w-[150px]"
+                                className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-bold text-[var(--text-primary)] min-w-[160px] cursor-pointer outline-none pl-10 h-10 shadow-sm"
                                 value={selectedBranchId}
                                 onChange={(e) => setSelectedBranchId(e.target.value)}
                             >
@@ -299,15 +332,36 @@ const Cars = () => {
                             </select>
                         </div>
                     )}
+                    {canManageCars && (
+                        <button
+                            onClick={() => {
+                                setCurrentCar({
+                                    registrationNumber: '',
+                                    make: '',
+                                    carType: '',
+                                    model: '',
+                                    variant: '',
+                                    vin: '',
+                                    engineNumber: '',
+                                    color: '',
+                                    manufacturingYear: new Date().getFullYear(),
+                                    purchaseDate: '',
+                                    purchasePrice: 0,
+                                    maximumRetailPrice: 0,
+                                    discountAmount: 0,
+                                    inventoryStatus: 'Available',
+                                    branchId: user.branchId || ''
+                                });
+                                setManualEntry({ make: false, carType: false, model: false, variant: false });
+                                setNewMasterValues({ make: '', carType: '', model: '', variant: '' });
+                                setIsModalOpen(true);
+                            }}
+                            className="btn-primary flex items-center gap-3 !py-2 !px-6"
+                        >
+                            <Plus size={18} /> New Asset
+                        </button>
+                    )}
                 </div>
-                {canManageCars && (
-                    <button
-                        onClick={() => { setCurrentCar({}); setManualEntry({ make: false, carType: false, model: false, variant: false }); setIsModalOpen(true); }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap text-sm font-medium"
-                    >
-                        Add Car
-                    </button>
-                )}
             </div>
 
             <div className="relative">
@@ -327,17 +381,17 @@ const Cars = () => {
                     actions={[
                         {
                             icon: Edit,
-                            label: 'Edit Car',
+                            label: 'Details',
                             onClick: handleEdit,
                             color: 'blue',
-                            title: 'Edit Car'
+                            title: 'Edit Vehicle'
                         },
                         {
                             icon: Trash2,
-                            label: 'Delete Car',
+                            label: 'Delete',
                             onClick: handleDelete,
                             color: 'red',
-                            title: 'Delete Car'
+                            title: 'Delete Vehicle'
                         }
                     ]}
                 />
@@ -346,16 +400,16 @@ const Cars = () => {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={currentCar?.carId ? 'Edit Car' : 'Add Car'}
+                title={currentCar?.carId ? 'Edit Vehicle' : 'Add New Vehicle'}
             >
-                <form onSubmit={handleSave} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2 md:col-span-1">
-                            <label className="block text-sm font-medium text-gray-700">Reg. Number</label>
+                <form onSubmit={handleSave} className="space-y-8">
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="col-span-2 md:col-span-1 space-y-2">
+                            <label className="form-label">Reg. Number</label>
                             <input
                                 type="text"
                                 placeholder="MH12AB1234"
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 uppercase"
+                                className="input-field uppercase font-bold"
                                 value={currentCar?.registrationNumber || ''}
                                 onChange={(e) => {
                                     const val = e.target.value.toUpperCase().replace(/\s+/g, '');
@@ -363,10 +417,10 @@ const Cars = () => {
                                 }}
                             />
                         </div>
-                        <div className="col-span-2 md:col-span-1">
-                            <label className="block text-sm font-medium text-gray-700">Inventory Status</label>
+                        <div className="col-span-2 md:col-span-1 space-y-2">
+                            <label className="form-label">Inventory Status</label>
                             <select
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                className="input-field font-semibold"
                                 value={currentCar?.inventoryStatus || 'UPCOMING'}
                                 onChange={(e) => setCurrentCar({ ...currentCar, inventoryStatus: e.target.value })}
                             >
@@ -375,43 +429,46 @@ const Cars = () => {
                                 ))}
                             </select>
                         </div>
-                        <div className="col-span-2 md:col-span-1">
-                            <label className="block text-sm font-medium text-gray-700">MRP (₹)</label>
+                        <div className="col-span-2 md:col-span-1 space-y-2">
+                            <label className="form-label">MRP (₹)</label>
                             <input
                                 type="number"
                                 placeholder="0.00"
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                className="input-field font-bold"
                                 value={currentCar?.maximumRetailPrice || ''}
                                 onChange={(e) => setCurrentCar({ ...currentCar, maximumRetailPrice: e.target.value })}
                             />
                         </div>
-                        <div className="col-span-2 md:col-span-1">
-                            <label className="block text-sm font-medium text-gray-700">Discount (₹)</label>
+                        <div className="col-span-2 md:col-span-1 space-y-2">
+                            <label className="form-label">Negotiated Discount (₹)</label>
                             <input
                                 type="number"
                                 placeholder="0.00"
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                className="input-field font-bold text-rose-600"
                                 value={currentCar?.discountAmount || ''}
                                 onChange={(e) => setCurrentCar({ ...currentCar, discountAmount: e.target.value })}
                             />
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <div className="col-span-2">
-                            <label className="block text-sm font-bold text-gray-800 mb-2">Vehicle Details</label>
+                    <div className="grid grid-cols-2 gap-6 p-6 rounded-xl border shadow-inner mb-8 bg-[var(--bg-secondary)]" style={{ borderColor: 'var(--border)' }}>
+                        <div className="col-span-2 flex items-center gap-3 mb-2">
+                            <div className="w-8 h-8 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center text-[var(--accent)]">
+                                <Filter size={14} />
+                            </div>
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-secondary)]">Technical Specifications</label>
                         </div>
 
                         {/* BRAND */}
-                        <div className='col-span-2 md:col-span-1'>
-                            <label className="block text-xs font-semibold text-gray-500 uppercase">Brand</label>
+                        <div className='col-span-2 md:col-span-1 space-y-2'>
+                            <label className="form-label">Manufacturer Brand</label>
                             <select
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm border p-2"
+                                className="input-field font-semibold"
                                 value={manualEntry.make ? '__OTHER__' : (currentCar?.make || '')}
                                 onChange={(e) => {
                                     if (e.target.value === '__OTHER__') {
                                         setManualEntry(prev => ({ ...prev, make: true }));
-                                        setCurrentCar({ ...currentCar, make: '' }); // Reset actual value to empty until they type and save
+                                        setCurrentCar({ ...currentCar, make: '' });
                                     } else {
                                         setManualEntry(prev => ({ ...prev, make: false }));
                                         setCurrentCar({ ...currentCar, make: e.target.value, carType: '', model: '', variant: '' });
@@ -425,30 +482,30 @@ const Cars = () => {
                                 <option value="__OTHER__">Other (Add New)</option>
                             </select>
                             {manualEntry.make && (
-                                <div className="mt-1 relative rounded-md shadow-sm">
+                                <div className="mt-3 relative">
                                     <input
                                         type="text"
-                                        className="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm border p-2 pr-10"
+                                        className="input-field pr-24"
                                         placeholder="Enter New Brand"
                                         value={newMasterValues.make}
                                         onChange={(e) => setNewMasterValues({ ...newMasterValues, make: e.target.value })}
                                     />
-                                    <div className="absolute inset-y-0 right-0 flex items-center pr-1 gap-1">
+                                    <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">
                                         <button
                                             type="button"
                                             onClick={() => handleCreateMaster('Brand')}
-                                            className="bg-blue-600 text-white p-1 rounded-full hover:bg-blue-700 focus:outline-none"
+                                            className="bg-indigo-600 text-white p-1.5 rounded-xl hover:bg-indigo-700 shadow-md transition-all"
                                             title="Save to Master"
                                         >
-                                            <Plus className="h-4 w-4" aria-hidden="true" />
+                                            <Plus size={16} />
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => handleCancelMaster('Brand')}
-                                            className="bg-gray-200 text-gray-600 p-1 rounded-full hover:bg-gray-300 focus:outline-none"
+                                            className="bg-slate-200 text-slate-600 p-1.5 rounded-xl hover:bg-slate-300 transition-all"
                                             title="Cancel"
                                         >
-                                            <X className="h-4 w-4" aria-hidden="true" />
+                                            <X size={16} />
                                         </button>
                                     </div>
                                 </div>
@@ -456,10 +513,10 @@ const Cars = () => {
                         </div>
 
                         {/* TYPE */}
-                        <div className='col-span-2 md:col-span-1'>
-                            <label className="block text-xs font-semibold text-gray-500 uppercase">Type</label>
+                        <div className='col-span-2 md:col-span-1 space-y-2'>
+                            <label className="form-label">Vehicle Segment</label>
                             <select
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm border p-2"
+                                className="input-field font-semibold"
                                 value={manualEntry.carType ? '__OTHER__' : (currentCar?.carType || '')}
                                 onChange={(e) => {
                                     if (e.target.value === '__OTHER__') {
@@ -471,37 +528,37 @@ const Cars = () => {
                                         setNewMasterValues(prev => ({ ...prev, carType: '' }));
                                     }
                                 }}
-                                required={!manualEntry.make} // If brand is manual, type is free text which is required in input below
+                                required={!manualEntry.make}
                             >
                                 <option value="">Select Type</option>
                                 {availableTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
                                 <option value="__OTHER__">Other (Add New)</option>
                             </select>
                             {manualEntry.carType && (
-                                <div className="mt-1 relative rounded-md shadow-sm">
+                                <div className="mt-3 relative">
                                     <input
                                         type="text"
-                                        className="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm border p-2 pr-10"
+                                        className="input-field pr-24"
                                         placeholder="Enter New Type"
                                         value={newMasterValues.carType}
                                         onChange={(e) => setNewMasterValues({ ...newMasterValues, carType: e.target.value })}
                                     />
-                                    <div className="absolute inset-y-0 right-0 flex items-center pr-1 gap-1">
+                                    <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">
                                         <button
                                             type="button"
                                             onClick={() => handleCreateMaster('Type')}
-                                            className="bg-blue-600 text-white p-1 rounded-full hover:bg-blue-700 focus:outline-none"
+                                            className="bg-indigo-600 text-white p-1.5 rounded-xl hover:bg-indigo-700 shadow-md transition-all"
                                             title="Save to Master"
                                         >
-                                            <Plus className="h-4 w-4" aria-hidden="true" />
+                                            <Plus size={16} />
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => handleCancelMaster('Type')}
-                                            className="bg-gray-200 text-gray-600 p-1 rounded-full hover:bg-gray-300 focus:outline-none"
+                                            className="bg-slate-200 text-slate-600 p-1.5 rounded-xl hover:bg-slate-300 transition-all"
                                             title="Cancel"
                                         >
-                                            <X className="h-4 w-4" aria-hidden="true" />
+                                            <X size={16} />
                                         </button>
                                     </div>
                                 </div>
@@ -509,10 +566,10 @@ const Cars = () => {
                         </div>
 
                         {/* MODEL */}
-                        <div className='col-span-2 md:col-span-1'>
-                            <label className="block text-xs font-semibold text-gray-500 uppercase">Model</label>
+                        <div className='col-span-2 md:col-span-1 space-y-2'>
+                            <label className="form-label">Model Name</label>
                             <select
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm border p-2"
+                                className="input-field font-semibold"
                                 value={manualEntry.model ? '__OTHER__' : (currentCar?.model || '')}
                                 onChange={(e) => {
                                     if (e.target.value === '__OTHER__') {
@@ -531,30 +588,30 @@ const Cars = () => {
                                 <option value="__OTHER__">Other (Add New)</option>
                             </select>
                             {manualEntry.model && (
-                                <div className="mt-1 relative rounded-md shadow-sm">
+                                <div className="mt-3 relative">
                                     <input
                                         type="text"
-                                        className="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm border p-2 pr-10"
+                                        className="input-field pr-24"
                                         placeholder="Enter New Model"
                                         value={newMasterValues.model}
                                         onChange={(e) => setNewMasterValues({ ...newMasterValues, model: e.target.value })}
                                     />
-                                    <div className="absolute inset-y-0 right-0 flex items-center pr-1 gap-1">
+                                    <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">
                                         <button
                                             type="button"
                                             onClick={() => handleCreateMaster('Model')}
-                                            className="bg-blue-600 text-white p-1 rounded-full hover:bg-blue-700 focus:outline-none"
+                                            className="bg-indigo-600 text-white p-1.5 rounded-xl hover:bg-indigo-700 shadow-md transition-all"
                                             title="Save to Master"
                                         >
-                                            <Plus className="h-4 w-4" aria-hidden="true" />
+                                            <Plus size={16} />
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => handleCancelMaster('Model')}
-                                            className="bg-gray-200 text-gray-600 p-1 rounded-full hover:bg-gray-300 focus:outline-none"
+                                            className="bg-slate-200 text-slate-600 p-1.5 rounded-xl hover:bg-slate-300 transition-all"
                                             title="Cancel"
                                         >
-                                            <X className="h-4 w-4" aria-hidden="true" />
+                                            <X size={16} />
                                         </button>
                                     </div>
                                 </div>
@@ -562,10 +619,10 @@ const Cars = () => {
                         </div>
 
                         {/* VARIANT */}
-                        <div className='col-span-2 md:col-span-1'>
-                            <label className="block text-xs font-semibold text-gray-500 uppercase">Variant</label>
+                        <div className='col-span-2 md:col-span-1 space-y-2'>
+                            <label className="form-label">Trim / Variant</label>
                             <select
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm border p-2"
+                                className="input-field font-semibold"
                                 value={manualEntry.variant ? '__OTHER__' : (currentCar?.variant || '')}
                                 onChange={(e) => {
                                     if (e.target.value === '__OTHER__') {
@@ -583,30 +640,30 @@ const Cars = () => {
                                 <option value="__OTHER__">Other (Add New)</option>
                             </select>
                             {manualEntry.variant && (
-                                <div className="mt-1 relative rounded-md shadow-sm">
+                                <div className="mt-3 relative">
                                     <input
                                         type="text"
-                                        className="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm border p-2 pr-10"
+                                        className="input-field pr-24"
                                         placeholder="Enter New Variant"
                                         value={newMasterValues.variant}
                                         onChange={(e) => setNewMasterValues({ ...newMasterValues, variant: e.target.value })}
                                     />
-                                    <div className="absolute inset-y-0 right-0 flex items-center pr-1 gap-1">
+                                    <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">
                                         <button
                                             type="button"
                                             onClick={() => handleCreateMaster('Variant')}
-                                            className="bg-blue-600 text-white p-1 rounded-full hover:bg-blue-700 focus:outline-none"
+                                            className="bg-indigo-600 text-white p-1.5 rounded-xl hover:bg-indigo-700 shadow-md transition-all"
                                             title="Save to Master"
                                         >
-                                            <Plus className="h-4 w-4" aria-hidden="true" />
+                                            <Plus size={16} />
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => handleCancelMaster('Variant')}
-                                            className="bg-gray-200 text-gray-600 p-1 rounded-full hover:bg-gray-300 focus:outline-none"
+                                            className="bg-slate-200 text-slate-600 p-1.5 rounded-xl hover:bg-slate-300 transition-all"
                                             title="Cancel"
                                         >
-                                            <X className="h-4 w-4" aria-hidden="true" />
+                                            <X size={16} />
                                         </button>
                                     </div>
                                 </div>
@@ -614,10 +671,10 @@ const Cars = () => {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Branch</label>
+                    <div className="space-y-2">
+                        <label className="form-label">Branch Store</label>
                         <select
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                            className="input-field font-semibold"
                             value={currentCar?.branchId || ''}
                             onChange={(e) => setCurrentCar({ ...currentCar, branchId: e.target.value })}
                             required
@@ -629,17 +686,17 @@ const Cars = () => {
                         </select>
                     </div>
 
-                    <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse bg-white pt-4 border-t">
+                    <div className="mt-10 flex flex-col sm:flex-row-reverse gap-4 border-t pt-8" style={{ borderColor: 'var(--border)' }}>
                         <button
                             type="submit"
-                            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                            className="btn-primary px-12 py-3 text-[10px] font-bold uppercase tracking-widest shadow-2xl active:scale-95 transition-all text-white"
                         >
                             Save Car
                         </button>
                         <button
                             type="button"
                             onClick={() => setIsModalOpen(false)}
-                            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:w-auto sm:text-sm"
+                            className="btn-secondary px-8"
                         >
                             Cancel
                         </button>

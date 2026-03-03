@@ -22,76 +22,109 @@ const Register = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8">
-                <div className="flex flex-col items-center">
-                    <Logo size={120} />
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                        Create your account
-                    </h2>
-                </div>
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    {error && <div className="text-red-500 text-center">{error}</div>}
-                    <div className="rounded-md shadow-sm -space-y-px">
-                        <div>
-                            <label htmlFor="fullName" className="sr-only">Full Name</label>
+        <div className="min-h-screen flex items-center justify-center p-6 bg-[var(--bg-primary)]">
+            <div className="max-w-[450px] w-full animate-fade-in-up">
+                <div className="bg-[var(--surface)] p-12 rounded-[2.5rem] shadow-2xl border border-[var(--border)] relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-2 h-full bg-[var(--accent)]"></div>
+
+                    <div className="flex flex-col items-center mb-12">
+                        <div className="w-20 h-20 bg-[var(--bg-secondary)] rounded-3xl flex items-center justify-center mb-6 shadow-sm border border-[var(--border)]">
+                            <Logo size={48} />
+                        </div>
+                        <h1 className="text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
+                            Create Account
+                        </h1>
+                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] mt-3">
+                            VANDI CRM Automotive • Registry Portal
+                        </p>
+                    </div>
+
+                    <form className="space-y-8" onSubmit={handleSubmit}>
+                        {error && (
+                            <div className="text-xs font-bold uppercase tracking-wider p-4 rounded-2xl bg-[var(--danger-bg)] text-[var(--danger)] border border-[var(--danger)]/20 animate-in shake duration-300">
+                                {error}
+                            </div>
+                        )}
+
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1">
+                                Full Name
+                            </label>
                             <input
                                 id="fullName"
                                 name="fullName"
                                 type="text"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                placeholder="Full Name"
+                                className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl px-5 py-4 text-sm font-semibold text-[var(--text-primary)] w-full outline-none focus:ring-2 focus:ring-[var(--accent)]/20 transition-all placeholder:text-[var(--text-muted)]"
+                                placeholder="John Doe"
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
                             />
                         </div>
-                        <div>
-                            <label htmlFor="email-address" className="sr-only">Email address</label>
+
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1">
+                                Email Address
+                            </label>
                             <input
                                 id="email-address"
                                 name="email"
                                 type="email"
                                 autoComplete="email"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                placeholder="Email address"
+                                className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl px-5 py-4 text-sm font-semibold text-[var(--text-primary)] w-full outline-none focus:ring-2 focus:ring-[var(--accent)]/20 transition-all placeholder:text-[var(--text-muted)]"
+                                placeholder="name@company.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
-                        <div>
-                            <label htmlFor="password" className="sr-only">Password</label>
+
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1">
+                                Authorization Passkey
+                            </label>
                             <input
                                 id="password"
                                 name="password"
                                 type="password"
                                 autoComplete="new-password"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                placeholder="Password"
+                                className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl px-5 py-4 text-sm font-semibold text-[var(--text-primary)] w-full outline-none focus:ring-2 focus:ring-[var(--accent)]/20 transition-all placeholder:text-[var(--text-muted)]"
+                                placeholder="••••••••"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
-                    </div>
 
-                    <div>
-                        <button
-                            type="submit"
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                            Register
-                        </button>
+                        <div className="pt-4">
+                            <button
+                                type="submit"
+                                className="btn-primary w-full py-4 text-sm font-bold uppercase tracking-widest shadow-xl shadow-[var(--accent)]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                                Initialize Onboarding
+                            </button>
+                        </div>
+                    </form>
+
+                    <div className="mt-10 pt-8 border-t border-[var(--border)] text-center">
+                        <p className="text-xs text-[var(--text-muted)] font-medium">
+                            Already have an account?{' '}
+                            <Link to="/login" className="text-[var(--accent)] font-bold hover:underline">
+                                Return to Identity Gateway
+                            </Link>
+                        </p>
                     </div>
-                </form>
-                <div className="text-center">
-                    <p className="text-sm text-gray-600">
-                        Already have an account?{' '}
-                        <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                            Sign in
-                        </Link>
+                </div>
+
+                <div className="mt-8 flex flex-col items-center gap-2">
+                    <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.3em]">
+                        &copy; 2026 VANDI CRM AUTOMOTIVE
                     </p>
+                    <div className="flex items-center gap-4 text-[10px] text-[var(--text-muted)]">
+                        <span className="hover:text-[var(--text-secondary)] cursor-pointer">Privacy Protocol</span>
+                        <span className="w-1 h-1 bg-[var(--border)] rounded-full"></span>
+                        <span className="hover:text-[var(--text-secondary)] cursor-pointer">Terms of Engagement</span>
+                    </div>
                 </div>
             </div>
         </div>

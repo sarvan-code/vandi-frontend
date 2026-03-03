@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, AlertTriangle, FileText, Car as CarIcon, User } from 'lucide-react';
+import clsx from 'clsx';
 import api from '../api';
 import { useToast } from '../context/ToastContext';
 
@@ -117,140 +118,120 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
     const totalReceived = booking.agreedPrice - booking.balanceAmount;
 
     return (
-        <div className="space-y-6">
-            {/* Data Verification Panel */}
-            <div className="bg-white rounded-lg shadow">
-                <div className="p-4 border-b bg-blue-50">
-                    <h3 className="text-lg font-semibold text-blue-900 flex items-center gap-2">
-                        <AlertTriangle size={20} />
-                        Data Verification - Please Review Before Proceeding
-                    </h3>
+        <div className="space-y-12 animate-fade-in">
+            {/* Critical Verification */}
+            <div className="card overflow-hidden border border-rose-200 dark:border-rose-900/30 shadow-sm">
+                <div className="px-6 py-4 border-b border-rose-100 dark:border-rose-900/20 bg-rose-50/50 dark:bg-rose-900/10 flex items-center gap-3">
+                    <div className="w-8 h-8 bg-rose-500/10 rounded-lg flex items-center justify-center text-rose-600">
+                        <AlertTriangle size={16} />
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-rose-900 dark:text-rose-400">Pre-Delivery Validation</h3>
+                    </div>
                 </div>
 
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Car Details */}
-                    <div className="border rounded-lg p-4">
-                        <div className="flex items-center gap-2 mb-3">
-                            <CarIcon size={20} className="text-blue-600" />
-                            <h4 className="font-semibold">Vehicle Details</h4>
-                        </div>
-                        <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Registration:</span>
-                                <span className="font-medium">{booking.car?.registrationNumber}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Make/Model:</span>
-                                <span className="font-medium">
-                                    {booking.car?.make} {booking.car?.model}
-                                </span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Variant:</span>
-                                <span className="font-medium">{booking.car?.variant || 'N/A'}</span>
+                    {/* Vehicle Metadata */}
+                    <div className="bg-[var(--bg-tertiary)] rounded-xl p-6 border border-[var(--border)] relative overflow-hidden group">
+                        <div className="relative z-10">
+                            <p className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mb-2">Asset Identification</p>
+                            <h4 className="text-xl font-bold tracking-tight text-[var(--text-primary)] mb-1">
+                                {booking.car?.make} {booking.car?.model}
+                            </h4>
+                            <p className="text-[var(--text-muted)] font-bold mb-6 text-xs">{booking.car?.variant || 'Standard Specification'}</p>
+
+                            <div className="pt-4 border-t border-[var(--border)]">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Reg Index</span>
+                                    <span className="font-mono font-bold text-[10px] bg-[var(--bg-secondary)] text-[var(--text-primary)] px-3 py-1 rounded border border-[var(--border)] uppercase">
+                                        {booking.car?.registrationNumber || 'PENDING'}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
+                    {/* Compliance Profile Retrieval */}
+                    <div className="card border-[var(--border)] p-6 bg-[var(--bg-secondary)] relative overflow-hidden">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Compliance Status</p>
+                        <h4 className="text-xl font-bold mb-1 text-[var(--text-primary)] tracking-tight">
+                            {booking.registration?.registrationType === 'SELF' ? 'Self Ownership' : 'Nominee Transfer'}
+                        </h4>
+                        <p className="text-[var(--text-muted)] font-bold mb-6 text-xs uppercase tracking-tight">
+                            {booking.registration?.registrationType === 'SELF' ? 'Direct Allocation' : `Legal Nominee: ${booking.registration?.nomineeName}`}
+                        </p>
 
-                    {/* RTO Details */}
-                    <div className="border rounded-lg p-4">
-                        <div className="flex items-center gap-2 mb-3">
-                            <User size={20} className="text-blue-600" />
-                            <h4 className="font-semibold">Registration Details</h4>
-                        </div>
-                        <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Type:</span>
-                                <span className="font-medium">
-                                    {booking.registration?.registrationType === 'SELF' ? 'Self (Customer)' : 'Other (Nominee)'}
+                        <div className="pt-4 border-t border-[var(--border)]">
+                            <div className="flex justify-between items-center text-[10px]">
+                                <span className="text-[var(--text-muted)] font-bold uppercase tracking-widest">Protocol</span>
+                                <span className="font-bold text-emerald-600 flex items-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                                    VERIFIED
                                 </span>
                             </div>
-                            {booking.registration?.registrationType === 'OTHER' && (
-                                <>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Nominee Name:</span>
-                                        <span className="font-medium">{booking.registration?.nomineeName}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Nominee Phone:</span>
-                                        <span className="font-medium">{booking.registration?.nomineePhone}</span>
-                                    </div>
-                                </>
-                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Payment Summary */}
-            <div className="bg-white rounded-lg shadow">
-                <div className="p-4 border-b">
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <FileText size={20} />
-                        Complete Payment History
-                    </h3>
+            {/* Transactional Audit */}
+            <div className="card overflow-hidden border border-[var(--border)] shadow-sm">
+                <div className="px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-tertiary)] flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center text-[var(--accent)]">
+                        <FileText size={16} />
+                    </div>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Financial Registry</h3>
                 </div>
-
                 <div className="p-6">
-                    {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div className="bg-blue-50 p-4 rounded-lg">
-                            <p className="text-sm text-gray-600 mb-1">Agreed Price</p>
-                            <p className="text-2xl font-bold text-blue-600">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div className="bg-[var(--bg-secondary)] border border-[var(--border)] p-4 rounded-xl">
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-1">Contract Value</p>
+                            <p className="text-xl font-extrabold text-[var(--text-primary)]">
                                 {formatCurrency(booking.agreedPrice)}
                             </p>
                         </div>
-                        <div className="bg-green-50 p-4 rounded-lg">
-                            <p className="text-sm text-gray-600 mb-1">Total Received</p>
-                            <p className="text-2xl font-bold text-green-600">
+                        <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20 p-4 rounded-xl">
+                            <p className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1">Cumulative Receipts</p>
+                            <p className="text-xl font-extrabold text-emerald-600">
                                 {formatCurrency(totalReceived)}
                             </p>
                         </div>
-                        <div className="bg-orange-50 p-4 rounded-lg">
-                            <p className="text-sm text-gray-600 mb-1">Pending Balance</p>
-                            <p className="text-2xl font-bold text-orange-600">
+                        <div className="bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20 p-4 rounded-xl">
+                            <p className="text-[9px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-widest mb-1">Pending Settlement</p>
+                            <p className="text-xl font-extrabold text-rose-600">
                                 {formatCurrency(booking.balanceAmount)}
                             </p>
                         </div>
                     </div>
-
-                    {/* Transaction Breakdown */}
-                    <div className="border rounded-lg overflow-hidden">
-                        <table className="w-full">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Date
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Type
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Mode
-                                    </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                                        Amount
-                                    </th>
+                    <div className="overflow-x-auto no-scrollbar border border-[var(--border)] rounded-xl">
+                        <table className="w-full text-xs">
+                            <thead>
+                                <tr className="bg-[var(--bg-tertiary)]">
+                                    <th className="px-6 py-4 text-left text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Timestamp</th>
+                                    <th className="px-6 py-4 text-left text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Nature</th>
+                                    <th className="px-6 py-4 text-left text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Mode</th>
+                                    <th className="px-6 py-4 text-right text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Amount</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200">
+                            <tbody className="divide-y divide-[var(--border)]">
                                 {booking.transactions?.map((transaction) => (
-                                    <tr key={transaction.id}>
-                                        <td className="px-4 py-3 text-sm text-gray-900">
+                                    <tr key={transaction.id} className="hover:bg-[var(--bg-tertiary)] transition-colors">
+                                        <td className="px-6 py-4 text-[10px] font-bold text-[var(--text-muted)] uppercase">
                                             {formatDate(transaction.date)}
                                         </td>
-                                        <td className="px-4 py-3 text-sm">
-                                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${transaction.type === 'advance' ? 'bg-blue-100 text-blue-800' :
-                                                transaction.type === 'part_payment' ? 'bg-green-100 text-green-800' :
-                                                    'bg-purple-100 text-purple-800'
-                                                }`}>
+                                        <td className="px-6 py-4">
+                                            <span className={clsx(
+                                                "badge py-0.5 px-2 rounded-md font-bold uppercase tracking-wider text-[9px] border",
+                                                transaction.type === 'advance' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                                    transaction.type === 'part_payment' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                        'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'
+                                            )}>
                                                 {transaction.type.replace(/_/g, ' ')}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-900">
+                                        <td className="px-6 py-4 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">
                                             {transaction.mode}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-right font-medium text-green-600">
+                                        <td className="px-6 py-4 text-right font-extrabold text-[var(--text-primary)]">
                                             {formatCurrency(transaction.amount)}
                                         </td>
                                     </tr>
@@ -261,55 +242,50 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
                 </div>
             </div>
 
-            {/* Final Settlement */}
+            {/* Settlement Interface */}
             {booking.balanceAmount > 0 && booking.status !== 'completed' && (
-                <div className="bg-white rounded-lg shadow">
-                    <div className="p-4 border-b bg-orange-50">
-                        <h3 className="text-lg font-semibold text-orange-900">
-                            Final Settlement Required
+                <div className="card overflow-hidden border border-amber-200 dark:border-amber-900/30 bg-amber-50/10 dark:bg-amber-900/10 shadow-sm">
+                    <div className="px-6 py-4 border-b border-amber-200 dark:border-amber-900/20 bg-amber-100/30 dark:bg-amber-900/20">
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-amber-900 dark:text-amber-400 flex items-center gap-3">
+                            <CheckCircle size={16} className="text-amber-600" />
+                            Final Settlement Deployment
                         </h3>
                     </div>
 
                     <div className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Final Amount (₹) *
-                                </label>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="space-y-2">
+                                <label className="form-label ml-1 text-amber-900/70">Final Payment (₹)</label>
                                 <input
                                     type="number"
                                     value={finalPayment.amount}
                                     onChange={(e) => setFinalPayment({ ...finalPayment, amount: parseFloat(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    className="input-field p-3 font-bold border-amber-200 focus:border-amber-500"
                                     required
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Payment Mode *
-                                </label>
+                            <div className="space-y-2">
+                                <label className="form-label ml-1 text-amber-900/70">Receipt Mode</label>
                                 <select
                                     value={finalPayment.mode}
                                     onChange={(e) => setFinalPayment({ ...finalPayment, mode: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    className="input-field p-3 font-bold border-amber-200 focus:border-amber-500"
                                 >
                                     <option value="cash">Cash</option>
                                     <option value="upi">UPI</option>
                                     <option value="bank_transfer">Bank Transfer</option>
-                                    <option value="loan">Loan</option>
+                                    <option value="loan">Loan Disbursal</option>
                                     <option value="cheque">Cheque</option>
                                 </select>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Transaction/Ref ID
-                                </label>
+                            <div className="space-y-2">
+                                <label className="form-label ml-1 text-amber-900/70">Reference Trace</label>
                                 <input
                                     type="text"
                                     value={finalPayment.referenceId}
                                     onChange={(e) => setFinalPayment({ ...finalPayment, referenceId: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Optional"
+                                    className="input-field p-3 font-bold uppercase text-[10px] tracking-wider border-amber-200 focus:border-amber-500"
+                                    placeholder="TRANS ID..."
                                 />
                             </div>
                         </div>
@@ -317,169 +293,49 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
                 </div>
             )}
 
-            {/* RTO Details Block (Backup) */}
+            {/* Final Authorization */}
             {booking.status !== 'completed' && (
-                <div className="bg-white rounded-lg shadow-lg p-6 border-2 border-orange-100">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold flex items-center gap-2">
-                            <User className="text-orange-600" size={24} />
-                            RTO / Registration Details
-                        </h3>
-                        <button
-                            onClick={handleRTOUpdate}
-                            disabled={submitting}
-                            className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 font-medium transition-colors"
-                        >
-                            {submitting ? 'Updating...' : 'Update RTO Details'}
-                        </button>
-                    </div>
-
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Registration Type *
-                            </label>
-                            <div className="flex gap-4">
-                                <label className="flex items-center">
-                                    <input
-                                        type="radio"
-                                        value="SELF"
-                                        checked={rtoData.registrationType === 'SELF'}
-                                        onChange={(e) => setRtoData({ ...rtoData, registrationType: e.target.value })}
-                                        className="mr-2"
-                                    />
-                                    Self (Customer)
-                                </label>
-                                <label className="flex items-center">
-                                    <input
-                                        type="radio"
-                                        value="OTHER"
-                                        checked={rtoData.registrationType === 'OTHER'}
-                                        onChange={(e) => setRtoData({ ...rtoData, registrationType: e.target.value })}
-                                        className="mr-2"
-                                    />
-                                    Other (Nominee)
-                                </label>
-                            </div>
-                        </div>
-
-                        {rtoData.registrationType === 'OTHER' && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-yellow-50 rounded-lg">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Nominee Name *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={rtoData.nomineeName}
-                                        onChange={(e) => setRtoData({ ...rtoData, nomineeName: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Nominee Address *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={rtoData.nomineeAddress}
-                                        onChange={(e) => setRtoData({ ...rtoData, nomineeAddress: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Nominee Phone *
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        value={rtoData.nomineePhone}
-                                        onChange={(e) => setRtoData({ ...rtoData, nomineePhone: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Documents Checklist */}
-                        <div>
-                            <h4 className="font-medium mb-2">Documents Checklist</h4>
-                            <div className="flex gap-4">
-                                {Object.entries(rtoData.documentsSubmitted).map(([key, value]) => (
-                                    <label key={key} className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            checked={value}
-                                            onChange={(e) => setRtoData({
-                                                ...rtoData,
-                                                documentsSubmitted: { ...rtoData.documentsSubmitted, [key]: e.target.checked }
-                                            })}
-                                            className="mr-2"
-                                        />
-                                        {key === 'photos' ? '2 Photos' : key.toUpperCase()}
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Final Invoice & Customer Acceptance */}
-            {booking.status !== 'completed' && (
-                <div className="bg-white rounded-lg shadow">
-                    <div className="p-4 border-b bg-green-50">
-                        <h3 className="text-lg font-semibold text-green-900">
-                            Final Invoice & Customer Acceptance
-                        </h3>
+                <div className="card overflow-hidden border border-emerald-200 dark:border-emerald-900/30 bg-emerald-50/10 dark:bg-emerald-900/10 shadow-sm">
+                    <div className="px-6 py-4 border-b border-emerald-100 dark:border-emerald-900/20 bg-emerald-50/50 dark:bg-emerald-900/20">
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-400">Handover Protocol</h3>
                     </div>
 
                     <div className="p-6">
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-                            <div className="flex">
-                                <div className="flex-shrink-0">
-                                    <AlertTriangle className="h-5 w-5 text-yellow-400" />
-                                </div>
-                                <div className="ml-3">
-                                    <h3 className="text-sm font-medium text-yellow-800">
-                                        Important Disclaimer
-                                    </h3>
-                                    <div className="mt-2 text-sm text-yellow-700">
-                                        <p className="italic">
-                                            "I accept the vehicle in as-is condition. I have verified all commitments
-                                            and am satisfied with the car's state. All payments have been accounted for
-                                            as shown in the transaction history above."
-                                        </p>
-                                    </div>
-                                </div>
+                        <div className="bg-[var(--bg-tertiary)] rounded-xl p-8 mb-8 border border-[var(--border)] relative overflow-hidden">
+                            <div className="relative z-10">
+                                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-4">Acceptance Declaration</p>
+                                <p className="text-[var(--text-primary)] font-bold italic text-base leading-relaxed mb-8 max-w-2xl opacity-70">
+                                    "I hereby acknowledge the transition of the asset. I have verified the physical integrity and financial closure of this transaction."
+                                </p>
+
+                                <label className="flex items-center gap-4 cursor-pointer group w-fit p-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
+                                    <input
+                                        type="checkbox"
+                                        checked={acceptanceChecked}
+                                        onChange={(e) => setAcceptanceChecked(e.target.checked)}
+                                        className="w-5 h-5 rounded border-[var(--border)] text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                    />
+                                    <span className={clsx(
+                                        "text-xs font-bold uppercase tracking-tight transition-colors",
+                                        acceptanceChecked ? "text-emerald-600" : "text-[var(--text-muted)]"
+                                    )}>
+                                        Authorize Physical Handover
+                                    </span>
+                                </label>
                             </div>
                         </div>
 
-                        <div className="mb-6">
-                            <label className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    checked={acceptanceChecked}
-                                    onChange={(e) => setAcceptanceChecked(e.target.checked)}
-                                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                />
-                                <span className="ml-3 text-sm font-medium text-gray-900">
-                                    Customer has read and accepted the above disclaimer
-                                </span>
-                            </label>
-                        </div>
-
-                        <div className="flex justify-end">
+                        <div className="flex justify-center flex-col items-center gap-4">
+                            <p className="text-[10px] font-bold text-[var(--text-muted)] max-w-[400px] text-center uppercase tracking-tight leading-relaxed">
+                                This action finalizes the lifecycle of this booking. Once authorized, it will be moved to archival records.
+                            </p>
                             <button
                                 onClick={handleCompleteDelivery}
                                 disabled={submitting || !acceptanceChecked}
-                                className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2 text-lg"
+                                className="btn-primary !px-16 !py-4 text-base flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
                             >
                                 <CheckCircle size={20} />
-                                {submitting ? 'Processing...' : 'Complete Delivery & Generate Invoice'}
+                                {submitting ? 'COMMITTING...' : 'FINALIZE DELIVERY'}
                             </button>
                         </div>
                     </div>

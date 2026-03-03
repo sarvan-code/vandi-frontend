@@ -3,10 +3,12 @@ import api from '../../api';
 import { useToast } from '../../context/ToastContext';
 import { useOptions } from '../../context/OptionsContext';
 import { Search, UserCheck, UserX, Trash2, Edit, X, Save, Eye, Building, UserPlus } from 'lucide-react';
+import clsx from 'clsx';
 import { AuthContext } from '../../context/AuthContext';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import Table from '../../components/Table';
 import FloatingActionPanel from '../../components/FloatingActionPanel';
+import Modal from '../../components/Modal';
 
 const UserConfig = () => {
     const { user: currentUser } = useContext(AuthContext);
@@ -149,30 +151,30 @@ const UserConfig = () => {
     const columns = [
         {
             key: 'userDetails',
-            label: 'User Details',
+            label: 'Name / Joined',
             render: (row) => (
                 <div className="flex flex-col">
-                    <div className="font-bold text-gray-900">{row.fullName}</div>
-                    <div className="text-[10px] text-gray-400 font-medium">JOINED: {new Date(row.createdAt).toLocaleDateString()}</div>
+                    <span className="font-bold text-[var(--text-primary)] tracking-tight">{row.fullName}</span>
+                    <span className="text-[9px] text-[var(--accent)] font-black uppercase tracking-[0.15em] mt-1 opacity-60">Joined: {new Date(row.createdAt).toLocaleDateString()}</span>
                 </div>
             )
         },
         {
             key: 'contactInfo',
-            label: 'Contact Info',
+            label: 'Contact Details',
             render: (row) => (
-                <div className="flex flex-col text-sm text-gray-600">
-                    <div className="flex items-center gap-1">{row.email}</div>
-                    <div className="text-gray-400">{row.phone || '-'}</div>
+                <div className="flex flex-col">
+                    <span className="text-sm font-bold text-[var(--text-primary)]">{row.email}</span>
+                    <span className="text-[10px] text-[var(--text-secondary)] font-medium mt-1">{row.phone || 'No communications record'}</span>
                 </div>
             )
         },
         {
             key: 'role',
-            label: 'System Role',
+            label: 'Role',
             render: (row) => (
                 <select
-                    className="border-gray-200 rounded p-1 text-xs bg-white cursor-pointer hover:border-blue-300 transition-colors max-w-[150px] font-medium"
+                    className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--text-primary)] cursor-pointer hover:border-[var(--accent)] transition-all outline-none focus:ring-4 focus:ring-[var(--accent)]/10"
                     value={row.role}
                     onChange={(e) => handleRoleChange(row, e.target.value)}
                     onClick={(e) => e.stopPropagation()}
@@ -186,37 +188,41 @@ const UserConfig = () => {
         },
         {
             key: 'status',
-            label: 'Lifecycle Status',
+            label: 'Status',
             render: (row) => (
-                <div className="text-center">
-                    <select
-                        className={`border rounded-full px-2 py-0.5 text-[10px] font-bold cursor-pointer transition-colors ${row.userStatus === 'ACTIVE' ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' :
-                            row.userStatus === 'NEW' ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' :
-                                'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
-                            }`}
-                        value={row.userStatus}
-                        onChange={(e) => handleStatusChange(row, e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <option value="NEW">NEW</option>
-                        <option value="ACTIVE">ACTIVE</option>
-                        <option value="INACTIVE">INACTIVE</option>
-                    </select>
-                </div>
+                <select
+                    className={clsx(
+                        "rounded-full px-5 py-2 text-[9px] font-black uppercase tracking-widest cursor-pointer transition-all border shadow-sm outline-none",
+                        row.userStatus === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                            row.userStatus === 'NEW' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                                'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                    )}
+                    value={row.userStatus}
+                    onChange={(e) => handleStatusChange(row, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <option value="NEW">Pending</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                </select>
             )
         }
     ];
 
     return (
-        <div>
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between my-4 gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold text-gray-800">User Management</h2>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="animate-fade-in">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 mb-10">
+                <div>
+                    <h1 className="text-4xl font-semibold mb-2 text-[var(--text-primary)]">Staff Management</h1>
+                    <p className="text-sm text-[var(--text-secondary)]">Manage staff accounts, roles, and branch assignments.</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
                     {(isSuperUser || isHR) && (
-                        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
-                            <Building size={16} className="text-gray-400" />
+                        <div className="flex items-center gap-3 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl shadow-sm transition-all focus-within:ring-2 focus-within:ring-[var(--accent)]/20">
+                            <Building size={18} className="text-[var(--text-muted)]" />
                             <select
-                                className="flex-1 text-sm bg-transparent border-none focus:ring-0 text-gray-700 font-medium min-w-[150px]"
+                                className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-black text-[var(--text-primary)] min-w-[150px] cursor-pointer outline-none uppercase tracking-widest h-10 shadow-sm"
                                 value={selectedBranchId}
                                 onChange={(e) => setSelectedBranchId(e.target.value)}
                             >
@@ -227,201 +233,207 @@ const UserConfig = () => {
                             </select>
                         </div>
                     )}
-                    <div className="relative">
-                        <Search className="absolute left-3 top-2.5 text-gray-400 h-5 w-5" />
+                    <div className="flex items-center gap-3 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl shadow-sm transition-all focus-within:ring-2 focus-within:ring-[var(--accent)]/20 flex-1 min-w-[250px]">
+                        <Search className="text-[var(--text-muted)]" size={18} />
                         <input
-                            className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm"
-                            placeholder="Search users..."
+                            className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-bold text-[var(--text-primary)] w-full outline-none placeholder:text-[var(--text-muted)] h-10 px-3 shadow-sm"
+                            placeholder="Search staff..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <button
                         onClick={openCreateModal}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 transition-colors shadow-sm whitespace-nowrap text-sm font-medium"
+                        className="btn-primary flex items-center gap-3 px-8 py-3 text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-[var(--accent)]/30 active:scale-95 transition-all text-white whitespace-nowrap"
                     >
-                        <UserPlus size={18} /> Add User
+                        <UserPlus size={18} /> Add Staff Member
                     </button>
                 </div>
             </div>
 
             <div className="relative">
-                <Table
-                    columns={columns}
-                    data={filteredUsers}
-                    onRowClick={(row) => setSelectedUserRow(row)}
-                    selectedRow={selectedUserRow?.userId}
-                    rowKey="userId"
-                    emptyMessage={loading ? "Loading users..." : "No staff members found."}
-                />
+                {loading ? (
+                    <div className="card p-20 flex flex-col items-center justify-center space-y-6 animate-pulse border border-[var(--border)]">
+                        <div className="w-16 h-16 border-4 border-[var(--bg-tertiary)] border-t-[var(--accent)] rounded-full animate-spin"></div>
+                        <p className="text-[var(--text-muted)] font-medium text-xs">Loading Unified Staff Systems...</p>
+                    </div>
+                ) : (
+                    <>
+                        <Table
+                            columns={columns}
+                            data={filteredUsers}
+                            onRowClick={(row) => setSelectedUserRow(row)}
+                            selectedRow={selectedUserRow?.userId}
+                            rowKey="userId"
+                            emptyMessage="No staff members found."
+                        />
 
-                <FloatingActionPanel
-                    selectedItem={selectedUserRow}
-                    onClose={() => setSelectedUserRow(null)}
-                    title={selectedUserRow?.fullName}
-                    subtitle={selectedUserRow?.email}
-                    actions={[
-                        {
-                            icon: Eye,
-                            label: 'Edit Details',
-                            onClick: openDetailModal,
-                            color: 'blue',
-                            title: 'View/Edit Details'
-                        },
-                        ...(currentUser?.userId !== selectedUserRow?.userId ? [{
-                            icon: Trash2,
-                            label: 'Delete User',
-                            onClick: handleDeleteUser,
-                            color: 'red',
-                            title: 'Delete User'
-                        }] : [])
-                    ]}
-                />
+                        <FloatingActionPanel
+                            selectedItem={selectedUserRow}
+                            onClose={() => setSelectedUserRow(null)}
+                            title={selectedUserRow?.fullName}
+                            subtitle={selectedUserRow?.email}
+                            actions={[
+                                {
+                                    icon: Eye,
+                                    label: 'Edit',
+                                    onClick: openDetailModal,
+                                    color: 'blue',
+                                    title: 'Edit Details'
+                                },
+                                ...(currentUser?.userId !== selectedUserRow?.userId ? [{
+                                    icon: Trash2,
+                                    label: 'Delete',
+                                    onClick: handleDeleteUser,
+                                    color: 'red',
+                                    title: 'Delete Account'
+                                }] : [])
+                            ]}
+                        />
+                    </>
+                )}
             </div>
 
             {/* Detail/Edit/Create Modal */}
-            {isModalOpen && selectedUser && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="flex justify-between items-center p-6 border-b bg-gray-50/50">
-                            <div>
-                                <h3 className="text-xl font-bold text-gray-800">
-                                    {isCreateMode ? 'Add New Staff' : `Edit: ${selectedUser.fullName}`}
-                                </h3>
-                                <p className="text-xs text-gray-500 mt-1 uppercase tracking-tighter">
-                                    Access & Identity Configuration
-                                </p>
-                            </div>
-                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
-                                <X size={20} className="text-gray-500" />
+            <Modal
+                isOpen={isModalOpen && !!selectedUser}
+                onClose={() => setIsModalOpen(false)}
+                title={isCreateMode ? 'Add Staff Member' : 'Update Staff Details'}
+                subtitle={!isCreateMode ? selectedUser?.fullName : 'Role and Account Details'}
+                icon={isCreateMode ? UserPlus : Edit}
+                maxWidth="max-w-2xl"
+                footer={
+                    <>
+                        <div className="flex-1">
+                            {!isCreateMode && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleDeleteUser(selectedUser)}
+                                    className="text-rose-500 hover:text-rose-700 text-[10px] font-black flex items-center gap-3 px-6 py-3 hover:bg-rose-500/10 rounded-xl transition-all uppercase tracking-[0.2em]"
+                                >
+                                    <Trash2 size={18} /> Delete Account
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex gap-6">
+                            <button
+                                type="button"
+                                onClick={() => setIsModalOpen(false)}
+                                className="px-8 py-3 text-[var(--text-muted)] hover:text-[var(--text-primary)] font-bold text-[10px] uppercase tracking-widest transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                form="user-form"
+                                className="btn-primary flex items-center gap-3 px-10 py-3 text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-[var(--accent)]/30 active:scale-95 transition-all text-white"
+                            >
+                                <Save size={18} /> {isCreateMode ? 'Create Account' : 'Save Changes'}
                             </button>
                         </div>
-
-                        <form onSubmit={handleModalSave} className="p-6 space-y-5">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">Full Identity Name</label>
+                    </>
+                }
+            >
+                {selectedUser && (
+                    <form id="user-form" onSubmit={handleModalSave} className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3 block">Full Name</label>
+                                <input
+                                    className="input-field h-14 font-bold text-base px-6 bg-[var(--bg-secondary)]/50"
+                                    value={selectedUser.fullName}
+                                    onChange={e => setSelectedUser({ ...selectedUser, fullName: e.target.value })}
+                                    required
+                                    placeholder="e.g. Robert Smith"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3 block">Email Address</label>
+                                <input
+                                    type="email"
+                                    className={`input-field h-14 font-bold text-base px-6 ${!isCreateMode ? 'bg-[var(--bg-tertiary)]/50 cursor-not-allowed opacity-60 text-[var(--text-muted)]' : 'bg-[var(--bg-secondary)]/50'}`}
+                                    value={selectedUser.email}
+                                    onChange={e => setSelectedUser({ ...selectedUser, email: e.target.value })}
+                                    required
+                                    disabled={!isCreateMode}
+                                    placeholder="email@vandi.com"
+                                />
+                            </div>
+                            {isCreateMode && (
+                                <div>
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3 block">Password</label>
                                     <input
-                                        className="w-full border-gray-200 border p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                        value={selectedUser.fullName}
-                                        onChange={e => setSelectedUser({ ...selectedUser, fullName: e.target.value })}
+                                        type="password"
+                                        className="input-field h-14 font-black text-base px-6 bg-[var(--bg-secondary)]/50 tracking-widest"
+                                        value={selectedUser.password}
+                                        onChange={e => setSelectedUser({ ...selectedUser, password: e.target.value })}
                                         required
-                                        placeholder="Full Name"
+                                        placeholder="••••••••"
                                     />
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">System Credential (Email)</label>
-                                    <input
-                                        type="email"
-                                        className={`w-full border-gray-200 border p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all ${!isCreateMode ? 'bg-gray-50 cursor-not-allowed' : ''}`}
-                                        value={selectedUser.email}
-                                        onChange={e => setSelectedUser({ ...selectedUser, email: e.target.value })}
-                                        required
-                                        disabled={!isCreateMode}
-                                        placeholder="email@example.com"
-                                    />
-                                </div>
-                                {isCreateMode && (
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Initial Password</label>
-                                        <input
-                                            type="password"
-                                            className="w-full border-gray-200 border p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                            value={selectedUser.password}
-                                            onChange={e => setSelectedUser({ ...selectedUser, password: e.target.value })}
-                                            required
-                                            placeholder="••••••••"
-                                        />
-                                    </div>
-                                )}
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">Contact Channel (Phone)</label>
-                                    <input
-                                        className="w-full border-gray-200 border p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                        value={selectedUser.phone || ''}
-                                        onChange={e => setSelectedUser({ ...selectedUser, phone: e.target.value })}
-                                        placeholder="+91 00000 00000"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">Assigned System Role</label>
+                            )}
+                            <div>
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3 block">Phone Number</label>
+                                <input
+                                    className="input-field h-14 font-bold text-base px-6 bg-[var(--bg-secondary)]/50"
+                                    value={selectedUser.phone || ''}
+                                    onChange={e => setSelectedUser({ ...selectedUser, phone: e.target.value })}
+                                    placeholder="+91 00000 00000"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3 block">Select Role</label>
+                                <select
+                                    className="input-field h-14 cursor-pointer font-bold text-base px-6 bg-[var(--bg-secondary)]/50"
+                                    value={selectedUser.role}
+                                    onChange={e => setSelectedUser({ ...selectedUser, role: e.target.value })}
+                                    disabled={!isCreateMode && isHR && superRoles.includes(selectedUser.role)}
+                                >
+                                    {availableRoles.map(r => (
+                                        <option key={r.code} value={r.code}>{r.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            {(isSuperUser || isHR || isCreateMode) && (
+                                <div>
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3 block">Branch Assignment</label>
                                     <select
-                                        className="w-full border-gray-200 border p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white"
-                                        value={selectedUser.role}
-                                        onChange={e => setSelectedUser({ ...selectedUser, role: e.target.value })}
-                                        disabled={!isCreateMode && isHR && superRoles.includes(selectedUser.role)}
+                                        className="input-field h-14 cursor-pointer font-bold text-base px-6 bg-[var(--bg-secondary)]/50"
+                                        value={selectedUser.branchId || ''}
+                                        onChange={e => setSelectedUser({ ...selectedUser, branchId: e.target.value })}
                                     >
-                                        {availableRoles.map(r => (
-                                            <option key={r.code} value={r.code}>{r.name}</option>
+                                        <option value="">Select Branch...</option>
+                                        {branches.map(b => (
+                                            <option key={b.id} value={b.id}>{b.displayName}</option>
                                         ))}
                                     </select>
                                 </div>
-                                {(isSuperUser || isHR || isCreateMode) && (
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Base Branch Attachment</label>
-                                        <select
-                                            className="w-full border-gray-200 border p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white"
-                                            value={selectedUser.branchId || ''}
-                                            onChange={e => setSelectedUser({ ...selectedUser, branchId: e.target.value })}
-                                        >
-                                            <option value="">Select Branch...</option>
-                                            {branches.map(b => (
-                                                <option key={b.id} value={b.id}>{b.displayName}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                            )}
+                        </div>
+
+                        <div className="bg-[var(--bg-secondary)]/50 p-8 rounded-[2rem] border border-[var(--border)] flex items-center justify-between shadow-inner">
+                            <div>
+                                <p className="text-sm font-black text-[var(--text-primary)] uppercase tracking-tight">Account Status</p>
+                                <p className="text-[10px] text-[var(--accent)] uppercase font-black tracking-[0.2em] mt-2 opacity-60">Manage user account status and login access</p>
+                            </div>
+                            <select
+                                className={clsx(
+                                    "rounded-2xl px-8 py-3.5 text-[10px] font-black tracking-[0.2em] uppercase shadow-xl outline-none border transition-all cursor-pointer",
+                                    selectedUser.userStatus === 'ACTIVE' ? 'bg-emerald-600 text-white border-emerald-700 shadow-emerald-500/20' :
+                                        selectedUser.userStatus === 'NEW' ? 'bg-amber-500 text-white border-amber-600 shadow-amber-500/20' :
+                                            'bg-rose-600 text-white border-rose-700 shadow-rose-500/20'
                                 )}
-                            </div>
-
-                            <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-bold text-blue-900 mb-0.5">Deployment Status</p>
-                                    <p className="text-[10px] text-blue-600 uppercase font-medium">Controls application entry access</p>
-                                </div>
-                                <select
-                                    className={`border rounded-lg px-4 py-2 text-sm font-black shadow-sm outline-none ${selectedUser.userStatus === 'ACTIVE' ? 'bg-green-600 text-white border-green-700' :
-                                        selectedUser.userStatus === 'NEW' ? 'bg-blue-600 text-white border-blue-700' :
-                                            'bg-red-600 text-white border-red-700'
-                                        }`}
-                                    value={selectedUser.userStatus}
-                                    onChange={e => setSelectedUser({ ...selectedUser, userStatus: e.target.value })}
-                                >
-                                    <option value="NEW">PENDING (NEW)</option>
-                                    <option value="ACTIVE">LIVE (ACTIVE)</option>
-                                    <option value="INACTIVE">BLOCKED (INACTIVE)</option>
-                                </select>
-                            </div>
-
-                            <div className="flex justify-between items-center pt-6 border-t mt-2">
-                                {!isCreateMode ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => handleDeleteUser(selectedUser)}
-                                        className="text-red-500 hover:text-red-700 text-xs font-bold flex items-center gap-1.5 p-2 hover:bg-red-50 rounded-lg transition-colors uppercase tracking-widest"
-                                    >
-                                        <Trash2 size={14} /> PURGE IDENTITY
-                                    </button>
-                                ) : <div />}
-                                <div className="flex gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsModalOpen(false)}
-                                        className="px-5 py-2 text-gray-500 hover:text-gray-700 font-bold text-sm uppercase tracking-wider"
-                                    >
-                                        Dismiss
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="px-8 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all active:scale-95 flex items-center gap-2"
-                                    >
-                                        <Save size={18} /> {isCreateMode ? 'Initialize Staff' : 'Apply Changes'}
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+                                value={selectedUser.userStatus}
+                                onChange={e => setSelectedUser({ ...selectedUser, userStatus: e.target.value })}
+                            >
+                                <option value="NEW">Pending Approval</option>
+                                <option value="ACTIVE">Active Account</option>
+                                <option value="INACTIVE">Inactive / Locked</option>
+                            </select>
+                        </div>
+                    </form>
+                )}
+            </Modal>
 
             {/* Delete Confirmation Dialog */}
             <ConfirmDialog

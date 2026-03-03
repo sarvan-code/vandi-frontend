@@ -2,11 +2,13 @@ import React, { useState, useEffect, useContext } from 'react';
 import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Save, History, PlusCircle, Search, X, Plus, Trash2 } from 'lucide-react';
+import { Save, History, PlusCircle, Search, X, Plus, Trash2, User, Phone, Mail, MapPin, Briefcase, Calendar, Car, ArrowRight } from 'lucide-react';
 import { useOptions } from '../context/OptionsContext';
 import VehicleAutocomplete from './VehicleAutocomplete';
+import clsx from 'clsx';
+import Logo from './Logo';
 
-const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustomerId, preloadedPhone, preloadedBranchId }) => {
+const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustomerId, preloadedPhone, preloadedBranchId, onTitleUpdate, preloadedFullData, onTabEmpty }) => {
     const { user } = useContext(AuthContext);
     const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(user?.role);
     const { getOptionList, getDependentOptions, vehicleBrands, vehicleTypes, vehicleModels, vehicleVariants, branches, loading: optionsLoading } = useOptions();
@@ -17,7 +19,6 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
 
     // ---- State ----
     const [loading, setLoading] = useState(false);
-    const [searchPhone, setSearchPhone] = useState('');
 
     // Search / Autocomplete State
     const [searchQuery, setSearchQuery] = useState('');
@@ -77,9 +78,31 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
-                    if (data.customer) setCustomer(data.customer);
-                    if (data.enquiry) setEnquiry(data.enquiry);
-                    if (data.followUp) setFollowUp(data.followUp);
+                    if (data.customer) {
+                        const sanitizedCust = { ...data.customer };
+                        Object.keys(sanitizedCust).forEach(k => {
+                            if (sanitizedCust[k] === null) sanitizedCust[k] = '';
+                        });
+                        setCustomer(sanitizedCust);
+                        // Notify workspace of customer name so tab title updates
+                        if (sanitizedCust.fullName && onTitleUpdate) {
+                            onTitleUpdate(sanitizedCust.fullName);
+                        }
+                    }
+                    if (data.enquiry) {
+                        const sanitizedEnq = { ...data.enquiry };
+                        Object.keys(sanitizedEnq).forEach(k => {
+                            if (sanitizedEnq[k] === null) sanitizedEnq[k] = '';
+                        });
+                        setEnquiry(sanitizedEnq);
+                    }
+                    if (data.followUp) {
+                        const sanitizedFollow = { ...data.followUp };
+                        Object.keys(sanitizedFollow).forEach(k => {
+                            if (sanitizedFollow[k] === null) sanitizedFollow[k] = '';
+                        });
+                        setFollowUp(sanitizedFollow);
+                    }
                     if (data.branchId) setSelectedBranchId(data.branchId);
                     if (data.activeEnquiryId) setActiveEnquiryId(data.activeEnquiryId);
                     if (data.isNewEnquiry !== undefined) setIsNewEnquiry(data.isNewEnquiry);
@@ -101,7 +124,8 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                 branchId: selectedBranchId,
                 activeEnquiryId,
                 isNewEnquiry,
-                history
+                history,
+                savedAt: Date.now() // Timestamp for stale detection
             };
             localStorage.setItem(`vandi_lead_form_${tabId}`, JSON.stringify(dataToSave));
         }
@@ -120,7 +144,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                 }
                 setIsSearching(true);
                 try {
-                    const res = await api.get(`/leads/search?term=${searchQuery}${selectedBranchId ? `&branchId=${selectedBranchId}` : ''}`);
+                    const res = await api.get(`/leads/search?term=${searchQuery}${selectedBranchId ? `&branchId=${selectedBranchId}` : ''}`, { hideLoader: true });
                     if (res.data.found && res.data.data) {
                         setSearchResults(res.data.data);
                         setShowDropdown(true);
@@ -150,19 +174,72 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
         }
     }, [followUp.followupMode, getDependentOptions]);
 
+    // -- Helper: Apply a full Enquiry row (from the Enquiries page) to form state --
+    // This avoids any API call when we already have the data from the table.
+    const applyEnquiryData = (enqRow) => {
+        const custData = enqRow.customer || {};
+        const sanitizedCust = {};
+        Object.keys(custData).forEach(k => {
+            sanitizedCust[k] = custData[k] === null ? '' : custData[k];
+        });
+        if (sanitizedCust.fullName && onTitleUpdate) onTitleUpdate(sanitizedCust.fullName);
+        setCustomer(sanitizedCust);
+        setInitialCustomer(JSON.stringify(sanitizedCust));
+
+        const sanitizedEnq = {};
+        Object.keys(enqRow).forEach(k => {
+            if (k !== 'customer' && k !== 'followUps') {
+                sanitizedEnq[k] = enqRow[k] === null ? '' : enqRow[k];
+            }
+        });
+        sanitizedEnq.carDetails = enqRow.carDetails || [];
+        sanitizedEnq.exchange = enqRow.exchange || false;
+        sanitizedEnq.followUps = enqRow.followUps || []; // Needed for "View Previous"
+        setEnquiry(sanitizedEnq);
+        setInitialEnquiry(JSON.stringify(sanitizedEnq));
+        setActiveEnquiryId(enqRow.enquiryId || null);
+        setIsNewEnquiry(false);
+        if (enqRow.branchId) setSelectedBranchId(enqRow.branchId);
+    };
+
     // Load pre-loaded enquiry if provided
     useEffect(() => {
+        // === PRIORITY 1: Fresh localStorage data (< 24h) ===
+        const STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000;
+        const saved = localStorage.getItem(`vandi_lead_form_${tabId}`);
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                const isStale = !data.savedAt || (Date.now() - data.savedAt) > STALE_THRESHOLD_MS;
+                const hasCustomerData = data.customer && (data.customer.fullName || data.customer.phone);
+
+                if (hasCustomerData && !isStale) {
+                    // Fresh, real data in localStorage — hydrated on mount, no server call needed.
+                    return;
+                }
+
+                // Stale — clear it so we can refresh
+                if (isStale) {
+                    localStorage.removeItem(`vandi_lead_form_${tabId}`);
+                }
+            } catch (e) { }
+        }
+
+        // === PRIORITY 2: Full enquiry data passed from the Enquiries page row ===
+        if (preloadedFullData) {
+            applyEnquiryData(preloadedFullData);
+            return;
+        }
+
+        // === PRIORITY 3: Stale / no local data — fetch from search API ===
         if (preloadedEnquiryId || preloadedCustomerId || preloadedPhone) {
             setLoading(true);
             const loadPreloadedEnquiry = async () => {
                 try {
-                    // Optimized Path: Smart Search (Now with Branch context)
                     if (preloadedPhone) {
                         const res = await api.get('/leads/search', {
-                            params: {
-                                term: preloadedPhone,
-                                branchId: preloadedBranchId
-                            }
+                            params: { term: preloadedPhone, branchId: preloadedBranchId },
+                            hideLoader: true
                         });
 
                         if (res.data.found && res.data.data && res.data.data.length > 0) {
@@ -170,12 +247,11 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                             setLoading(false);
                             return;
                         }
+
+                        // Search returned empty — notify workspace to close this tab
+                        console.warn('Search returned no results for preloaded enquiry. Closing tab.');
+                        if (onTabEmpty) onTabEmpty();
                     }
-
-                    // Fallback: If search fails or phone is missing, we log it.
-                    // The "Legacy Path" has been removed per user instruction.
-                    console.log("No active lead context found for preloaded data.");
-
                 } catch (error) {
                     console.error('Error loading pre-loaded enquiry:', error);
                     showToast('Error loading enquiry data', 'error');
@@ -185,13 +261,20 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
             };
             loadPreloadedEnquiry();
         }
-    }, [preloadedEnquiryId, preloadedCustomerId, preloadedPhone, preloadedBranchId]);
+    }, [preloadedEnquiryId, preloadedCustomerId, preloadedPhone, preloadedBranchId, preloadedFullData]);
 
     const handleSelectResult = (result) => {
         const { customer: custData, activeEnquiry, history: histData } = result;
         const sanitizedCust = { ...custData };
+        Object.keys(sanitizedCust).forEach(k => {
+            if (sanitizedCust[k] === null) sanitizedCust[k] = '';
+        });
         setCustomer(sanitizedCust);
         setInitialCustomer(JSON.stringify(sanitizedCust));
+        // Inform workspace of the name
+        if (sanitizedCust.fullName && onTitleUpdate) {
+            onTitleUpdate(sanitizedCust.fullName);
+        }
         setHistory([]); // Clear history when context changes
         setShowHistory(false);
 
@@ -200,6 +283,9 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
             setActiveEnquiryId(activeEnquiry.enquiryId);
             if (activeEnquiry.branchId) setSelectedBranchId(activeEnquiry.branchId);
             const sanitizedEnq = { ...activeEnquiry };
+            Object.keys(sanitizedEnq).forEach(k => {
+                if (sanitizedEnq[k] === null) sanitizedEnq[k] = '';
+            });
             setEnquiry(sanitizedEnq);
             setInitialEnquiry(JSON.stringify(sanitizedEnq));
             setIsNewEnquiry(false);
@@ -328,20 +414,28 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
     };
 
     return (
-        <div className="h-full flex flex-col bg-gray-50 p-4 overflow-y-auto">
-            <form onSubmit={handleSubmit} className="flex-1 space-y-4" autoComplete="off">
-                <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500 relative">
-                    <div className="flex justify-between items-center mb-1">
-                        <h3 className="text-lg font-semibold text-gray-800">Customer Details</h3>
+        <div className="h-full flex flex-col p-4 overflow-y-auto custom-scrollbar" style={{ background: 'var(--bg-primary)' }}>
+            <form onSubmit={handleSubmit} className="flex-1 space-y-6" autoComplete="off">
 
-                    </div>
-                    <div className="mb-4 relative">
+                {/* Customer Details Section */}
+                <div className="card p-6 transition-all duration-300">
+                    <div className="flex justify-between items-center mb-6 pb-4 border-b" style={{ borderColor: 'var(--border)' }}>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ background: 'var(--accent)' }}>
+                                <User size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Customer Details</h3>
+                                <p className="text-[10px] uppercase font-bold tracking-widest" style={{ color: 'var(--text-muted)' }}>Name and Phone Number</p>
+                            </div>
+                        </div>
+
                         {isSuperUser && (
-                            <div className="relative mb-1">
+                            <div className="relative">
                                 <select
                                     value={selectedBranchId}
                                     onChange={(e) => setSelectedBranchId(e.target.value)}
-                                    className="text-sm border rounded px-2 py-1 bg-white outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
+                                    className="input-field py-2 px-4 text-xs font-bold text-slate-600 min-w-[150px]"
                                     required
                                 >
                                     <option value="">-- Select Branch --</option>
@@ -351,212 +445,280 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                 </select>
                             </div>
                         )}
-                        <div className="relative">
-                            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    </div>
+
+                    <div className="mb-6 relative">
+                        <div className="search-box">
+                            <Search className="search-icon" />
                             <input
                                 type="text"
                                 name="lead_search"
-                                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="Search Name or Phone to Auto-fill..."
+                                className="input-field !pl-10 !pr-10"
+                                placeholder="Search by name or phone..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                autoComplete="nope"
+                                autoComplete="off"
                             />
                             {searchQuery && (
                                 <button
                                     type="button"
                                     onClick={() => { setSearchQuery(''); setSearchResults([]); }}
-                                    className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--danger)] transition-colors p-1"
                                 >
-                                    <X className="h-5 w-5" />
+                                    <X className="h-4 w-4" />
                                 </button>
                             )}
                         </div>
                         {showDropdown && searchResults.length > 0 && (
-                            <div className="absolute z-10 w-full bg-white mt-1 border rounded-md shadow-lg max-h-60 overflow-auto">
+                            <div className="absolute z-50 w-full backdrop-blur-xl mt-2 border rounded-2xl shadow-2xl max-h-60 overflow-auto custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-200"
+                                style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
                                 {searchResults.map((res) => (
                                     <div
                                         key={res.customer.customerId || res.customer.phone || res.customer.id}
                                         onClick={() => handleSelectResult(res)}
-                                        className="p-3 hover:bg-blue-50 cursor-pointer border-b last:border-b-0 flex justify-between items-center"
+                                        className="p-4 cursor-pointer border-b last:border-b-0 flex justify-between items-center group/item"
+                                        style={{ borderColor: 'var(--border)' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-tertiary)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                                     >
                                         <div>
-                                            <div className="font-medium text-gray-800">{res.customer.fullName}</div>
-                                            <div className="text-sm text-gray-500">{res.customer.phone}</div>
+                                            <div className="font-bold group-hover/item:text-[var(--accent)] transition-colors" style={{ color: 'var(--text-primary)' }}>{res.customer.fullName}</div>
+                                            <div className="text-xs font-bold flex items-center gap-1 mt-1" style={{ color: 'var(--text-muted)' }}>
+                                                <Phone size={10} /> {res.customer.phone}
+                                            </div>
                                         </div>
                                         {res.activeEnquiry && (
-                                            <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold uppercase">Active</span>
+                                            <span className="text-[10px] bg-[var(--success-bg)] text-[var(--success)] px-3 py-1 rounded-full font-semibold uppercase tracking-wider shadow-sm">
+                                                Active Enquiry
+                                            </span>
                                         )}
                                     </div>
                                 ))}
                             </div>
                         )}
-                        {isSearching && <div className="absolute right-10 top-2.5 text-xs text-gray-400">Searching...</div>}
+                        {isSearching && (
+                            <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-2 pr-2 pointer-events-none">
+                                <Logo size={24} color="blue" isAnimating={true} />
+                            </div>
+                        )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <input className="border p-2 rounded" placeholder="Full Name" value={customer.fullName} onChange={e => setCustomer({ ...customer, fullName: e.target.value })} required />
-                        <input
-                            className={`border p-2 rounded ${customer.customerId ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                            placeholder="Phone Number"
-                            value={customer.phone}
-                            onChange={e => setCustomer({ ...customer, phone: e.target.value })}
-                            required
-                            readOnly={!!customer.customerId}
-                        />
-                        <input className="border p-2 rounded" placeholder="Email" value={customer.email || ''} onChange={e => setCustomer({ ...customer, email: e.target.value })} />
-                        <input className="border p-2 rounded" placeholder="Instagram ID" value={customer.instaid || ''} onChange={e => setCustomer({ ...customer, instaid: e.target.value })} />
-                        <div className="flex flex-col">
-                            <label className="text-xs text-gray-500">Date of Birth</label>
-                            <div className="relative group">
-                                <input type="date" className="w-full border p-2 rounded pr-6" max={new Date().toISOString().split("T")[0]} value={customer.dateOfBirth || ''} onChange={e => setCustomer({ ...customer, dateOfBirth: e.target.value })} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <div className="space-y-1">
+                            <label className="form-label">Full Name *</label>
+                            <div className="relative">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                                <input className="input-field !pl-10" placeholder="John Doe" value={customer.fullName} onChange={e => setCustomer({ ...customer, fullName: e.target.value })} required />
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="form-label">Phone Number *</label>
+                            <div className="relative">
+                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                                <input
+                                    className={clsx("input-field !pl-10", customer.customerId && 'bg-[var(--bg-tertiary)] cursor-not-allowed')}
+                                    placeholder="9876543210"
+                                    value={customer.phone}
+                                    onChange={e => setCustomer({ ...customer, phone: e.target.value })}
+                                    required
+                                    readOnly={!!customer.customerId}
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="form-label">Email</label>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                                <input className="input-field !pl-10" placeholder="john@example.com" value={customer.email || ''} onChange={e => setCustomer({ ...customer, email: e.target.value })} />
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="form-label">Digital Handle</label>
+                            <input className="input-field" placeholder="@username" value={customer.instaid || ''} onChange={e => setCustomer({ ...customer, instaid: e.target.value })} />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="form-label">Date of Birth</label>
+                            <div className="relative group/date">
+                                <input type="date" className="input-field pr-8" max={new Date().toISOString().split("T")[0]} value={customer.dateOfBirth || ''} onChange={e => setCustomer({ ...customer, dateOfBirth: e.target.value })} />
                                 {customer.dateOfBirth && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setCustomer({ ...customer, dateOfBirth: '' })}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
-                                    >
+                                    <button type="button" onClick={() => setCustomer({ ...customer, dateOfBirth: '' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--danger)]">
                                         <X size={14} />
                                     </button>
                                 )}
                             </div>
                         </div>
-                        <div className="flex flex-col">
-                            <label className="text-xs text-gray-500">Marriage Date</label>
-                            <div className="relative group">
 
-                                <input type="date" className="w-full border p-2 rounded pr-6" max={new Date().toISOString().split("T")[0]} value={customer.marriageDate || ''} onChange={e => setCustomer({ ...customer, marriageDate: e.target.value })} />
+                        <div className="space-y-1">
+                            <label className="form-label">Anniversary</label>
+                            <div className="relative group/date">
+                                <input type="date" className="input-field pr-8" max={new Date().toISOString().split("T")[0]} value={customer.marriageDate || ''} onChange={e => setCustomer({ ...customer, marriageDate: e.target.value })} />
                                 {customer.marriageDate && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setCustomer({ ...customer, marriageDate: '' })}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
-                                    >
+                                    <button type="button" onClick={() => setCustomer({ ...customer, marriageDate: '' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--danger)]">
                                         <X size={14} />
                                     </button>
                                 )}
                             </div>
                         </div>
-                        <select className="w-full border p-2 rounded text-sm h-[42px]" value={customer.profession} onChange={e => setCustomer({ ...customer, profession: e.target.value })}>
-                            <option value="">Select Profession</option>
-                            {getOpt('PROFESSIONS').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
-                        </select>
-                        <select className="border p-2 rounded" value={customer.customerType || 'Lead'} onChange={e => setCustomer({ ...customer, customerType: e.target.value })}>
-                            <option value="Lead">Lead</option>
-                            <option value="Customer">Customer</option>
-                        </select>
+
+                        <div className="space-y-1">
+                            <label className="form-label">Profession</label>
+                            <select className="input-field h-[38px]" value={customer.profession || ''} onChange={e => setCustomer({ ...customer, profession: e.target.value })}>
+                                <option value="">Select Profession</option>
+                                {getOpt('PROFESSIONS').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="form-label">Type</label>
+                            <select className="input-field" value={customer.customerType || 'Lead'} onChange={e => setCustomer({ ...customer, customerType: e.target.value })}>
+                                <option value="Lead">Lead</option>
+                                <option value="Customer">Customer</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div className="border-t pt-2 mt-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Referral</label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <select className="w-full border p-2 rounded text-sm h-[42px]" value={customer.referredBy} onChange={e => setCustomer({ ...customer, referredBy: e.target.value })}>
+                    <div className="mt-6 pt-6 border-t border-dashed" style={{ borderColor: 'var(--border)' }}>
+                        <label className="form-label mb-2">Referral Information</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <select className="input-field h-[38px]" value={customer.referredBy || ''} onChange={e => setCustomer({ ...customer, referredBy: e.target.value })}>
                                 <option value="">Select Referral Source</option>
                                 {getOpt('REFERRAL_SOURCES').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
                             </select>
-                            <input className="border p-2 rounded" placeholder="Referrer Name" value={customer.referredByName || ''} onChange={e => setCustomer({ ...customer, referredByName: e.target.value })} />
+                            <input className="input-field" placeholder="Referrer Name / Details" value={customer.referredByName || ''} onChange={e => setCustomer({ ...customer, referredByName: e.target.value })} />
                         </div>
                     </div>
 
-                    <div className="border-t pt-2 mt-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <input className="border p-2 rounded md:col-span-2" placeholder="Address Line" value={customer.address || ''} onChange={e => setCustomer({ ...customer, address: e.target.value })} />
-                            <input className="border p-2 rounded" placeholder="Landmark" value={customer.landMark || ''} onChange={e => setCustomer({ ...customer, landMark: e.target.value })} />
-                            <input className="border p-2 rounded" placeholder="District" value={customer.district || ''} onChange={e => setCustomer({ ...customer, district: e.target.value })} />
-                            <input className="border p-2 rounded" placeholder="State" value={customer.state || ''} onChange={e => setCustomer({ ...customer, state: e.target.value })} />
-                            <input className="border p-2 rounded" placeholder="Country" value={customer.country || ''} onChange={e => setCustomer({ ...customer, country: e.target.value })} />
+                    <div className="mt-6 pt-6 border-t border-dashed" style={{ borderColor: 'var(--border)' }}>
+                        <label className="form-label mb-2 flex items-center gap-2">
+                            <MapPin size={12} /> Address Details
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            <input className="input-field md:col-span-2" placeholder="Street Address / Area" value={customer.address || ''} onChange={e => setCustomer({ ...customer, address: e.target.value })} />
+                            <input className="input-field" placeholder="Landmark" value={customer.landMark || ''} onChange={e => setCustomer({ ...customer, landMark: e.target.value })} />
+                            <input className="input-field" placeholder="District" value={customer.district || ''} onChange={e => setCustomer({ ...customer, district: e.target.value })} />
+                            <input className="input-field" placeholder="State" value={customer.state || ''} onChange={e => setCustomer({ ...customer, state: e.target.value })} />
+                            <input className="input-field" placeholder="Country" value={customer.country || ''} onChange={e => setCustomer({ ...customer, country: e.target.value })} />
                         </div>
                     </div>
                 </div>
 
-                <div className={`bg-white p-4 rounded-lg shadow border-l-4 ${isNewEnquiry ? 'border-green-500' : 'border-purple-500'}`}>
-                    <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-lg font-semibold text-gray-800">
-                            {isNewEnquiry ? 'New Enquiry' : 'Active Enquiry'}
-                        </h3>
-                        {!isNewEnquiry && (
-                            <button
-                                type="button"
-                                onClick={handleForceNewEnquiry}
-                                disabled={!!activeEnquiryId}
-                                className={`text - sm px - 3 py - 1 rounded - full flex items - center gap - 1 ${!!activeEnquiryId ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-green-100 text-green-700 hover:bg-green-200'} `}
-                            >
-                                <PlusCircle className="h-4 w-4" /> Start New Instead
-                            </button>
-                        )}
-                        {(customer.customerId) && (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    if (!showHistory && history.length === 0) {
-                                        fetchHistory();
-                                    } else {
+                {/* Enquiry Details Section */}
+                <div className="card p-6 transition-all duration-300">
+                    <div className="flex justify-between items-center mb-6 pb-4 border-b" style={{ borderColor: 'var(--border)' }}>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ background: isNewEnquiry ? 'var(--success)' : 'var(--accent)' }}>
+                                <Briefcase size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                                    {isNewEnquiry ? 'New Enquiry' : 'Update Enquiry'}
+                                </h3>
+                                <p className="text-[10px] uppercase font-bold tracking-widest" style={{ color: 'var(--text-muted)' }}>
+                                    {isNewEnquiry ? 'Establishing Requirements' : 'Refining Specifications'}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            {!isNewEnquiry && (
+                                <button
+                                    type="button"
+                                    onClick={handleForceNewEnquiry}
+                                    disabled={!!activeEnquiryId}
+                                    className="btn-secondary !py-1.5 !px-3 text-xs"
+                                >
+                                    <PlusCircle size={14} /> New Instead
+                                </button>
+                            )}
+                            {(customer.customerId) && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (!showHistory && history.length === 0) fetchHistory();
                                         setShowHistory(!showHistory);
-                                    }
-                                }}
-                                className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                                disabled={isHistoryLoading}
-                            >
-                                <History className={`h-4 w-4 ${isHistoryLoading ? 'animate-spin' : ''}`} />
-                                {isHistoryLoading ? 'Loading...' : (showHistory ? 'Hide History' : 'View History')}
-                            </button>
-                        )}
+                                    }}
+                                    className="btn-secondary !py-1.5 !px-3 text-xs"
+                                    disabled={isHistoryLoading}
+                                >
+                                    <History size={14} className={isHistoryLoading ? 'animate-spin' : ''} />
+                                    {isHistoryLoading ? 'Loading...' : (showHistory ? 'Hide History' : 'History')}
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {showHistory && (
-                        <div className="mb-4 bg-gray-50 p-3 rounded text-sm text-gray-600">
-                            <h4 className="font-medium mb-2">Past Enquiries:</h4>
+                        <div className="mb-6 bg-[var(--bg-secondary)] p-6 rounded-[2rem] border border-dashed border-[var(--border)] text-sm animate-in fade-in slide-in-from-top-4">
+                            <h4 className="font-bold text-[var(--text-muted)] text-[10px] uppercase tracking-[0.2em] mb-4">Enquiry History</h4>
                             {history.length > 0 ? (
-                                <ul className="list-disc pl-5 space-y-1">
+                                <ul className="space-y-3">
                                     {history.map(h => (
-                                        <li key={h.enquiryId}>
-                                            {h.branch && <span className="font-bold text-blue-700 mr-2">[{h.branch.displayName}]</span>}
-                                            <span className="font-medium">{h.enquiryType}</span> -
+                                        <li key={h.enquiryId} className="flex flex-wrap items-center gap-3 p-4 rounded-2xl shadow-sm border transition-all hover:border-[var(--accent)]/30"
+                                            style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
+                                            {h.branch && <span className="font-bold text-[10px] px-3 py-1 rounded-lg uppercase tracking-wider" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>{h.branch.displayName}</span>}
+                                            <span className="font-bold text-[var(--accent)]">{h.enquiryType}</span>
+                                            <span style={{ color: 'var(--border)' }}>|</span>
                                             {h.carDetails && h.carDetails.length > 0 ? (
-                                                <span> {h.carDetails.map(c => `${c.carBrand} ${c.carModel}`).join(', ')}</span>
-                                            ) : ' No vehicle details'}
-                                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${h.status === 'converted' ? 'bg-green-100 text-green-700' :
-                                                h.status === 'lost' ? 'bg-red-100 text-red-700' :
-                                                    'bg-gray-200 text-gray-600'
-                                                }`}> {h.status} </span> - {new Date(h.createdAt).toLocaleDateString()}
+                                                <span className="font-medium" style={{ color: 'var(--text-primary)' }}> {h.carDetails.map(c => `${c.carBrand} ${c.carModel}`).join(', ')}</span>
+                                            ) : <span className="italic" style={{ color: 'var(--text-muted)' }}>No Vehicle Selected</span>}
+                                            <div className="flex-1"></div>
+                                            <span className={clsx("px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider shadow-sm",
+                                                h.status === 'converted' ? 'bg-emerald-500/10 text-emerald-600' :
+                                                    h.status === 'lost' ? 'bg-rose-500/10 text-rose-600' :
+                                                        'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'
+                                            )}> {h.status} </span>
+                                            <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{new Date(h.createdAt).toLocaleDateString()}</span>
                                         </li>
                                     ))}
                                 </ul>
                             ) : (
-                                <p className="italic text-gray-400">No past enquiries found for this customer.</p>
+                                <p className="italic text-slate-400 text-center py-2">No past enquiries found for this customer.</p>
                             )}
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Enquiry Type</label>
-                            <div className="flex gap-4 mt-2">
-                                <label className="flex items-center"><input type="radio" name="enquiryType" value="Buy" checked={enquiry.enquiryType === 'Buy'} onChange={e => setEnquiry({ ...enquiry, enquiryType: e.target.value })} className="mr-2" /> Buy</label>
-                                <label className="flex items-center"><input type="radio" name="enquiryType" value="Sell" checked={enquiry.enquiryType === 'Sell'} onChange={e => setEnquiry({ ...enquiry, enquiryType: e.target.value })} className="mr-2" /> Sell</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                        <div className="space-y-1">
+                            <label className="form-label">Enquiry Type</label>
+                            <div className="flex gap-4 p-1 bg-[var(--bg-tertiary)] rounded-md">
+                                <label className={clsx(
+                                    "flex-1 flex items-center justify-center py-1.5 rounded cursor-pointer transition-all font-semibold text-xs",
+                                    enquiry.enquiryType === 'Buy' ? 'bg-[var(--bg-secondary)] text-[var(--accent)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                                )}>
+                                    <input type="radio" name="enquiryType" value="Buy" checked={enquiry.enquiryType === 'Buy'} onChange={e => setEnquiry({ ...enquiry, enquiryType: e.target.value })} className="hidden" />
+                                    Buy
+                                </label>
+                                <label className={clsx(
+                                    "flex-1 flex items-center justify-center py-1.5 rounded cursor-pointer transition-all font-semibold text-xs",
+                                    enquiry.enquiryType === 'Sell' ? 'bg-[var(--bg-secondary)] text-[var(--accent)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                                )}>
+                                    <input type="radio" name="enquiryType" value="Sell" checked={enquiry.enquiryType === 'Sell'} onChange={e => setEnquiry({ ...enquiry, enquiryType: e.target.value })} className="hidden" />
+                                    Sell
+                                </label>
                             </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Status</label>
-                            <input
-                                className="mt-1 w-full border p-2 rounded text-sm bg-gray-50 text-gray-600 font-semibold uppercase cursor-not-allowed"
-                                value={enquiry.status || 'new'}
-                                readOnly
-                                disabled
-                            />
+                        <div className="space-y-1">
+                            <label className="form-label">Status</label>
+                            <div className="input-field bg-[var(--bg-tertiary)] h-[38px] flex items-center font-bold text-[var(--text-muted)] uppercase cursor-not-allowed">
+                                {enquiry.status || 'new'}
+                            </div>
                         </div>
                     </div>
 
-                    <div className="bg-blue-50 p-3 rounded mb-4">
-                        <div className="flex justify-between items-center mb-2">
-                            <label className="font-semibold text-gray-700 text-sm">Vehicle Details</label>
+                    <div className="bg-[var(--bg-tertiary)]/50 p-5 rounded-lg border border-[var(--border)] mb-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <label className="form-label !mb-0 flex items-center gap-2">
+                                <Car size={16} className="text-[var(--accent)]" /> Interested Vehicles
+                            </label>
                             <button type="button" onClick={() => {
                                 const mk = [...(enquiry.carDetails || [])];
                                 mk.push({ carType: '', carBrand: '', carModel: '', carVariant: '' });
                                 setEnquiry({ ...enquiry, carDetails: mk });
-                            }} className="text-xs bg-blue-600 text-white px-2 py-1 rounded flex items-center gap-1"> <Plus size={14} /> Add </button>
+                            }} className="btn-primary !py-1.5 !px-3 text-xs">
+                                <Plus size={14} /> Add Vehicle
+                            </button>
                         </div>
+
                         <div className="space-y-3">
                             {(enquiry.carDetails || []).map((car, idx) => {
                                 const typeTerm = (car.carType || '').trim().toLowerCase();
@@ -575,10 +737,10 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                 const filteredVariants = vehicleVariants.filter(v => selectedModelObj && v.modelId === selectedModelObj.id);
 
                                 return (
-                                    <div key={idx} className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-3 p-3 bg-white rounded-lg border border-blue-100 shadow-sm relative group transition-all hover:border-blue-300">
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-[10px] uppercase font-bold text-gray-400">Brand</label>
-                                            <select className="w-full border p-1.5 rounded text-sm bg-gray-50 focus:bg-white transition-colors" value={car.carBrand || ''} onChange={e => {
+                                    <div key={idx} className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-3 p-4 bg-[var(--bg-secondary)] rounded-md border border-[var(--border)] shadow-sm relative group transition-all hover:shadow-md">
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] uppercase font-bold text-[var(--text-muted)] pl-1">Brand</label>
+                                            <select className="input-field py-1 px-2 text-xs h-8" value={car.carBrand || ''} onChange={e => {
                                                 const mk = [...enquiry.carDetails];
                                                 mk[idx].carBrand = e.target.value; mk[idx].carType = ''; mk[idx].carModel = ''; mk[idx].carVariant = '';
                                                 setEnquiry({ ...enquiry, carDetails: mk });
@@ -588,9 +750,9 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                             </select>
                                         </div>
 
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-[10px] uppercase font-bold text-gray-400">Type</label>
-                                            <select className="w-full border p-1.5 rounded text-sm bg-gray-50 focus:bg-white transition-colors" value={car.carType || ''} onChange={e => {
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] uppercase font-bold text-[var(--text-muted)] pl-1">Type</label>
+                                            <select className="input-field py-1 px-2 text-xs h-8" value={car.carType || ''} onChange={e => {
                                                 const mk = [...enquiry.carDetails];
                                                 mk[idx].carType = e.target.value; mk[idx].carModel = ''; mk[idx].carVariant = '';
                                                 setEnquiry({ ...enquiry, carDetails: mk });
@@ -600,9 +762,9 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                             </select>
                                         </div>
 
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-[10px] uppercase font-bold text-gray-400">Model</label>
-                                            <select className="w-full border p-1.5 rounded text-sm bg-gray-50 focus:bg-white transition-colors" value={car.carModel || ''} onChange={e => {
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] uppercase font-bold text-[var(--text-muted)] pl-1">Model</label>
+                                            <select className="input-field py-1 px-2 text-xs h-8" value={car.carModel || ''} onChange={e => {
                                                 const mk = [...enquiry.carDetails]; mk[idx].carModel = e.target.value; mk[idx].carVariant = '';
                                                 setEnquiry({ ...enquiry, carDetails: mk });
                                             }}>
@@ -611,9 +773,9 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                             </select>
                                         </div>
 
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-[10px] uppercase font-bold text-gray-400">Variant</label>
-                                            <select className="w-full border p-1.5 rounded text-sm bg-gray-50 focus:bg-white transition-colors" value={car.carVariant || ''} onChange={e => {
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] uppercase font-bold text-[var(--text-muted)] pl-1">Variant</label>
+                                            <select className="input-field py-1 px-2 text-xs h-8" value={car.carVariant || ''} onChange={e => {
                                                 const mk = [...enquiry.carDetails]; mk[idx].carVariant = e.target.value;
                                                 setEnquiry({ ...enquiry, carDetails: mk });
                                             }}>
@@ -622,203 +784,239 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                             </select>
                                         </div>
 
-                                        <div className="col-span-2 lg:col-span-1 flex items-end justify-end">
+                                        <div className="flex items-end justify-end pb-1">
                                             <button
                                                 type="button"
                                                 onClick={() => {
                                                     const mk = enquiry.carDetails.filter((_, i) => i !== idx);
                                                     setEnquiry({ ...enquiry, carDetails: mk });
                                                 }}
-                                                className="text-red-500 p-2 hover:bg-red-50 rounded transition-colors"
-                                                title="Remove vehicle"
+                                                className="text-[var(--text-muted)] hover:text-[var(--danger)] p-1.5 rounded transition-colors"
                                             >
-                                                <Trash2 size={18} />
+                                                <Trash2 size={14} />
                                             </button>
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
-                        <input className="w-full border p-2 text-sm rounded mt-1" placeholder="Car Detail Remarks..." value={enquiry.carDetailRemarks || ''} onChange={e => setEnquiry({ ...enquiry, carDetailRemarks: e.target.value })} />
+                        <div className="mt-3">
+                            <input className="input-field w-full text-xs" placeholder="Additional Vehicle Remarks..." value={enquiry.carDetailRemarks || ''} onChange={e => setEnquiry({ ...enquiry, carDetailRemarks: e.target.value })} />
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <select className="w-full border p-2 rounded text-sm h-[42px]" value={enquiry.budgetRange || ''} onChange={e => setEnquiry({ ...enquiry, budgetRange: e.target.value })}>
-                            <option value="">Budget Range</option>
-                            {getOpt('BUDGET_RANGES').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
-                        </select>
-                        <input className="border p-2 rounded" placeholder="Budget Remarks" value={enquiry.budgetRemarks || ''} onChange={e => setEnquiry({ ...enquiry, budgetRemarks: e.target.value })} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                        <div className="space-y-1">
+                            <label className="form-label">Budget</label>
+                            <select className="input-field h-[38px] font-semibold" value={enquiry.budgetRange || ''} onChange={e => setEnquiry({ ...enquiry, budgetRange: e.target.value })}>
+                                <option value="">Select Budget Range</option>
+                                {getOpt('BUDGET_RANGES').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="form-label">Budget Remarks</label>
+                            <input className="input-field" placeholder="Specific budget constraints..." value={enquiry.budgetRemarks || ''} onChange={e => setEnquiry({ ...enquiry, budgetRemarks: e.target.value })} />
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        <select className="w-full border p-2 rounded text-sm h-[42px]" value={enquiry.fuelType || ''} onChange={e => setEnquiry({ ...enquiry, fuelType: e.target.value })}>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <select className="input-field w-full" value={enquiry.fuelType || ''} onChange={e => setEnquiry({ ...enquiry, fuelType: e.target.value })}>
                             <option value="">Fuel Type</option>
                             {getOpt('FUEL_TYPES').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
                         </select>
-                        <select className="border p-2 rounded h-[42px]" value={enquiry.usageType || ''} onChange={e => setEnquiry({ ...enquiry, usageType: e.target.value })}>
-                            <option value="">Usage...</option>
+                        <select className="input-field w-full" value={enquiry.usageType || ''} onChange={e => setEnquiry({ ...enquiry, usageType: e.target.value })}>
+                            <option value="">Usage Type</option>
                             {getOpt('USAGE_TYPES').map((u, i) => <option key={u.value || i} value={u.value}>{u.label}</option>)}
                         </select>
-                        <select className="w-full border p-2 rounded text-sm h-[42px]" value={enquiry.payment || ''} onChange={e => setEnquiry({ ...enquiry, payment: e.target.value })}>
+                        <select className="input-field w-full" value={enquiry.payment || ''} onChange={e => setEnquiry({ ...enquiry, payment: e.target.value })}>
                             <option value="">Payment Mode</option>
                             {getOpt('PAYMENT_MODES').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
                         </select>
                     </div>
 
-                    <div className="border-t pt-2 mt-4">
-                        <label className="flex items-center gap-2 font-medium text-gray-700">
-                            <input type="checkbox" checked={enquiry.exchange || false} onChange={e => setEnquiry({ ...enquiry, exchange: e.target.checked })} /> Exchange Vehicle?
+                    <div className="border-t border-dashed pt-5 mt-5" style={{ borderColor: 'var(--border)' }}>
+                        <label className="flex items-center gap-3 font-semibold text-[var(--text-primary)] cursor-pointer w-fit p-1.5 hover:bg-[var(--bg-tertiary)] rounded transition-colors">
+                            <input
+                                type="checkbox"
+                                className="w-4 h-4 rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)] cursor-pointer"
+                                checked={enquiry.exchange || false}
+                                onChange={e => setEnquiry({ ...enquiry, exchange: e.target.checked })}
+                            />
+                            Exchange Vehicle?
                         </label>
                         {enquiry.exchange && (
-                            <input className="mt-2 w-full border p-2 rounded" placeholder="Exchange Vehicle Details" value={enquiry.exchangeDetail || ''} onChange={e => setEnquiry({ ...enquiry, exchangeDetail: e.target.value })} />
+                            <div className="mt-3 animate-in fade-in slide-in-from-top-2">
+                                <input className="input-field" placeholder="Describe Exchange Vehicle..." value={enquiry.exchangeDetail || ''} onChange={e => setEnquiry({ ...enquiry, exchangeDetail: e.target.value })} />
+                            </div>
                         )}
                     </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-lg shadow border-l-4 border-amber-500">
-                    <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-lg font-semibold text-gray-800">Schedule Follow-up</h3>
+                {/* Follow-up Section */}
+                <div className="card p-6 transition-all duration-300">
+                    <div className="flex justify-between items-center mb-6 pb-4 border-b" style={{ borderColor: 'var(--border)' }}>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ background: 'var(--warning)' }}>
+                                <Calendar size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Follow-up Steps</h3>
+                                <p className="text-[10px] uppercase font-bold tracking-widest" style={{ color: 'var(--text-muted)' }}>Interaction History & Next Steps</p>
+                            </div>
+                        </div>
+
                         {enquiry.followUps && enquiry.followUps.length > 0 && (
                             <button
                                 type="button"
                                 onClick={() => setShowFollowUpHistory(!showFollowUpHistory)}
-                                className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                                className="btn-secondary !py-1.5 !px-3 text-xs"
                             >
-                                <History className="h-4 w-4" /> {showFollowUpHistory ? 'Hide Past Follow-ups' : 'View Past Follow-ups'}
+                                <History size={14} /> {showFollowUpHistory ? 'Hide Previous' : 'View Previous'}
                             </button>
                         )}
                     </div>
 
-                    {showFollowUpHistory && enquiry.followUps && (
-                        <div className="mb-4 bg-amber-50 rounded-lg border border-amber-100 overflow-auto">
-                            <table className="w-full text-left text-xs">
-                                <thead className="bg-amber-100/50 text-amber-900 font-semibold border-b border-amber-200">
-                                    <tr>
-                                        <th className="p-2">Date / Agent</th>
-                                        <th className="p-2">Mode / Type</th>
-                                        <th className="p-2">Action / Car</th>
-                                        <th className="p-2">Result / Remarks</th>
-                                        <th className="p-2">Next Visit</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-amber-100">
-                                    {enquiry.followUps.map((f, idx) => (
-                                        <tr key={f.followUpId || idx} className="hover:bg-amber-100/30">
-                                            <td className="p-2 align-top">
-                                                <div className="font-bold">{new Date(f.createdAt).toLocaleDateString()}</div>
-                                                <div className="text-gray-500 truncate max-w-[100px]" title={f.agent?.fullName}>{f.agent?.fullName || 'Unknown'}</div>
-                                            </td>
-                                            <td className="p-2 align-top">
-                                                <div className="font-medium">{f.followupMode}</div>
-                                                <div className="text-gray-500">{f.followupType}</div>
-                                            </td>
-                                            <td className="p-2 align-top">
-                                                <div className="font-medium">{f.followupActionDone}</div>
-                                                {f.car && <div className="font-bold bg-blue-100 uppercase text-[10px] px-1.5 py-0.5 rounded w-fit mb-1">{f.car?.registrationNumber}</div>}
-                                            </td>
-                                            <td className="p-2 align-top">
-                                                <div className={`font-bold uppercase text-[10px] px-1.5 py-0.5 rounded w-fit mb-1 ${f.followupResults === 'not-interested' ? 'bg-red-100 text-red-700' :
-                                                    f.followupResults === 'sale-closed' ? 'bg-green-100 text-green-700' :
-                                                        'bg-blue-100 text-blue-700'
-                                                    }`}>
-                                                    {f.followupResults}
-                                                </div>
-                                                <div className="text-gray-600 italic leading-tight">{f.followupRemarks}</div>
-                                            </td>
-                                            <td className="p-2 align-top font-medium text-gray-700">
-                                                {f.nextVisitDate ? new Date(f.nextVisitDate).toLocaleString() : '-'}
-                                            </td>
+                    {
+                        showFollowUpHistory && enquiry.followUps && (
+                            <div className="mb-6 bg-amber-50/50 rounded-2xl border border-amber-100 overflow-hidden animate-in fade-in slide-in-from-top-4">
+                                <table className="w-full text-left text-xs">
+                                    <thead className="bg-amber-100/30 text-amber-900 font-bold border-b border-amber-100 uppercase tracking-wider">
+                                        <tr>
+                                            <th className="p-3">Date / Agent</th>
+                                            <th className="p-3">Context</th>
+                                            <th className="p-3">Action</th>
+                                            <th className="p-3">Outcome</th>
+                                            <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-amber-900/60">Next Follow-up</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                                    </thead>
+                                    <tbody className="divide-y divide-amber-100/50">
+                                        {enquiry.followUps.map((f, idx) => (
+                                            <tr key={f.followUpId || idx} className="hover:bg-amber-50/80 transition-all duration-300">
+                                                <td className="p-4">
+                                                    <div className="font-bold text-slate-800">{new Date(f.createdAt).toLocaleDateString()}</div>
+                                                    <div className="text-[10px] font-bold text-amber-600/60 uppercase tracking-widest mt-1" title={f.agent?.fullName}>{f.agent?.fullName || 'N/A'}</div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="font-bold text-slate-700 text-xs">{f.followupMode}</div>
+                                                    <div className="text-[10px] font-medium text-slate-400 mt-0.5">{f.followupType}</div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="font-bold text-xs" style={{ color: 'var(--text-secondary)' }}>{f.followupActionDone}</div>
+                                                    {f.car && <div className="font-bold border uppercase text-[9px] px-2 py-0.5 rounded-lg w-fit mt-2 shadow-sm" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--accent)' }}>{f.car?.registrationNumber}</div>}
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className={clsx(
+                                                        "font-bold uppercase text-[9px] px-3 py-1 rounded-full w-fit mb-2 shadow-sm tracking-widest",
+                                                        f.followupResults === 'not-interested' ? 'bg-red-50 text-red-600' :
+                                                            f.followupResults === 'sale-closed' ? 'bg-emerald-50 text-emerald-600' :
+                                                                'bg-amber-50 text-amber-600'
+                                                    )}>
+                                                        {f.followupResults}
+                                                    </div>
+                                                    <div className="text-slate-500 italic text-[10px] max-w-[180px] line-clamp-2 leading-relaxed">"{f.followupRemarks}"</div>
+                                                </td>
+                                                <td className="p-4 font-mono font-bold text-slate-600 text-[11px]">
+                                                    {f.nextVisitDate ? new Date(f.nextVisitDate).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '-'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )
+                    }
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs text-gray-500 font-medium">Mode <span className="text-red-500">*</span></label>
-                            <select className="w-full border p-2 rounded text-sm h-[42px]" value={followUp.followupMode || ''} onChange={e => setFollowUp({ ...followUp, followupMode: e.target.value })}>
-                                <option value="">Select...</option>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                        <div className="space-y-1">
+                            <label className="form-label">Follow-up Mode *</label>
+                            <select className="input-field font-semibold text-xs h-[38px]" value={followUp.followupMode || ''} onChange={e => setFollowUp({ ...followUp, followupMode: e.target.value })}>
+                                <option value="">Select Mode...</option>
                                 {getOpt('FOLLOWUP_MODES').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-xs text-gray-500 font-medium">Type <span className="text-red-500">*</span></label>
+                        <div className="space-y-1">
+                            <label className="form-label">Follow-up Type *</label>
                             <select
-                                className="w-full border p-2 rounded text-sm h-[42px]"
+                                className="input-field font-semibold text-xs h-[38px]"
                                 value={followUp.followupType || ''}
-                                onChange={e => setFollowUp({ ...followUp, followupType: e.target.value })}
+                                onChange={(e) => setFollowUp({ ...followUp, followupType: e.target.value })}
                                 disabled={!followUp.followupMode}
                             >
-                                <option value="">{followUp.followupMode ? 'Select Type...' : 'Select Mode First...'}</option>
+                                <option value="">{followUp.followupMode ? 'Select Category' : 'Awaiting Mode...'}</option>
                                 {filteredFollowupTypes.map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
                             </select>
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div>
-                            <label className="block text-xs text-gray-500 font-medium">Action Done <span className="text-red-500">*</span></label>
-                            <select className="w-full border p-2 rounded text-sm h-[42px]" value={followUp.followupActionDone || ''} onChange={e => setFollowUp({ ...followUp, followupActionDone: e.target.value })}>
-                                <option value="">Select...</option>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                        <div className="space-y-1">
+                            <label className="form-label">Follow-up Action *</label>
+                            <select className="input-field text-xs font-semibold h-[38px]" value={followUp.followupActionDone || ''} onChange={e => setFollowUp({ ...followUp, followupActionDone: e.target.value })}>
+                                <option value="">Select Action</option>
                                 {getOpt('FOLLOWUP_ACTIONS').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
                             </select>
                         </div>
-                        <div className="flex flex-col gap-1">
-                            <label className="text-xs text-gray-500 font-medium">
-                                Vehicle Number {
-                                    VEHICLE_ACTIONS.includes(followUp.followupActionDone?.toLowerCase())
-                                        ? "(Optional)"
-                                        : "*"
-                                }
+                        <div className="space-y-1">
+                            <label className="form-label">
+                                Vehicle {VEHICLE_ACTIONS.includes(followUp.followupActionDone?.toLowerCase()) ? "(Optional)" : "*"}
                             </label>
                             <VehicleAutocomplete
-                                placeholder="Enter Vehicle Number"
+                                placeholder="Registration Number..."
                                 value={followUp.car?.registrationNumber || ''}
                                 onChange={(car) => setFollowUp({ ...followUp, car: car || null })}
                             />
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div>
-                            <label className="block text-xs text-gray-500 font-medium">Results <span className="text-red-500">*</span></label>
-                            <select className="w-full border p-2 rounded text-sm h-[42px]" value={followUp.followupResults} onChange={e => setFollowUp({ ...followUp, followupResults: e.target.value })}>
-                                <option value="">Select...</option>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                        <div className="space-y-1">
+                            <label className="form-label">Follow-up Result *</label>
+                            <select className="input-field font-semibold text-xs h-[38px]" value={followUp.followupResults || ''} onChange={e => setFollowUp({ ...followUp, followupResults: e.target.value })}>
+                                <option value="">Select Outcome...</option>
                                 {getOpt('FOLLOWUP_RESULTS').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
                             </select>
                         </div>
-                        <div className="flex flex-col">
-                            <label className="block text-xs text-gray-500 font-medium">Next Visit / Contact {NEXT_VISIT_ACTIONS.includes(followUp.followupResults?.toLowerCase()) ? <span className="text-gray-400 font-normal">(Optional)</span> : <span className="text-red-500">*</span>}</label>
-                            <div className="relative group">
-                                <input type="datetime-local" className="w-full border p-2 rounded pr-6" value={followUp.nextVisitDate || ''} min={getMinDateTime()} onChange={e => setFollowUp({ ...followUp, nextVisitDate: e.target.value })} />
+                        <div className="space-y-1">
+                            <label className="form-label">
+                                Next Follow-up Date {NEXT_VISIT_ACTIONS.includes(followUp.followupResults?.toLowerCase()) ? "(Optional)" : "*"}
+                            </label>
+                            <div className="relative group/date">
+                                <input type="datetime-local" className="input-field !pr-10 h-[38px]" value={followUp.nextVisitDate || ''} min={getMinDateTime()} onChange={e => setFollowUp({ ...followUp, nextVisitDate: e.target.value })} />
                                 {followUp.nextVisitDate && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setFollowUp({ ...followUp, nextVisitDate: '' })}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
-                                    >
+                                    <button type="button" onClick={() => setFollowUp({ ...followUp, nextVisitDate: '' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--danger)]">
                                         <X size={14} />
                                     </button>
                                 )}
                             </div>
                         </div>
                     </div>
+
                     <div className="mt-4">
-                        <textarea className="w-full border p-2 rounded" rows={2} placeholder="Follow-up Remarks..." value={followUp.followupRemarks || ''} onChange={e => setFollowUp({ ...followUp, followupRemarks: e.target.value })} />
+                        <label className="form-label mb-2 block">Remarks</label>
+                        <textarea
+                            className="input-field min-h-[80px] text-sm"
+                            rows={3}
+                            placeholder="Add internal remarks here..."
+                            value={followUp.followupRemarks || ''}
+                            onChange={e => setFollowUp({ ...followUp, followupRemarks: e.target.value })}
+                        />
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex justify-end gap-3 pt-6 pb-10">
                     <button type="button" onClick={() => {
                         if (tabId) localStorage.removeItem(`vandi_lead_form_${tabId}`);
                         onCancel();
-                    }} className="px-6 py-2 border border-blue-100 bg-blue-50 text-blue-600 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-100 font-medium transition-colors" disabled={loading}>Close Tab</button>
-                    <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold flex items-center gap-2" disabled={loading}>
-                        <Save className="h-5 w-5" /> {loading ? 'Saving...' : 'Save Lead'}
+                    }} className="btn-secondary !px-8 h-10 font-bold uppercase text-[10px] tracking-widest" disabled={loading}>
+                        <X size={14} /> Cancel
+                    </button>
+                    <button type="submit" className="btn-primary !px-12 h-10 font-bold uppercase text-[10px] tracking-widest shadow-md active:scale-[0.98]" disabled={loading}>
+                        {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Save size={16} />}
+                        <span>{loading ? 'Saving...' : 'Save Enquiry'}</span>
                     </button>
                 </div>
-            </form>
-        </div>
+            </form >
+        </div >
     );
 };
 

@@ -25,35 +25,56 @@ export const ToastProvider = ({ children }) => {
         setToasts(prev => prev.filter(t => t.id !== id));
     };
 
+    const getBorderColor = (type) => {
+        switch (type) {
+            case 'success': return 'var(--success)';
+            case 'error': return 'var(--danger)';
+            case 'warning': return 'var(--warning)';
+            case 'info': return 'var(--accent)';
+            default: return 'var(--accent)';
+        }
+    };
+
+    const getIconColor = (type) => {
+        switch (type) {
+            case 'success': return 'var(--success)';
+            case 'error': return 'var(--danger)';
+            case 'warning': return 'var(--warning)';
+            case 'info': return 'var(--accent)';
+            default: return 'var(--accent)';
+        }
+    };
+
     return (
         <ToastContext.Provider value={{ showToast }}>
             {children}
-            <div className="fixed bottom-4 right-4 z-[9998] flex flex-col gap-2 pointer-events-none">
+            <div
+                className="fixed right-4 z-[9998] flex flex-col gap-2 pointer-events-none"
+                style={{ bottom: 'calc(1rem + var(--safe-area-bottom))' }}
+            >
                 {toasts.map(toast => (
                     <div
                         key={toast.id}
-                        className={`
-                            pointer-events-auto
-                            flex items-center gap-3 px-4 py-3 rounded-lg shadow-2xl border min-w-[300px]
-                            animate-fade-in-right transform transition-all duration-300
-                            ${toast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : ''}
-                            ${toast.type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-800' : ''}
-                            ${toast.type === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-800' : ''}
-                            ${toast.type === 'info' ? 'bg-blue-50 border-blue-200 text-blue-800' : ''}
-                        `}
+                        className="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[320px] max-w-[420px] animate-fade-in"
+                        style={{
+                            background: 'var(--surface)',
+                            border: '1px solid var(--border)',
+                            borderLeft: `3px solid ${getBorderColor(toast.type)}`
+                        }}
                     >
-                        <div className="flex-shrink-0">
-                            {toast.type === 'success' && <CheckCircle size={20} className="text-emerald-500" />}
-                            {toast.type === 'error' && <AlertCircle size={20} className="text-rose-500" />}
-                            {toast.type === 'warning' && <AlertTriangle size={20} className="text-amber-500" />}
-                            {toast.type === 'info' && <Info size={20} className="text-blue-500" />}
+                        <div className="flex-shrink-0" style={{ color: getIconColor(toast.type) }}>
+                            {toast.type === 'success' && <CheckCircle size={18} />}
+                            {toast.type === 'error' && <AlertCircle size={18} />}
+                            {toast.type === 'warning' && <AlertTriangle size={18} />}
+                            {toast.type === 'info' && <Info size={18} />}
                         </div>
-                        <div className="flex-grow text-sm font-medium">
+                        <p className="flex-grow text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                             {toast.message}
-                        </div>
+                        </p>
                         <button
                             onClick={() => removeToast(toast.id)}
-                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                            className="p-1 rounded hover:bg-[var(--bg-tertiary)] transition-colors"
+                            style={{ color: 'var(--text-muted)' }}
                         >
                             <X size={16} />
                         </button>

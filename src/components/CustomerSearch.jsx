@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
+import Logo from './Logo';
 
 const CustomerSearch = ({ customers, onSearch, onSelect, selectedCustomer, disabled }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isOpen, setIsOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const wrapperRef = useRef(null);
 
     useEffect(() => {
@@ -26,12 +28,17 @@ const CustomerSearch = ({ customers, onSearch, onSelect, selectedCustomer, disab
         };
     }, [wrapperRef]);
 
-    const handleInputChange = (e) => {
+    const handleInputChange = async (e) => {
         const value = e.target.value;
         setSearchTerm(value);
         setIsOpen(true);
         if (value.length > 2) {
-            onSearch(value);
+            setIsLoading(true);
+            try {
+                await onSearch(value);
+            } finally {
+                setIsLoading(false);
+            }
         } else {
             // Optional: Clear results if input is too short
             // onSearch(''); 
@@ -49,33 +56,36 @@ const CustomerSearch = ({ customers, onSearch, onSelect, selectedCustomer, disab
 
     return (
         <div className="relative" ref={wrapperRef}>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
-            <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
-                </div>
+            <label className="form-label">Customer</label>
+            <div className="search-box relative">
+                <Search className="search-icon absolute left-3 top-1/2 transform -translate-y-1/2" />
                 <input
                     type="text"
-                    className="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 bg-white disabled:bg-gray-100 disabled:text-gray-500"
+                    className="input-field !pl-10 !pr-10"
                     placeholder="Search by name or phone (min 3 chars)..."
                     value={searchTerm}
                     onChange={handleInputChange}
                     onFocus={() => !disabled && searchTerm.length > 2 && setIsOpen(true)}
                     disabled={disabled}
                 />
+                {isLoading && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10 flex items-center justify-center pointer-events-none pr-1 mb-2">
+                        <Logo size={24} isAnimating={true} color="blue" />
+                    </div>
+                )}
             </div>
 
             {isOpen && !disabled && customers.length > 0 && (
-                <ul className="absolute z-20 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                <ul className="absolute z-20 mt-1 w-full card py-1 max-h-60 overflow-auto focus:outline-none sm:text-sm">
                     {customers.map((customer) => (
                         <li
                             key={customer.customerId}
-                            className="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-50 text-gray-900"
+                            className="cursor-pointer select-none relative py-2 px-3 hover:bg-[var(--accent-bg)] text-[var(--text-primary)] border-b border-[var(--border)] last:border-b-0"
                             onClick={() => handleSelect(customer)}
                         >
                             <div className="flex flex-col">
-                                <span className="font-medium">{customer.fullName}</span>
-                                <span className="text-gray-500 text-xs">{customer.phone}</span>
+                                <span className="font-semibold text-sm">{customer.fullName}</span>
+                                <span className="text-[var(--text-muted)] text-xs">{customer.phone}</span>
                             </div>
                         </li>
                     ))}
@@ -83,7 +93,7 @@ const CustomerSearch = ({ customers, onSearch, onSelect, selectedCustomer, disab
             )}
 
             {isOpen && !disabled && customers.length === 0 && searchTerm.length > 2 && (
-                <div className="absolute z-20 mt-1 w-full bg-white shadow-lg rounded-md py-2 px-3 text-sm text-gray-500">
+                <div className="absolute z-20 mt-1 w-full card py-3 px-4 text-sm text-[var(--text-muted)]">
                     No customers found.
                 </div>
             )}

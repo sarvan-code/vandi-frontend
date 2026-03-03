@@ -7,14 +7,15 @@ import './Logo.css';
  * @param {string} color - Optional color class ('red' or default blue)
  * @param {string} className - Additional CSS classes
  * @param {boolean} animateOnHover - Whether to speed up animation on hover
+ * @param {boolean} isAnimating - Whether to speed up animation permanently
  */
-const Logo = ({ size = 120, color = '', className = '', animateOnHover = false }) => {
+const Logo = ({ size = 120, color = '', className = '', animateOnHover = false, isAnimating = false }) => {
     // Base width is 120px
     const scale = size / 120;
 
     return (
         <div
-            className={`car-loader-wrapper ${color} ${animateOnHover ? 'logo-animate-hover' : ''} ${className}`}
+            className={`car-loader-wrapper ${color} ${animateOnHover ? 'logo-animate-hover' : ''} ${isAnimating ? 'logo-animating' : ''} ${className}`}
             style={{ '--logo-scale': scale }}
         >
             <div className="car-body">

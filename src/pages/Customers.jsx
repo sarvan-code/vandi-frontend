@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Edit, Trash, MessageSquare, X, Phone } from 'lucide-react';
+import { Eye, Edit, Trash, MessageSquare, X, Phone, Plus, ChevronLeft, ChevronRight, Building, Users } from 'lucide-react';
+import clsx from 'clsx';
 import api from '../api';
 import Table from '../components/Table';
 import { useToast } from '../context/ToastContext';
@@ -109,13 +110,31 @@ const Customers = () => {
     };
 
     const columns = [
-        { key: 'fullName', label: 'Name' },
-        { key: 'email', label: 'Email' },
-        { key: 'phone', label: 'Phone' },
+        {
+            key: 'fullName', label: 'Customer Name', render: (row) => (
+                <div className="flex flex-col">
+                    <span className="font-bold text-[var(--text-primary)]">{row.fullName}</span>
+                    <span className="text-[10px] text-[var(--text-muted)] font-bold tracking-tight">{row.email || 'No email record'}</span>
+                </div>
+            )
+        },
+        {
+            key: 'phone', label: 'Phone Number', render: (row) => (
+                <div className="flex items-center gap-2 font-medium text-[var(--text-primary)]">
+                    <Phone size={14} className="text-[var(--text-muted)]" />
+                    {row.phone}
+                </div>
+            )
+        },
         {
             key: 'customerType', label: 'Type', render: (row) => (
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${row.customerType === 'Customer' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                    {row.customerType}
+                <span className={clsx(
+                    "badge py-1 px-3 rounded-full text-[10px] font-black tracking-[0.1em] border shadow-sm",
+                    row.customerType === 'Individual' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                        row.customerType === 'Corporate' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                            'bg-slate-50 text-slate-600 border-slate-100'
+                )}>
+                    {row.customerType?.toUpperCase() || 'STANDARD'}
                 </span>
             )
         }
@@ -127,17 +146,21 @@ const Customers = () => {
     }, [page, pageSize, selectedBranchId]);
 
     return (
-        <div>
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">Customers</h1>
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
+        <div className="animate-fade-in">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-10 gap-6">
+                <div>
+                    <h1 className="text-4xl font-semibold mb-2 text-[var(--text-primary)]">Customers</h1>
+                    <p className="text-sm font-medium text-[var(--text-secondary)]">Manage your customer database and interaction history.</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
                     {isSuperUser && (
-                        <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Branch:</label>
+                        <div className="search-box !w-auto">
+                            <Building size={18} className="search-icon" />
                             <select
                                 value={selectedBranchId}
                                 onChange={(e) => setSelectedBranchId(e.target.value)}
-                                className="flex-1 sm:flex-initial border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-semibold text-[var(--text-primary)] min-w-[160px] cursor-pointer outline-none pl-10 h-10 shadow-sm"
                             >
                                 <option value="">All Branches</option>
                                 {branches.map((branch) => (
@@ -150,125 +173,156 @@ const Customers = () => {
                     )}
                     <button
                         onClick={() => { setCurrentCustomer({}); setIsViewMode(false); setIsModalOpen(true); }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                        className="btn-primary flex items-center gap-3 !py-2 !px-6"
                     >
-                        Add Customer
+                        <Plus size={18} /> New Customer
                     </button>
                 </div>
             </div>
 
             {/* Collapsible Form Block */}
             {isModalOpen && (
-                <div className="bg-white rounded-lg shadow-lg p-6 mb-6 relative animate-fade-in-down border-l-4 border-blue-500">
+                <div className="p-8 mb-10 relative overflow-visible animate-fade-in card">
                     <button
                         onClick={() => setIsModalOpen(false)}
-                        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                        className="absolute top-6 right-6 p-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors text-[var(--text-muted)]"
+                        title="Close"
                     >
-                        <X size={24} />
+                        <X size={20} />
                     </button>
 
-                    <h2 className="text-xl font-semibold mb-4 text-gray-800">
-                        {isViewMode ? 'Customer Details' : (currentCustomer?.customerId ? 'Edit Customer' : 'New Customer')}
-                    </h2>
+                    <div className="flex items-center gap-5 mb-10 pb-6 border-b" style={{ borderColor: 'var(--border)' }}>
+                        <div className="w-12 h-12 bg-[var(--accent)]/10 rounded-xl flex items-center justify-center text-[var(--accent)]">
+                            <Users size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">
+                                {isViewMode ? 'Customer Profile' : (currentCustomer?.customerId ? 'Update Customer' : 'New Customer')}
+                            </h2>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] mt-1">
+                                {isViewMode ? 'Comprehensive customer overview' : 'Registration of a new stakeholder entity'}
+                            </p>
+                        </div>
+                    </div>
 
-                    <form onSubmit={handleSave} className="space-y-4">
+                    <form onSubmit={handleSave} className="space-y-10">
                         <fieldset disabled={isViewMode} className="contents">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                <div className="space-y-2">
+                                    <label className="form-label">Full Name <span className="text-red-500">*</span></label>
                                     <input
-                                        className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
+                                        className="input-field"
+                                        placeholder="e.g. John Carter"
                                         value={currentCustomer?.fullName || ''}
                                         onChange={(e) => setCurrentCustomer({ ...currentCustomer, fullName: e.target.value })}
                                         required
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Phone</label>
+                                <div className="space-y-2">
+                                    <label className="form-label">Phone Number <span className="text-red-500">*</span></label>
                                     <input
-                                        className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
+                                        className="input-field"
+                                        placeholder="e.g. +91 98765 43210"
                                         value={currentCustomer?.phone || ''}
                                         onChange={(e) => setCurrentCustomer({ ...currentCustomer, phone: e.target.value })}
                                         required
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                                <div className="space-y-2">
+                                    <label className="form-label">Email Address</label>
                                     <input
-                                        className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
+                                        className="input-field"
+                                        placeholder="e.g. john@example.com"
                                         value={currentCustomer?.email || ''}
                                         onChange={(e) => setCurrentCustomer({ ...currentCustomer, email: e.target.value })}
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Instagram ID</label>
+                                <div className="space-y-2">
+                                    <label className="form-label">Social Media ID</label>
                                     <input
-                                        className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
+                                        className="input-field"
+                                        placeholder="e.g. Instagram/Facebook handle"
                                         value={currentCustomer?.instaid || ''}
                                         onChange={(e) => setCurrentCustomer({ ...currentCustomer, instaid: e.target.value })}
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
+                                <div className="space-y-2">
+                                    <label className="form-label">Date of Birth</label>
                                     <input
                                         type="date"
-                                        className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
+                                        className="input-field"
                                         value={currentCustomer?.dateOfBirth || ''}
                                         onChange={(e) => setCurrentCustomer({ ...currentCustomer, dateOfBirth: e.target.value })}
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Marriage Date</label>
+                                <div className="space-y-2">
+                                    <label className="form-label">Marriage Anniversary</label>
                                     <input
                                         type="date"
-                                        className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
+                                        className="input-field"
                                         value={currentCustomer?.marriageDate || ''}
                                         onChange={(e) => setCurrentCustomer({ ...currentCustomer, marriageDate: e.target.value })}
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Profession</label>
+                                <div className="space-y-2">
+                                    <label className="form-label">Profession / Industry</label>
                                     <select
-                                        className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
+                                        className="input-field"
                                         value={currentCustomer?.profession || ''}
                                         onChange={(e) => setCurrentCustomer({ ...currentCustomer, profession: e.target.value })}
                                     >
-                                        <option value="">Select...</option>
+                                        <option value="">Select Category</option>
                                         {getOpt('PROFESSIONS').map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Customer Type</label>
-                                    <select
-                                        className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
-                                        value={currentCustomer?.customerType || 'Lead'}
-                                        onChange={(e) => setCurrentCustomer({ ...currentCustomer, customerType: e.target.value })}
-                                    >
-                                        <option value="Lead">Lead</option>
-                                        <option value="Customer">Customer</option>
-                                    </select>
+                                <div className="space-y-2">
+                                    <label className="form-label">Classification</label>
+                                    <div className="flex gap-4">
+                                        {['Lead', 'Customer'].map(type => (
+                                            <label key={type} className="flex-1">
+                                                <input
+                                                    type="radio"
+                                                    name="customerType"
+                                                    value={type}
+                                                    checked={(currentCustomer?.customerType || 'Lead') === type}
+                                                    onChange={(e) => setCurrentCustomer({ ...currentCustomer, customerType: e.target.value })}
+                                                    className="sr-only"
+                                                />
+                                                <div className={clsx(
+                                                    "flex items-center justify-center p-2 rounded-lg border-2 transition-all cursor-pointer font-bold text-xs h-full",
+                                                    (currentCustomer?.customerType || 'Lead') === type
+                                                        ? "border-[var(--accent)] text-[var(--accent)] bg-[var(--accent-bg)]"
+                                                        : "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-secondary)]"
+                                                )}>
+                                                    {type}
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="border-t pt-4">
-                                <h4 className="text-sm font-semibold mb-2">Referral Info</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Referred By (Source)</label>
+                            <div className="space-y-6">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--accent)] border-b pb-2 mb-6 flex items-center gap-2" style={{ borderColor: 'var(--accent-bg)' }}>
+                                    External Referrals
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-2">
+                                        <label className="form-label">Lead Source</label>
                                         <select
-                                            className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
+                                            className="input-field"
                                             value={currentCustomer?.referredBy || ''}
                                             onChange={(e) => setCurrentCustomer({ ...currentCustomer, referredBy: e.target.value })}
                                         >
-                                            <option value="">Select...</option>
+                                            <option value="">Select Channel</option>
                                             {getOpt('REFERRAL_SOURCES').map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                                         </select>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Referred By Name</label>
+                                    <div className="space-y-2">
+                                        <label className="form-label">Referrer Details</label>
                                         <input
-                                            className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
-                                            placeholder="Name of referrer if applicable"
+                                            className="input-field"
+                                            placeholder="e.g. Shared Contact or Agency"
                                             value={currentCustomer?.referredByName || ''}
                                             onChange={(e) => setCurrentCustomer({ ...currentCustomer, referredByName: e.target.value })}
                                         />
@@ -276,86 +330,93 @@ const Customers = () => {
                                 </div>
                             </div>
 
-                            <div className="border-t pt-4">
-                                <h4 className="text-sm font-semibold mb-2">Address & Location</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700">Address Line</label>
+                            <div className="space-y-6">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--accent)] border-b pb-2 mb-6 flex items-center gap-2" style={{ borderColor: 'var(--accent-bg)' }}>
+                                    Geographic Details
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                    <div className="md:col-span-2 lg:col-span-4 space-y-2">
+                                        <label className="form-label">Communication Address</label>
                                         <input
-                                            className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
+                                            className="input-field"
+                                            placeholder="Street, locality, and unit details..."
                                             value={currentCustomer?.address || ''}
                                             onChange={(e) => setCurrentCustomer({ ...currentCustomer, address: e.target.value })}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Landmark</label>
+                                    <div className="space-y-2">
+                                        <label className="form-label">Locality / Landmark</label>
                                         <input
-                                            className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
+                                            className="input-field"
+                                            placeholder="e.g. Near Market Square"
                                             value={currentCustomer?.landMark || ''}
                                             onChange={(e) => setCurrentCustomer({ ...currentCustomer, landMark: e.target.value })}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">District</label>
+                                    <div className="space-y-2">
+                                        <label className="form-label">City / District</label>
                                         <input
-                                            className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
+                                            className="input-field"
+                                            placeholder="e.g. Mumbai"
                                             value={currentCustomer?.district || ''}
                                             onChange={(e) => setCurrentCustomer({ ...currentCustomer, district: e.target.value })}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">State</label>
+                                    <div className="space-y-2">
+                                        <label className="form-label">State / Province</label>
                                         <input
-                                            className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
+                                            className="input-field"
+                                            placeholder="e.g. Maharashtra"
                                             value={currentCustomer?.state || ''}
                                             onChange={(e) => setCurrentCustomer({ ...currentCustomer, state: e.target.value })}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Country</label>
+                                    <div className="space-y-2">
+                                        <label className="form-label">Country</label>
                                         <input
-                                            className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
-                                            value={currentCustomer?.country || ''}
+                                            className="input-field font-bold"
+                                            placeholder="Country"
+                                            value={currentCustomer?.country || 'India'}
                                             onChange={(e) => setCurrentCustomer({ ...currentCustomer, country: e.target.value })}
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="border-t pt-4">
-                                <label className="block text-sm font-medium text-gray-700">Remarks</label>
+                            <div>
+                                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3 block">Notes / Remarks</label>
                                 <textarea
-                                    className="mt-1 block w-full border p-2 rounded-md border-gray-300 disabled:bg-gray-50 disabled:text-gray-500"
-                                    rows={3}
+                                    className="input-field min-h-[120px] p-4 text-sm font-medium"
+                                    placeholder="Enter any relevant observations, interaction history or specific preferences..."
                                     value={currentCustomer?.remarks || ''}
                                     onChange={(e) => setCurrentCustomer({ ...currentCustomer, remarks: e.target.value })}
                                 />
                             </div>
                         </fieldset>
 
-                        <div className="flex justify-end gap-3 pt-4 border-t mt-4">
-                            <button
-                                type="button"
-                                onClick={() => setIsModalOpen(false)}
-                                className="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-50 bg-white"
-                            >
-                                {isViewMode ? 'Close' : 'Cancel'}
-                            </button>
+                        <div className="flex flex-col sm:flex-row-reverse gap-4 pt-8 border-t border-[var(--border)]">
                             {!isViewMode && (
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                    className="btn-primary px-12 py-3 text-[10px] font-bold uppercase tracking-widest shadow-2xl shadow-[var(--accent)]/30 active:scale-95 transition-all text-white"
                                 >
                                     Save Customer
                                 </button>
                             )}
+                            <button
+                                type="button"
+                                onClick={() => setIsModalOpen(false)}
+                                className="btn-secondary px-8"
+                            >
+                                {isViewMode ? 'Dismiss' : 'Cancel'}
+                            </button>
                         </div>
                     </form>
                 </div>
             )}
 
 
-            <div className="relative">
+            <div className="relative mb-8">
                 <Table
                     columns={columns}
                     data={customers}
@@ -364,14 +425,13 @@ const Customers = () => {
                     rowKey="customerId"
                 />
 
-                {/* Floating Action Panel */}
                 <FloatingActionPanel
                     selectedItem={selectedCustomer}
                     onClose={() => setSelectedCustomer(null)}
                     actions={[
                         {
                             icon: Phone,
-                            label: 'Call Customer',
+                            label: 'Call',
                             onClick: (customer) => {
                                 if (customer.phone) {
                                     window.open(`tel:${customer.phone}`, '_self');
@@ -380,35 +440,35 @@ const Customers = () => {
                                 }
                             },
                             color: 'green',
-                            title: 'Call Customer'
+                            title: 'Call'
                         },
                         {
                             icon: Eye,
-                            label: 'View Details',
+                            label: 'View',
                             onClick: handleView,
-                            color: 'gray',
-                            title: 'View Details'
+                            color: 'blue',
+                            title: 'View'
                         },
                         {
                             icon: MessageSquare,
-                            label: 'View Enquiries',
+                            label: 'Enquiries',
                             onClick: (customer) => navigate(`/enquiries?customerId=${customer.customerId}`),
                             color: 'indigo',
-                            title: 'View Enquiries'
+                            title: 'Enquiries'
                         },
                         {
                             icon: Edit,
-                            label: 'Edit Customer',
+                            label: 'Edit',
                             onClick: handleEdit,
-                            color: 'blue',
-                            title: 'Edit Customer'
+                            color: 'orange',
+                            title: 'Edit'
                         },
                         {
                             icon: Trash,
-                            label: 'Delete Customer',
+                            label: 'Delete',
                             onClick: handleDelete,
                             color: 'red',
-                            title: 'Delete Customer'
+                            title: 'Delete'
                         }
                     ]}
                     title={selectedCustomer?.fullName}
@@ -417,41 +477,25 @@ const Customers = () => {
             </div>
 
             {/* Pagination Controls */}
-            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-lg shadow">
+            <div className="flex items-center justify-between border-t bg-[var(--surface)] px-6 py-4 mt-8 rounded-lg border shadow-sm" style={{ borderColor: 'var(--border)' }}>
                 <div className="flex flex-1 justify-between sm:hidden">
-                    <button
-                        onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                        disabled={page === 1}
-                        className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400"
-                    >
-                        Previous
-                    </button>
-                    <button
-                        onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={page === totalPages}
-                        className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400"
-                    >
-                        Next
-                    </button>
+                    <button onClick={() => setPage(prev => Math.max(prev - 1, 1))} disabled={page === 1} className="btn-secondary px-4 !py-1">Previous</button>
+                    <button onClick={() => setPage(prev => Math.min(prev + 1, totalPages))} disabled={page === totalPages} className="btn-secondary px-4 !py-1">Next</button>
                 </div>
                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                     <div>
-                        <p className="text-sm text-gray-700">
-                            Showing <span className="font-medium">{(page - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(page * pageSize, totalCustomers)}</span> of{' '}
-                            <span className="font-medium">{totalCustomers}</span> results
+                        <p className="text-xs font-medium text-[var(--text-secondary)]">
+                            Showing <span className="font-bold text-[var(--text-primary)]">{(page - 1) * pageSize + 1}</span> to <span className="font-bold text-[var(--text-primary)]">{Math.min(page * pageSize, totalCustomers)}</span> of <span className="font-bold text-[var(--text-primary)]">{totalCustomers}</span> results
                         </p>
                     </div>
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center">
-                            <label htmlFor="pageSize" className="mr-2 text-sm text-gray-700">Rows per page:</label>
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                            <label htmlFor="pageSize" className="text-xs font-medium text-[var(--text-secondary)]">Rows per page:</label>
                             <select
                                 id="pageSize"
                                 value={pageSize}
-                                onChange={(e) => {
-                                    setPageSize(Number(e.target.value));
-                                    setPage(1); // Reset to first page on size change
-                                }}
-                                className="block w-full rounded-md border-gray-300 py-1.5 text-base leading-5 text-gray-900 focus:border-blue-500 focus:placeholder-gray-400 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                                className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-md px-2 py-1 text-xs font-semibold text-[var(--text-primary)] outline-none focus:ring-1 focus:ring-[var(--accent)]"
                             >
                                 <option value={5}>5</option>
                                 <option value={10}>10</option>
@@ -459,36 +503,29 @@ const Customers = () => {
                                 <option value={50}>50</option>
                             </select>
                         </div>
-                        <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                        <nav className="flex items-center gap-2" aria-label="Pagination">
                             <button
                                 onClick={() => setPage(prev => Math.max(prev - 1, 1))}
                                 disabled={page === 1}
-                                className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:bg-gray-100"
+                                className="p-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--bg-tertiary)] disabled:opacity-30 transition-colors"
                             >
-                                <span className="sr-only">Previous</span>
-                                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
-                                </svg>
+                                <ChevronLeft size={16} />
                             </button>
-                            <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                            <div className="text-xs font-bold text-[var(--text-primary)] px-2">
                                 {page} / {totalPages}
-                            </span>
+                            </div>
                             <button
                                 onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={page === totalPages}
-                                className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:bg-gray-100"
+                                className="p-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--bg-tertiary)] disabled:opacity-30 transition-colors"
                             >
-                                <span className="sr-only">Next</span>
-                                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                                </svg>
+                                <ChevronRight size={16} />
                             </button>
                         </nav>
                     </div>
                 </div>
             </div>
 
-            {/* Delete Confirmation Dialog */}
             <ConfirmDialog
                 isOpen={deleteConfirm.isOpen}
                 onClose={() => setDeleteConfirm({ isOpen: false, customer: null })}
@@ -499,8 +536,7 @@ const Customers = () => {
                 cancelText="Cancel"
                 variant="danger"
             />
-
-        </div >
+        </div>
     );
 };
 
