@@ -56,11 +56,38 @@ export const AuthProvider = ({ children }) => {
 
             localStorage.setItem('token', token);
             localStorage.setItem('user', JSON.stringify(user));
+            // Store email to facilitate PIN login on next visit
+            localStorage.setItem('lastEmail', user.email);
+            if (user.isPinEnabled) {
+                localStorage.setItem('isPinEnabled', 'true');
+            } else {
+                localStorage.removeItem('isPinEnabled');
+            }
+
             setUser(user);
             return { success: true };
         } catch (error) {
             console.error('Login failed', error);
             return { success: false, error: error.response?.data?.error || 'Login failed' };
+        }
+    };
+
+    const loginWithPin = async (email, pin) => {
+        try {
+            const response = await api.post('/auth/login-pin', { email, pin });
+            const { token, user } = response.data;
+
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
+            setUser(user);
+            return { success: true };
+        } catch (error) {
+            console.error('PIN Login failed', error);
+            return {
+                success: false,
+                error: error.response?.data?.error || 'PIN Login failed',
+                code: error.response?.data?.code
+            };
         }
     };
 
@@ -77,11 +104,12 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        // We keep lastEmail and isPinEnabled for the next login experience
         setUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, setUser, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, setUser, login, loginWithPin, register, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );
