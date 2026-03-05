@@ -155,7 +155,7 @@ const UserProfile = () => {
 
                 {/* Profile Form Card */}
                 <div className="lg:col-span-2">
-                    <div className="card p-10 border border-[var(--border)] h-full">
+                    <div className="card p-10 border border-[var(--border)]">
                         <div className="flex items-center gap-5 mb-12 pb-8 border-b border-[var(--border)]">
                             <div className="w-14 h-14 bg-[var(--accent)]/10 rounded-2xl flex items-center justify-center text-[var(--accent)] shadow-inner group-hover:scale-110 transition-transform">
                                 <User size={28} />
@@ -227,7 +227,7 @@ const UserProfile = () => {
 
                     {/* Security & PIN Login Card */}
                     <div className="card p-10 border border-[var(--border)] mt-8 relative overflow-hidden group">
-                        <div className="flex items-center justify-between mb-8 pb-6 border-b border-[var(--border)]">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 pb-6 border-b border-[var(--border)] gap-6">
                             <div className="flex items-center gap-5">
                                 <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 shadow-inner group-hover:scale-110 transition-transform">
                                     <Shield size={28} />
@@ -237,7 +237,7 @@ const UserProfile = () => {
                                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] mt-1">Manage your 4-digit PIN login</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-3 w-full sm:w-auto justify-start sm:justify-end flex-wrap">
                                 <span className={clsx(
                                     "text-[10px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full border",
                                     authUser?.isPinEnabled
@@ -270,7 +270,7 @@ const UserProfile = () => {
                                             maxLength={4}
                                             value={pin}
                                             onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                                            className="w-48 text-center text-4xl font-black tracking-[1em] p-4 bg-white border-2 border-[var(--accent)] rounded-2xl focus:ring-8 focus:ring-[var(--accent)]/10 transition-all outline-none"
+                                            className="w-54 text-center text-4xl font-black tracking-[1em] p-4 bg-white border-2 border-[var(--accent)] rounded-2xl focus:ring-8 focus:ring-[var(--accent)]/10 transition-all outline-none"
                                             placeholder="••••"
                                             autoFocus
                                             required

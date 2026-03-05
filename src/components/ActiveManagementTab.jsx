@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import clsx from 'clsx';
-import { DollarSign, Plus, FileText, Phone, X } from 'lucide-react';
+import { IndianRupee, Plus, FileText, Phone, X } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../context/ToastContext';
 import { AuthContext } from '../context/AuthContext';
@@ -133,6 +133,28 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
         }
     };
 
+    const handleDownloadReceipt = async (transaction) => {
+        try {
+            const endpoint = transaction.type === 'advance_payment'
+                ? `/bookings/${booking.id}/advance-receipt`
+                : `/bookings/${booking.id}/receipt/${transaction.id}`;
+
+            const response = await api.get(endpoint, { responseType: 'blob' });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${transaction.type}_${transaction.id.slice(0, 8)}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error downloading receipt:', error);
+            showToast('Error downloading receipt', 'error');
+        }
+    };
+
     const handleRTOUpdate = async (e) => {
         if (e) e.preventDefault();
         setSubmitting(true);
@@ -192,9 +214,9 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                             <Plus size={24} className="rotate-45" />
                         </div>
                         <div>
-                            <h4 className="text-lg font-bold tracking-tight text-[var(--text-primary)]">Workflow Progression</h4>
+                            <h4 className="text-lg font-bold tracking-tight text-[var(--text-primary)]">Booking Progress</h4>
                             <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mt-0.5">
-                                Transition Asset to Delivery Readiness
+                                Move to ready for delivery
                             </p>
                         </div>
                     </div>
@@ -213,10 +235,10 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                 <div className="px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-tertiary)] flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center text-[var(--accent)]">
-                            <DollarSign size={16} />
+                            <IndianRupee size={16} />
                         </div>
                         <div>
-                            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Transaction Ledger</h3>
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Payment History</h3>
                         </div>
                     </div>
                     <button
@@ -238,7 +260,7 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                     <form onSubmit={handlePaymentSubmit} className="p-8 bg-[var(--bg-secondary)] border-b border-[var(--border)] animate-in slide-in-from-top-4 duration-300">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                             <div className="space-y-2">
-                                <label className="form-label ml-1">Receipt Amount (₹)</label>
+                                <label className="form-label ml-1">Payment Amount (₹)</label>
                                 <input
                                     type="number"
                                     value={paymentData.amount}
@@ -263,7 +285,7 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <label className="form-label ml-1">Ref ID / Remarks</label>
+                                <label className="form-label ml-1">Reference Number / Note</label>
                                 <input
                                     type="text"
                                     value={paymentData.referenceId}
@@ -278,7 +300,7 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                                     disabled={submitting}
                                     className="w-full btn-primary !py-3 flex items-center justify-center gap-2 disabled:opacity-50 transition-all font-bold text-xs uppercase tracking-widest"
                                 >
-                                    {submitting ? 'RECORDING...' : 'COMMIT RECEIPT'}
+                                    {submitting ? 'SAVING...' : 'SAVE PAYMENT'}
                                 </button>
                             </div>
                         </div>
@@ -306,7 +328,7 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={clsx(
                                                 "badge py-0.5 px-2 rounded-md font-bold uppercase tracking-wider text-[9px] border",
-                                                transaction.type === 'advance' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                                transaction.type === 'advance_payment' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
                                                     transaction.type === 'part_payment' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
                                                         'bg-[var(--bg-tertiary)] text-[var(--text-muted)] border-[var(--border)]'
                                             )}>
@@ -323,18 +345,12 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                                             {transaction.referenceId || '--'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-[var(--accent)]">
-                                            {transaction.receiptUrl ? (
-                                                <a
-                                                    href={transaction.receiptUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1 font-bold uppercase tracking-widest hover:underline"
-                                                >
-                                                    Receipt <FileText size={10} />
-                                                </a>
-                                            ) : (
-                                                <span className="opacity-30">N/A</span>
-                                            )}
+                                            <button
+                                                onClick={() => handleDownloadReceipt(transaction)}
+                                                className="inline-flex items-center gap-1 font-bold uppercase tracking-widest hover:underline text-[var(--accent)] bg-transparent border-none p-0"
+                                            >
+                                                Receipt <FileText size={10} />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
@@ -359,7 +375,7 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                             <div className="w-8 h-8 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center text-[var(--accent)]">
                                 <Phone size={16} />
                             </div>
-                            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Communication Stream</h3>
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Follow-ups</h3>
                         </div>
                         <button
                             onClick={() => setShowFollowUpForm(!showFollowUpForm)}
@@ -368,14 +384,14 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                                 showFollowUpForm ? "bg-rose-50 text-rose-600" : ""
                             )}
                         >
-                            {showFollowUpForm ? 'Cancel' : 'Add Insight'}
+                            {showFollowUpForm ? 'Cancel' : 'Add Follow-up'}
                         </button>
                     </div>
                     {showFollowUpForm && (
                         <form onSubmit={handleFollowUpSubmit} className="p-6 bg-[var(--bg-secondary)] border-b border-[var(--border)] space-y-4 animate-in slide-in-from-top-4">
                             <div className="space-y-4">
                                 <div className="space-y-1.5">
-                                    <label className="form-label ml-1">Engagement Objective</label>
+                                    <label className="form-label ml-1">Follow-up Type</label>
                                     <select
                                         value={followUpData.type}
                                         onChange={(e) => setFollowUpData({ ...followUpData, type: e.target.value })}
@@ -389,7 +405,7 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="form-label ml-1">Interaction Transcript</label>
+                                    <label className="form-label ml-1">Notes</label>
                                     <textarea
                                         value={followUpData.remarks}
                                         onChange={(e) => setFollowUpData({ ...followUpData, remarks: e.target.value })}
@@ -398,7 +414,7 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="form-label ml-1">Scheduled Follow-up</label>
+                                    <label className="form-label ml-1">Next Follow-up Date</label>
                                     <input
                                         type="date"
                                         value={followUpData.nextActionDate}
@@ -413,7 +429,7 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                                     disabled={submitting}
                                     className="btn-primary !px-8 !py-2.5 !text-[10px] uppercase tracking-widest"
                                 >
-                                    COMMIT ENTRY
+                                    SAVE FOLLOW-UP
                                 </button>
                             </div>
                         </form>
@@ -461,7 +477,7 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                                 <FileText size={16} />
                             </div>
                             <div>
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Legal Provisions</h3>
+                                <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">RTO Details</h3>
                             </div>
                         </div>
                         <button
@@ -469,7 +485,7 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                             disabled={submitting}
                             className="btn-primary !bg-orange-600 !text-white hover:!bg-orange-700 !px-4 !py-2 !text-[10px] uppercase tracking-widest shadow-none"
                         >
-                            Sync Details
+                            Update RTO
                         </button>
                     </div>
                     <div className="p-6 flex-1 space-y-8">
@@ -524,7 +540,7 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                             </div>
                         )}
                         <div className="pt-6 border-t border-[var(--border)]">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-4">Verification Artifacts</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-4">Documents list</p>
                             <div className="flex flex-wrap gap-4">
                                 {Object.entries(rtoData.documentsSubmitted).map(([key, value]) => (
                                     <label key={key} className="flex items-center gap-2 cursor-pointer group">

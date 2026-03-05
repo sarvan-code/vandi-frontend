@@ -78,6 +78,24 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
         }
     };
 
+    const handleDownloadInvoice = async () => {
+        try {
+            const response = await api.get(`/bookings/${booking.id}/invoice`, { responseType: 'blob' });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Invoice_${booking.id.slice(0, 8)}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error downloading invoice:', error);
+            showToast('Error downloading invoice', 'error');
+        }
+    };
+
     const handleRTOUpdate = async (e) => {
         if (e) e.preventDefault();
         setSubmitting(true);
@@ -126,7 +144,7 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
                         <AlertTriangle size={16} />
                     </div>
                     <div>
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-rose-900 dark:text-rose-400">Pre-Delivery Validation</h3>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-rose-900 dark:text-rose-400">Final Verification</h3>
                     </div>
                 </div>
 
@@ -134,7 +152,7 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
                     {/* Vehicle Metadata */}
                     <div className="bg-[var(--bg-tertiary)] rounded-xl p-6 border border-[var(--border)] relative overflow-hidden group">
                         <div className="relative z-10">
-                            <p className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mb-2">Asset Identification</p>
+                            <p className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mb-2">Car Details</p>
                             <h4 className="text-xl font-bold tracking-tight text-[var(--text-primary)] mb-1">
                                 {booking.car?.make} {booking.car?.model}
                             </h4>
@@ -152,7 +170,7 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
                     </div>
                     {/* Compliance Profile Retrieval */}
                     <div className="card border-[var(--border)] p-6 bg-[var(--bg-secondary)] relative overflow-hidden">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Compliance Status</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Registration Info</p>
                         <h4 className="text-xl font-bold mb-1 text-[var(--text-primary)] tracking-tight">
                             {booking.registration?.registrationType === 'SELF' ? 'Self Ownership' : 'Nominee Transfer'}
                         </h4>
@@ -162,7 +180,7 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
 
                         <div className="pt-4 border-t border-[var(--border)]">
                             <div className="flex justify-between items-center text-[10px]">
-                                <span className="text-[var(--text-muted)] font-bold uppercase tracking-widest">Protocol</span>
+                                <span className="text-[var(--text-muted)] font-bold uppercase tracking-widest">Status</span>
                                 <span className="font-bold text-emerald-600 flex items-center gap-1.5">
                                     <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                                     VERIFIED
@@ -179,7 +197,7 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
                     <div className="w-8 h-8 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center text-[var(--accent)]">
                         <FileText size={16} />
                     </div>
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Financial Registry</h3>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Payment Records</h3>
                 </div>
                 <div className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -190,13 +208,13 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
                             </p>
                         </div>
                         <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20 p-4 rounded-xl">
-                            <p className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1">Cumulative Receipts</p>
+                            <p className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1">Total Received</p>
                             <p className="text-xl font-extrabold text-emerald-600">
                                 {formatCurrency(totalReceived)}
                             </p>
                         </div>
                         <div className="bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20 p-4 rounded-xl">
-                            <p className="text-[9px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-widest mb-1">Pending Settlement</p>
+                            <p className="text-[9px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-widest mb-1">Remaining Balance</p>
                             <p className="text-xl font-extrabold text-rose-600">
                                 {formatCurrency(booking.balanceAmount)}
                             </p>
@@ -207,7 +225,7 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
                             <thead>
                                 <tr className="bg-[var(--bg-tertiary)]">
                                     <th className="px-6 py-4 text-left text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Timestamp</th>
-                                    <th className="px-6 py-4 text-left text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Nature</th>
+                                    <th className="px-6 py-4 text-left text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Type</th>
                                     <th className="px-6 py-4 text-left text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Mode</th>
                                     <th className="px-6 py-4 text-right text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border)]">Amount</th>
                                 </tr>
@@ -221,7 +239,7 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
                                         <td className="px-6 py-4">
                                             <span className={clsx(
                                                 "badge py-0.5 px-2 rounded-md font-bold uppercase tracking-wider text-[9px] border",
-                                                transaction.type === 'advance' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                                transaction.type === 'advance_payment' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
                                                     transaction.type === 'part_payment' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
                                                         'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'
                                             )}>
@@ -248,7 +266,7 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
                     <div className="px-6 py-4 border-b border-amber-200 dark:border-amber-900/20 bg-amber-100/30 dark:bg-amber-900/20">
                         <h3 className="text-sm font-bold uppercase tracking-wider text-amber-900 dark:text-amber-400 flex items-center gap-3">
                             <CheckCircle size={16} className="text-amber-600" />
-                            Final Settlement Deployment
+                            Record Final Payment
                         </h3>
                     </div>
 
@@ -293,17 +311,17 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
                 </div>
             )}
 
-            {/* Final Authorization */}
+            {/* Confirm Delivery */}
             {booking.status !== 'completed' && (
                 <div className="card overflow-hidden border border-emerald-200 dark:border-emerald-900/30 bg-emerald-50/10 dark:bg-emerald-900/10 shadow-sm">
                     <div className="px-6 py-4 border-b border-emerald-100 dark:border-emerald-900/20 bg-emerald-50/50 dark:bg-emerald-900/20">
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-400">Handover Protocol</h3>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-400">Delivery Confirmation</h3>
                     </div>
 
                     <div className="p-6">
                         <div className="bg-[var(--bg-tertiary)] rounded-xl p-8 mb-8 border border-[var(--border)] relative overflow-hidden">
                             <div className="relative z-10">
-                                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-4">Acceptance Declaration</p>
+                                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-4">Customer Acceptance</p>
                                 <p className="text-[var(--text-primary)] font-bold italic text-base leading-relaxed mb-8 max-w-2xl opacity-70">
                                     "I hereby acknowledge the transition of the asset. I have verified the physical integrity and financial closure of this transaction."
                                 </p>
@@ -319,7 +337,7 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
                                         "text-xs font-bold uppercase tracking-tight transition-colors",
                                         acceptanceChecked ? "text-emerald-600" : "text-[var(--text-muted)]"
                                     )}>
-                                        Authorize Physical Handover
+                                        Confirm Car Handover
                                     </span>
                                 </label>
                             </div>
@@ -335,10 +353,30 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
                                 className="btn-primary !px-16 !py-4 text-base flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
                             >
                                 <CheckCircle size={20} />
-                                {submitting ? 'COMMITTING...' : 'FINALIZE DELIVERY'}
+                                {submitting ? 'COMMITTING...' : 'Complete Delivery'}
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Final Success State & Invoice Download */}
+            {booking.status === 'completed' && (
+                <div className="card p-8 border border-emerald-200 bg-emerald-50/20 flex flex-col items-center gap-6 animate-in zoom-in-95 duration-500">
+                    <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+                        <CheckCircle size={32} />
+                    </div>
+                    <div className="text-center">
+                        <h4 className="text-xl font-bold text-emerald-900 mb-1">Delivery Completed</h4>
+                        <p className="text-xs font-bold text-emerald-700 uppercase tracking-widest">Post-delivery documentation ready</p>
+                    </div>
+                    <button
+                        onClick={handleDownloadInvoice}
+                        className="btn-primary !bg-emerald-600 hover:!bg-emerald-700 !px-12 !py-4 flex items-center gap-3 shadow-lg"
+                    >
+                        <FileText size={20} />
+                        Download Final Invoice
+                    </button>
                 </div>
             )}
         </div>

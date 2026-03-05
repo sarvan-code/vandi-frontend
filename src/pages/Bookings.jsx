@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, Eye, Clock, CheckCircle, Building, Phone } from 'lucide-react';
+import { IndianRupee, Eye, Clock, CheckCircle, Building, Phone } from 'lucide-react';
 import clsx from 'clsx';
 import api from '../api';
 import Table from '../components/Table';
@@ -234,7 +234,7 @@ const Bookings = () => {
                                     title: 'Call'
                                 },
                                 {
-                                    icon: DollarSign,
+                                    icon: IndianRupee,
                                     label: 'Book',
                                     onClick: (row) => openFinanceTab(row.enquiryId, row.customer?.fullName || 'New Lead'),
                                     color: 'blue',

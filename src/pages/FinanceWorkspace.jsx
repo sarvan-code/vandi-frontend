@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, DollarSign, Calendar, User, Car as CarIcon } from 'lucide-react';
+import { ArrowLeft, IndianRupee, Calendar, User, Car as CarIcon } from 'lucide-react';
 import clsx from 'clsx';
 import api from '../api';
 import { useToast } from '../context/ToastContext';
@@ -69,11 +69,11 @@ const FinanceWorkspace = () => {
                     </button>
                     <div>
                         <h1 className="text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
-                            Booking Management
+                            Booking Details
                         </h1>
                         <div className="flex items-center gap-3 mt-1">
                             <span className="badge py-1 px-3 bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 rounded-lg text-[10px] font-bold tracking-wider">
-                                {booking?.enquiry?.customer?.fullName || 'IDENTIFIED CUSTOMER'}
+                                {booking?.enquiry?.customer?.fullName || 'Customer Name'}
                             </span>
                             <span className="text-[var(--text-muted)] font-bold text-[10px] uppercase tracking-widest">
                                 ENQ #{enquiryId.slice(0, 8)}
@@ -126,7 +126,7 @@ const FinanceWorkspace = () => {
                                 <CarIcon size={20} />
                             </div>
                             <div className="flex-1">
-                                <span className="text-[10px] font-bold uppercase tracking-widest block mb-1 text-[var(--text-muted)]">Asset Details</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest block mb-1 text-[var(--text-muted)]">Car Details</span>
                                 <h4 className="text-lg font-bold tracking-tight text-[var(--text-primary)]">
                                     {booking.car?.make} {booking.car?.model} {booking.car?.variant}
                                 </h4>
@@ -153,7 +153,7 @@ const FinanceWorkspace = () => {
                                 <User size={20} />
                             </div>
                             <div className="flex-1">
-                                <span className="text-[10px] font-bold uppercase tracking-widest block mb-1 text-[var(--text-muted)]">Client Profile</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest block mb-1 text-[var(--text-muted)]">Customer Info</span>
                                 <h4 className="text-lg font-bold tracking-tight text-[var(--text-primary)]">{booking.enquiry?.customer?.fullName}</h4>
                                 <div className="mt-4 flex flex-wrap gap-2">
                                     {booking.commitments && Object.entries(booking.commitments).map(([key, val]) => (
@@ -177,10 +177,10 @@ const FinanceWorkspace = () => {
                     <div className="flex items-center gap-4">
                         <div className="w-2 h-2 bg-[var(--accent)] rounded-full shadow-[0_0_8px_var(--accent)]"></div>
                         <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
-                            {(!booking || booking.status === 'ADVANCE_PENDING' || booking.status === 'initial') && 'Financial Provisioning'}
-                            {booking?.status === 'active' && 'Strategic Management'}
-                            {booking?.status === 'ready_for_delivery' && 'Delivery Readiness'}
-                            {booking?.status === 'completed' && 'Closed Transaction'}
+                            {(!booking || booking.status === 'ADVANCE_PENDING' || booking.status === 'initial') && 'Setup Booking'}
+                            {booking?.status === 'active' && 'Manage Booking'}
+                            {booking?.status === 'ready_for_delivery' && 'Ready for Delivery'}
+                            {booking?.status === 'completed' && 'Completed'}
                         </h3>
                     </div>
                 </div>
@@ -207,7 +207,7 @@ const FinanceWorkspace = () => {
                                 <CheckCircle size={40} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">Handover Successful</h2>
+                                <h2 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">Delivered</h2>
                                 <p className="text-[var(--text-muted)] max-w-md mx-auto mt-2 font-bold text-xs uppercase tracking-tight leading-relaxed">
                                     This asset lifecycle is officially finalized. All financial obligations have been satisfied and committed to historical records.
                                 </p>

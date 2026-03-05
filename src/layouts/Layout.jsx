@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, MessageSquare, Car, Calendar, User, Menu, X, LogOut, Briefcase, Settings as SettingsIcon, ChevronDown, ChevronRight, Database, Building2, ShieldAlert, DollarSign, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Users, MessageSquare, Car, Calendar, User, Menu, X, LogOut, Briefcase, Settings as SettingsIcon, ChevronDown, ChevronRight, Database, Building2, ShieldAlert, IndianRupee, Sun, Moon } from 'lucide-react';
 import clsx from 'clsx';
 import { AuthContext } from '../context/AuthContext';
 import { useWorkspace } from '../context/WorkspaceContext';
@@ -56,7 +56,7 @@ const Layout = () => {
         if (isSuperUser || isAccountant) {
             navItems.push({
                 name: 'Finance Workspace',
-                icon: DollarSign,
+                icon: IndianRupee,
                 onClick: () => {
                     if (financeTabs.length > 0) {
                         openFinanceTab(financeTabs[0].enquiryId, financeTabs[0].title);

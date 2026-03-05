@@ -93,7 +93,7 @@ const Login = () => {
                             <Logo size={48} />
                         </div>
                         <h1 className="text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
-                            {showPinView ? 'PIN Verification' : 'Institutional Access'}
+                            {showPinView ? 'PIN Verification' : 'Login'}
                         </h1>
                         <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] mt-3">
                             {showPinView ? (
@@ -107,7 +107,7 @@ const Login = () => {
                                     </button>
                                 </span>
                             ) : (
-                                'VANDI CRM Automotive • Identity Gateway'
+                                'VANDI CRM Automotive • Login'
                             )}
                         </p>
                     </div>
@@ -148,7 +148,7 @@ const Login = () => {
                                     onClick={() => setShowPinView(false)}
                                     className="h-16 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--accent)] text-xs font-bold uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95"
                                 >
-                                    Login with Pass
+                                    Login with Password
                                 </button>
                                 <button
                                     key={0}
@@ -192,7 +192,7 @@ const Login = () => {
 
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1">
-                                    Authorization Passkey
+                                    Password
                                 </label>
                                 <input
                                     id="password"
@@ -213,7 +213,7 @@ const Login = () => {
                                     disabled={isLoading}
                                     className="btn-primary w-full py-4 text-sm font-bold uppercase tracking-widest shadow-xl shadow-[var(--accent)]/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
                                 >
-                                    {isLoading ? 'Authorizing...' : 'Authorize Access'}
+                                    {isLoading ? 'Logging in...' : 'Login'}
                                 </button>
                             </div>
                         </form>
@@ -223,7 +223,7 @@ const Login = () => {
                         <p className="text-xs text-[var(--text-muted)] font-medium">
                             Initial Onboarding?{' '}
                             <Link to="/register" className="text-[var(--accent)] font-bold hover:underline">
-                                Establish Identity
+                                Register Now
                             </Link>
                         </p>
                     </div>
@@ -234,9 +234,9 @@ const Login = () => {
                         &copy; 2026 VANDI CRM AUTOMOTIVE
                     </p>
                     <div className="flex items-center gap-4 text-[10px] text-[var(--text-muted)]">
-                        <span className="hover:text-[var(--text-secondary)] cursor-pointer">Security Protocol</span>
+                        <span className="hover:text-[var(--text-secondary)] cursor-pointer">Privacy Policy</span>
                         <span className="w-1 h-1 bg-[var(--border)] rounded-full"></span>
-                        <span className="hover:text-[var(--text-secondary)] cursor-pointer">Legal Framework</span>
+                        <span className="hover:text-[var(--text-secondary)] cursor-pointer">Terms of Service</span>
                     </div>
                 </div>
             </div>

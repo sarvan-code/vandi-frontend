@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Calendar, User, Car as CarIcon } from 'lucide-react';
+import { IndianRupee, Calendar, User, Car as CarIcon } from 'lucide-react';
 import clsx from 'clsx';
 import api from '../api';
 import { useToast } from '../context/ToastContext';
@@ -64,14 +64,14 @@ const FinanceWorkspaceContent = ({ enquiryId, tabId, onComplete }) => {
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <DollarSign size={14} className="text-[var(--text-muted)]" />
+                                <IndianRupee size={14} className="text-[var(--text-muted)]" />
                                 <p className="text-[var(--text-muted)] text-[9px] uppercase tracking-wider font-bold">Contract Value</p>
                             </div>
                             <p className="text-lg font-extrabold text-[var(--text-primary)]">{formatCurrency(booking.agreedPrice)}</p>
                         </div>
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <DollarSign size={14} className="text-emerald-500" />
+                                <IndianRupee size={14} className="text-emerald-500" />
                                 <p className="text-emerald-600 dark:text-emerald-400 text-[9px] uppercase tracking-wider font-bold">Receipts</p>
                             </div>
                             <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">
@@ -80,14 +80,14 @@ const FinanceWorkspaceContent = ({ enquiryId, tabId, onComplete }) => {
                         </div>
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <DollarSign size={14} className="text-rose-500" />
+                                <IndianRupee size={14} className="text-rose-500" />
                                 <p className="text-rose-600 dark:text-rose-400 text-[9px] uppercase tracking-wider font-bold">Balance</p>
                             </div>
                             <p className="text-lg font-extrabold text-rose-600 dark:text-rose-400">{formatCurrency(booking.balanceAmount)}</p>
                         </div>
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <DollarSign size={14} className="text-[var(--accent)]" />
+                                <IndianRupee size={14} className="text-[var(--accent)]" />
                                 <p className="text-[var(--accent)] text-[9px] uppercase tracking-wider font-bold">Total Discount</p>
                             </div>
                             <p className="text-lg font-extrabold text-[var(--accent)]">{formatCurrency(totalNegotiatedDiscount)}</p>
@@ -208,7 +208,7 @@ const FinanceWorkspaceContent = ({ enquiryId, tabId, onComplete }) => {
                     ) : booking.status === 'completed' ? (
                         <div className="py-12 text-center space-y-4 animate-fade-in bg-[var(--bg-tertiary)]/30 rounded-2xl border border-[var(--border)] border-dashed">
                             <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm border border-emerald-100 dark:border-emerald-900/30">
-                                <DollarSign size={32} />
+                                <IndianRupee size={32} />
                             </div>
                             <h2 className="text-xl font-extrabold text-[var(--text-primary)] uppercase tracking-tight">Handover Complete</h2>
                             <p className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest max-w-sm mx-auto leading-relaxed">

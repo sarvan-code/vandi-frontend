@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { IndianRupee, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
 import { useFinanceWorkspace } from '../context/FinanceWorkspaceContext';
 import FinanceWorkspaceContent from './FinanceWorkspaceContent';
@@ -37,7 +37,7 @@ const FinanceWorkspaceOverlay = () => {
                     className="flex items-center gap-2 font-bold px-3 py-2 cursor-pointer text-[var(--accent)]"
                     onClick={(e) => { e.stopPropagation(); toggleFinanceMinimize(); }}
                 >
-                    <DollarSign className="h-5 w-5" />
+                    <IndianRupee className="h-5 w-5" />
                     <span className="hidden sm:inline uppercase tracking-widest text-[10px]">Finance Workspace</span>
                 </div>
 

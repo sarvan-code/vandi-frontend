@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { useToast } from '../context/ToastContext';
 import VehicleAutocomplete from './VehicleAutocomplete';
-import { X, Car as CarIcon, DollarSign, Calendar } from 'lucide-react';
+import { X, Car as CarIcon, IndianRupee, Calendar } from 'lucide-react';
 import clsx from 'clsx';
 
 const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
@@ -142,15 +142,15 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                         <CarIcon size={20} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Asset Selection</h3>
-                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mt-0.5">Identify Vehicle from Inventory</p>
+                        <h3 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Select Car</h3>
+                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mt-0.5">Select a car from stock</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="space-y-3">
                         <label className="form-label ml-1">
-                            Search Inventory
+                            Search for Car
                         </label>
                         <VehicleAutocomplete
                             value={formData.carRegistration}
@@ -178,7 +178,7 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                     {selectedCar && (
                         <div className="bg-[var(--bg-tertiary)] p-6 rounded-xl border border-[var(--border)] shadow-sm animate-in zoom-in-95 duration-300 relative overflow-hidden">
                             <div className="relative z-10">
-                                <p className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mb-2">Selected Asset</p>
+                                <p className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mb-2">Selected Car</p>
                                 <h4 className="text-xl font-bold tracking-tight text-[var(--text-primary)] mb-1">
                                     {selectedCar.make} {selectedCar.model}
                                 </h4>
@@ -192,11 +192,11 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center text-xs">
-                                        <span className="text-[var(--text-muted)] font-bold uppercase tracking-tighter">Standard Price</span>
+                                        <span className="text-[var(--text-muted)] font-bold uppercase tracking-tighter">Showroom Price</span>
                                         <span className="font-bold text-[var(--text-primary)]">₹{selectedCar.maximumRetailPrice?.toLocaleString('en-IN')}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-xs pt-2 mt-2 border-t border-[var(--border)]/50">
-                                        <span className="text-emerald-600 font-bold uppercase tracking-tighter">Net Value</span>
+                                        <span className="text-emerald-600 font-bold uppercase tracking-tighter">Final Price</span>
                                         <span className="text-lg font-bold text-emerald-600">
                                             ₹{(selectedCar.maximumRetailPrice - (selectedCar.discountAmount || 0)).toLocaleString('en-IN')}
                                         </span>
@@ -212,11 +212,11 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
             <div className="card p-8 border border-[var(--border)]">
                 <div className="flex items-center gap-3 mb-8">
                     <div className="w-10 h-10 bg-emerald-600/10 rounded-lg flex items-center justify-center text-emerald-600">
-                        <DollarSign size={20} />
+                        <IndianRupee size={20} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Financial Terms</h3>
-                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-0.5">Revenue & Commitment Details</p>
+                        <h3 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Payment Details</h3>
+                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-0.5">Payment and responsibility details</p>
                     </div>
                 </div>
 
@@ -260,11 +260,11 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 bg-rose-500/10 rounded-full flex items-center justify-center text-rose-600">
-                                    <DollarSign size={16} />
+                                    <IndianRupee size={16} />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-bold text-rose-900 dark:text-rose-400 uppercase tracking-tight">Negotiated Discount</p>
-                                    <p className="text-[9px] font-bold text-rose-500 uppercase tracking-widest">Reduction from Standard MRP</p>
+                                    <p className="text-xs font-bold text-rose-900 dark:text-rose-400 uppercase tracking-tight">Total Discount</p>
+                                    <p className="text-[9px] font-bold text-rose-500 uppercase tracking-widest">Discount on showroom price</p>
                                 </div>
                             </div>
                             <p className="text-2xl font-extrabold text-rose-600 tracking-tight">
@@ -278,7 +278,7 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                 <div className="mt-8">
                     <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-6 text-center flex items-center justify-center gap-4">
                         <span className="w-8 h-[1px] bg-[var(--border)]"></span>
-                        Service Responsibilities
+                        Work Responsibilities
                         <span className="w-8 h-[1px] bg-[var(--border)]"></span>
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -313,8 +313,8 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                             <Calendar size={20} />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Compliance Profile</h3>
-                            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mt-0.5">RTO & Legal Provisioning</p>
+                            <h3 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Registration Details</h3>
+                            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mt-0.5">RTO and Owner info</p>
                         </div>
                     </div>
 
@@ -371,7 +371,7 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                         )}
 
                         <div className="pt-6 border-t border-[var(--border)]">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-4">Verification Checklist</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-4">Documents list</p>
                             <div className="flex flex-wrap gap-4">
                                 {Object.entries(formData.documentsSubmitted).map(([key, value]) => (
                                     <label key={key} className="flex items-center gap-2 cursor-pointer group">
@@ -404,8 +404,8 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                             <X size={20} className="rotate-45" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Asset Validation</h3>
-                            <p className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mt-0.5">Mandatory Inspection Points</p>
+                            <h3 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Vehicle Inspection</h3>
+                            <p className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mt-0.5">Verification checklist</p>
                         </div>
                     </div>
 
@@ -428,8 +428,8 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                                     {key === 'testDrive' && 'Test Drive Completed'}
                                     {key === 'mechanicCheck' && 'Mechanic Verification'}
                                     {key === 'bodyLine' && 'Body & Paint Inspection'}
-                                    {key === 'stepneyToolkit' && 'Inventory Checklist'}
-                                    {key === 'tireCondition' && 'Wheel Alignment & Wear'}
+                                    {key === 'stepneyToolkit' && 'Spare Tire & Tools'}
+                                    {key === 'tireCondition' && 'Tire Condition'}
                                 </span>
                             </label>
                         ))}
@@ -438,7 +438,7 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                     <div className="mt-8 pt-8 border-t border-[var(--border)] space-y-6">
                         <div>
                             <label className="form-label mb-3 block text-center uppercase tracking-widest text-[9px]">
-                                Proposed Delivery Date
+                                Delivery Date
                             </label>
                             <input
                                 type="date"
@@ -455,7 +455,7 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                                 onChange={(e) => setFormData({ ...formData, payPartAmountBeforeDelivery: e.target.checked })}
                                 className="w-4 h-4 rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)] cursor-pointer"
                             />
-                            <span className="text-[10px] font-bold uppercase tracking-tight text-[var(--text-primary)]">Pre-Delivery Settlement Agreed</span>
+                            <span className="text-[10px] font-bold uppercase tracking-tight text-[var(--text-primary)]">Payment before delivery agreed</span>
                         </label>
                     </div>
                 </div>
@@ -464,7 +464,7 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
             {/* Submit Action */}
             <div className="flex flex-col items-center gap-4 pt-8 border-t border-[var(--border)]">
                 <p className="text-[10px] font-bold text-[var(--text-muted)] max-w-[400px] text-center uppercase tracking-tight leading-relaxed">
-                    By confirming, you authorize the formal booking record and initial financial commitment for this asset.
+                    By confirming, you authorize the booking and financial commitment for this vehicle.
                 </p>
                 <button
                     type="submit"
@@ -478,7 +478,7 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                         </>
                     ) : (
                         <>
-                            <DollarSign size={20} /> Authorize Booking
+                            <IndianRupee size={20} /> Confirm Booking
                         </>
                     )}
                 </button>
