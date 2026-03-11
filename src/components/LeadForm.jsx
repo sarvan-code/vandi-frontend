@@ -43,7 +43,8 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
         fuelType: '', usageType: '', payment: '',
         customerType: 'Lead',
         status: 'new',
-        carDetails: [] // [{carType, carBrand, carModel, carVariant}]
+        carDetails: [], // [{carType, carBrand, carModel, carVariant}]
+        assignedToUserId: user?.userId
     });
 
     const [followUp, setFollowUp] = useState({
@@ -702,6 +703,14 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                             <div className="input-field bg-[var(--bg-tertiary)] h-[38px] flex items-center font-bold text-[var(--text-muted)] uppercase cursor-not-allowed">
                                 {enquiry.status || 'new'}
                             </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="form-label">Assigned To</label>
+                            <div className="input-field bg-[var(--bg-tertiary)] h-[38px] flex items-center font-bold text-[var(--text-primary)] cursor-not-allowed">
+                                {isNewEnquiry ? (user?.fullName || '—') : (enquiry.assignedTo?.fullName || '—')}
+                            </div>
+                            <input type="hidden" value={isNewEnquiry ? user?.userId : (enquiry.assignedToUserId || '')} />
                         </div>
                     </div>
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { User, Phone, Mail, MapPin, Briefcase, UserCheck, ChevronDown, ChevronUp } from 'lucide-react';
+import clsx from 'clsx';
 
 const CustomerProfile = ({ customer }) => {
     if (!customer) return null;

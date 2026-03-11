@@ -42,6 +42,8 @@ const Enquiries = () => {
     // Filter state
     const [filterCustomerId, setFilterCustomerId] = useState(initialCustomerId);
     const [selectedStatus, setSelectedStatus] = useState('new');
+    const [selectedAssignedToUserId, setSelectedAssignedToUserId] = useState('');
+    const [assignableUsers, setAssignableUsers] = useState([]);
 
     // Delete confirmation dialog state
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, enquiry: null });
@@ -66,6 +68,7 @@ const Enquiries = () => {
 
     useEffect(() => {
         fetchEnquiries();
+        fetchAssignableUsers();
         if (filterCustomerId) {
             setIsEditMode(true);
             setCurrentEnquiry(null);
@@ -73,7 +76,7 @@ const Enquiries = () => {
         } else {
             setCustomerProfile(null);
         }
-    }, [page, pageSize, filterCustomerId, selectedBranchId, selectedStatus, isSuperUser]);
+    }, [page, pageSize, filterCustomerId, selectedBranchId, selectedStatus, selectedAssignedToUserId, isSuperUser]);
 
     const fetchBranches = null; // Removed in favor of OptionsContext
 
@@ -92,6 +95,9 @@ const Enquiries = () => {
             if (selectedStatus) {
                 url += `&status=${selectedStatus}`;
             }
+            if (selectedAssignedToUserId) {
+                url += `&assignedToUserId=${selectedAssignedToUserId}`;
+            }
             const response = await api.get(url);
             if (response.data.data && response.data.meta) {
                 setEnquiries(response.data.data);
@@ -102,6 +108,15 @@ const Enquiries = () => {
             }
         } catch (error) {
             console.error('Error fetching enquiries:', error);
+        }
+    };
+
+    const fetchAssignableUsers = async () => {
+        try {
+            const response = await api.get('/users/assignable');
+            setAssignableUsers(response.data);
+        } catch (error) {
+            console.error("Failed to fetch assignable users", error);
         }
     };
 
@@ -322,7 +337,7 @@ const Enquiries = () => {
                 return last.nextVisitDate ? (
                     <div className="text-[10px] space-y-0.5">
                         <div className="flex items-center gap-2 text-[var(--accent)] font-bold">
-                            <span className="text-xs">{new Date(last.nextVisitDate).toLocaleDateString() + ' ' + new Date(last.nextVisitDate).toLocaleTimeString()}</span>
+                            <span className="text-xs">{row.nextVisitDate ? new Date(row.nextVisitDate).toLocaleDateString() + ' ' + new Date(row.nextVisitDate).toLocaleTimeString() : '—'}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <span className="text-[var(--text-muted)] font-semibold">{new Date(last.createdAt).toLocaleDateString()}</span>
@@ -356,12 +371,24 @@ const Enquiries = () => {
                                 </div>
                                 <div>
                                     <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                                        {isViewMode ? 'Enquiry Overview' : (currentEnquiry.enquiryId ? 'Update Enquiry' : 'New Enquiry')}
+                                        {isViewMode ? 'Enquiry Overview' : (currentEnquiry?.enquiryId ? 'Update Enquiry' : 'New Enquiry')}
                                     </h2>
                                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1" style={{ color: 'var(--text-secondary)' }}>
                                         {isViewMode ? 'View enquiry summary' : 'Enter vehicle and customer details'}
                                     </p>
                                 </div>
+                                {(isViewMode || currentEnquiry?.enquiryId) && (
+                                    <div className="ml-auto flex gap-6 text-[10px] font-bold uppercase tracking-wider">
+                                        <div className="text-right">
+                                            <div className="text-[var(--text-muted)] mb-0.5">Created By</div>
+                                            <div className="text-[var(--text-primary)]">{currentEnquiry?.createdBy?.fullName || '—'}</div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-[var(--text-muted)] mb-0.5">Assigned To</div>
+                                            <div className="text-[var(--accent)]">{currentEnquiry?.assignedTo?.fullName || '—'}</div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {isViewMode ? (
@@ -442,6 +469,27 @@ const Enquiries = () => {
                                                     {currentEnquiry?.status || 'new'}
                                                 </div>
                                             </div>
+
+                                            {(!currentEnquiry?.enquiryId || (['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE', 'SALES_MGR'].includes(user?.role))) && (
+                                                <div className="md:col-span-2">
+                                                    <label className="form-label mb-3 block">Assigned To</label>
+                                                    <select
+                                                        className="input-field h-10 font-bold shadow-sm"
+                                                        value={currentEnquiry?.assignedToUserId || ''}
+                                                        onChange={e => setCurrentEnquiry({ ...currentEnquiry, assignedToUserId: e.target.value })}
+                                                    >
+                                                        <option value="">Select Assignee</option>
+                                                        {assignableUsers.map(u => (
+                                                            <option key={u.userId} value={u.userId}>
+                                                                {u.fullName} {u.role ? `(${u.role})` : ''}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <p className="text-[10px] text-[var(--text-muted)] mt-2 italic font-medium">
+                                                        Assign this enquiry to a specific sales representative.
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* 3. Vehicle Requirements */}
@@ -739,6 +787,23 @@ const Enquiries = () => {
                         </select>
                     </div>
 
+                    <div className="search-box !w-auto">
+                        <Briefcase size={18} className="search-icon" />
+                        <select
+                            className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-semibold text-[var(--text-primary)] min-w-[160px] cursor-pointer outline-none pl-10 h-10 shadow-sm"
+                            value={selectedAssignedToUserId}
+                            onChange={(e) => {
+                                setSelectedAssignedToUserId(e.target.value);
+                                setPage(1);
+                            }}
+                        >
+                            <option value="">All Users</option>
+                            {assignableUsers.map(u => (
+                                <option key={u.userId} value={u.userId}>{u.fullName}</option>
+                            ))}
+                        </select>
+                    </div>
+
                     <div className="flex items-center gap-3">
                         {filterCustomerId && (
                             <button
@@ -751,23 +816,25 @@ const Enquiries = () => {
                                 Clear
                             </button>
                         )}
-                        <button
-                            onClick={() => {
-                                setCurrentEnquiry({ status: 'new', enquiryType: 'Buy', carDetails: [] });
-                                if (filterCustomerId && customerProfile) {
-                                    setSelectedCustomer(customerProfile);
-                                    setCurrentEnquiry(prev => ({ ...prev, customerId: customerProfile.customerId }));
-                                } else {
-                                    setSelectedCustomer(null);
-                                }
-                                setIsViewMode(false);
-                                setIsEditMode(true);
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                            className="btn-primary !py-2 !px-6"
-                        >
-                            <Plus size={18} /> New Enquiry
-                        </button>
+                        {user?.role !== 'SALES_REP' && (
+                            <button
+                                onClick={() => {
+                                    setCurrentEnquiry({ status: 'new', enquiryType: 'Buy', carDetails: [], assignedToUserId: user?.userId });
+                                    if (filterCustomerId && customerProfile) {
+                                        setSelectedCustomer(customerProfile);
+                                        setCurrentEnquiry(prev => ({ ...prev, customerId: customerProfile.customerId }));
+                                    } else {
+                                        setSelectedCustomer(null);
+                                    }
+                                    setIsViewMode(false);
+                                    setIsEditMode(true);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                className="btn-primary !py-2 !px-6"
+                            >
+                                <Plus size={18} /> New Enquiry
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -807,8 +874,8 @@ const Enquiries = () => {
                             color: 'gray',
                             title: 'View Details'
                         },
-                        // Show Edit only if active
-                        ...(['new', 'in-followup'].includes(selectedEnquiry?.status) ? [{
+                        // Show Edit only if active and not SALES_REP
+                        ...(user?.role !== 'SALES_REP' && ['new', 'in-followup'].includes(selectedEnquiry?.status) ? [{
                             icon: Edit,
                             label: 'Edit Enquiry',
                             onClick: handleEdit,
