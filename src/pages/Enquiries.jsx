@@ -313,6 +313,16 @@ const Enquiries = () => {
             }
         },
         {
+            key: 'assignedTo', label: 'Assigned To',
+            render: (row) => {
+                return (
+                    <div className="flex flex-col">
+                        <span className="font-semibold text-[var(--text-primary)]">{row.assignedTo?.fullName || 'N/A'}</span>
+                    </div>
+                )
+            }
+        },
+        {
             key: 'lastFollowUp', label: 'Last Follow-up',
             render: (row) => {
                 if (!row.followUps || row.followUps.length === 0) return <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider">No Activity</span>;
