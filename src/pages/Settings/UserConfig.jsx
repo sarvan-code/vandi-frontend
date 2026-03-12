@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import api from '../../api';
 import { useToast } from '../../context/ToastContext';
 import { useOptions } from '../../context/OptionsContext';
-import { Search, UserCheck, UserX, Trash2, Edit, X, Save, Eye, Building, UserPlus } from 'lucide-react';
+import { Search, UserCheck, UserX, Trash2, Edit, X, Save, Eye, EyeOff, Building, UserPlus, Key, Lock, ShieldAlert } from 'lucide-react';
 import clsx from 'clsx';
 import { AuthContext } from '../../context/AuthContext';
 import ConfirmDialog from '../../components/ConfirmDialog';
@@ -33,6 +33,13 @@ const UserConfig = () => {
 
     // Delete confirmation dialog state
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, user: null });
+
+    // Password Reset Modal State
+    const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+    const [resetPasswordUser, setResetPasswordUser] = useState(null);
+    const [newPassword, setNewPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [resetLoading, setResetLoading] = useState(false);
 
     useEffect(() => {
         fetchUsers();
@@ -136,6 +143,28 @@ const UserConfig = () => {
             setIsModalOpen(false);
         } catch (error) {
             showToast("Failed to save user: " + (error.response?.data?.error || error.message), "error");
+        }
+    };
+
+    const openResetPasswordModal = (user) => {
+        setResetPasswordUser(user);
+        setNewPassword('');
+        setShowPassword(false);
+        setIsResetModalOpen(true);
+    };
+
+    const handleResetPassword = async (e) => {
+        e.preventDefault();
+        if (!newPassword) return;
+        setResetLoading(true);
+        try {
+            await api.patch(`/users/${resetPasswordUser.userId}/reset-password`, { newPassword });
+            showToast(`Password for ${resetPasswordUser.fullName} has been reset.`, "success");
+            setIsResetModalOpen(false);
+        } catch (error) {
+            showToast("Failed to reset password: " + (error.response?.data?.error || error.message), "error");
+        } finally {
+            setResetLoading(false);
         }
     };
 
@@ -281,6 +310,13 @@ const UserConfig = () => {
                                     color: 'blue',
                                     title: 'Edit Details'
                                 },
+                                ...(isSuperUser ? [{
+                                    icon: Key,
+                                    label: 'Reset Password',
+                                    onClick: openResetPasswordModal,
+                                    color: 'indigo',
+                                    title: 'Reset User Password'
+                                }] : []),
                                 ...(currentUser?.userId !== selectedUserRow?.userId ? [{
                                     icon: Trash2,
                                     label: 'Delete',
@@ -446,6 +482,80 @@ const UserConfig = () => {
                 cancelText="Cancel"
                 variant="danger"
             />
+
+            {/* Reset Password Modal */}
+            <Modal
+                isOpen={isResetModalOpen && !!resetPasswordUser}
+                onClose={() => setIsResetModalOpen(false)}
+                title="Reset Password"
+                subtitle={`Set a new secure password for ${resetPasswordUser?.fullName}`}
+                icon={Lock}
+                maxWidth="max-w-md"
+                footer={
+                    <div className="flex gap-6 w-full justify-end">
+                        <button
+                            type="button"
+                            onClick={() => setIsResetModalOpen(false)}
+                            className="px-8 py-3 text-[var(--text-muted)] hover:text-[var(--text-primary)] font-bold text-[10px] uppercase tracking-widest transition-all"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            form="reset-password-form"
+                            disabled={resetLoading || !newPassword}
+                            className="btn-primary flex items-center gap-3 px-10 py-3 text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-[var(--accent)]/30 active:scale-95 transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {resetLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Save size={18} />} 
+                            Reset Password
+                        </button>
+                    </div>
+                }
+            >
+                <form id="reset-password-form" onSubmit={handleResetPassword} className="space-y-8 py-4">
+                    <div className="bg-[var(--bg-secondary)]/50 p-6 rounded-2xl border border-[var(--border)] shadow-inner">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-500">
+                                <Key size={20} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-[var(--text-primary)]">{resetPasswordUser?.fullName}</p>
+                                <p className="text-[10px] text-[var(--text-muted)] uppercase font-bold tracking-widest">{resetPasswordUser?.email}</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 block">New Password</label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-[var(--text-muted)]">
+                                    <Lock size={18} />
+                                </div>
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    className="input-field h-14 font-black text-lg pl-12 pr-14 bg-white dark:bg-[var(--bg-primary)] tracking-widest shadow-sm focus:ring-4 focus:ring-indigo-500/10 border-[var(--border)] transition-all"
+                                    value={newPassword}
+                                    onChange={e => setNewPassword(e.target.value)}
+                                    required
+                                    autoFocus
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute inset-y-0 right-4 flex items-center text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors p-1"
+                                    title={showPassword ? "Hide Password" : "Show Password"}
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-[var(--text-muted)] font-medium px-1 flex items-center gap-2">
+                                <ShieldAlert size={12} className="text-amber-500" />
+                                Use a strong, unique password for better security.
+                            </p>
+                        </div>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 };
