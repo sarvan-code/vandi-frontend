@@ -4,8 +4,9 @@ import { IndianRupee, Plus, FileText, Phone, X } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../context/ToastContext';
 import { AuthContext } from '../context/AuthContext';
+import CustomerContactInfo from './CustomerContactInfo';
 
-const ActiveManagementTab = ({ booking, onUpdate }) => {
+const ActiveManagementTab = ({ booking, onUpdate, onEditCustomer }) => {
     const { user } = useContext(AuthContext);
     const { showToast } = useToast();
     const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -489,6 +490,14 @@ const ActiveManagementTab = ({ booking, onUpdate }) => {
                         </button>
                     </div>
                     <div className="p-6 flex-1 space-y-8">
+                        {booking?.enquiry?.customer && (
+                            <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                                <CustomerContactInfo 
+                                    customer={booking.enquiry.customer} 
+                                    onEdit={onEditCustomer} 
+                                />
+                            </div>
+                        )}
                         <div className="flex bg-[var(--bg-primary)] p-1 rounded-xl w-fit border border-[var(--border)]">
                             <button
                                 type="button"

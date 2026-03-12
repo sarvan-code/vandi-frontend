@@ -6,29 +6,40 @@ import { useToast } from '../context/ToastContext';
 import InitialBookingTab from './InitialBookingTab';
 import ActiveManagementTab from './ActiveManagementTab';
 import FinalDeliveryTab from './FinalDeliveryTab';
+import CustomerEditModal from './CustomerEditModal';
 
 const FinanceWorkspaceContent = ({ enquiryId, tabId, onComplete }) => {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(true);
     const [booking, setBooking] = useState(null);
+    const [enquiry, setEnquiry] = useState(null);
+    const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
 
     useEffect(() => {
-        fetchBooking();
+        fetchWorkspaceData();
     }, [enquiryId]);
 
-    const fetchBooking = async () => {
+    const fetchWorkspaceData = async () => {
+        setLoading(true);
         try {
-            const response = await api.get('/bookings');
-            const existingBooking = response.data.find(b => b.enquiryId === enquiryId);
+            // 1. Fetch Enquiry Details (Source of Truth for Customer)
+            const enquiryRes = await api.get(`/enquiries/${enquiryId}`);
+            setEnquiry(enquiryRes.data);
+
+            // 2. Fetch Booking History for this Enquiry
+            const bookingsRes = await api.get('/bookings');
+            const existingBooking = bookingsRes.data.find(b => b.enquiryId === enquiryId);
 
             if (existingBooking) {
                 const detailResponse = await api.get(`/bookings/${existingBooking.id}`);
                 setBooking(detailResponse.data);
+            } else {
+                setBooking(null);
             }
-            setLoading(false);
         } catch (error) {
-            console.error('Error fetching booking:', error);
-            showToast('Error loading booking data', 'error');
+            console.error('Error fetching workspace data:', error);
+            showToast('Error loading workspace data', 'error');
+        } finally {
             setLoading(false);
         }
     };
@@ -192,17 +203,21 @@ const FinanceWorkspaceContent = ({ enquiryId, tabId, onComplete }) => {
                     {(!booking || booking.status === 'ADVANCE_PENDING' || booking.status === 'initial') ? (
                         <InitialBookingTab
                             enquiryId={enquiryId}
-                            onBookingCreated={fetchBooking}
+                            enquiry={enquiry}
+                            onBookingCreated={fetchWorkspaceData}
+                            onEditCustomer={() => setIsCustomerModalOpen(true)}
                         />
                     ) : booking.status === 'active' ? (
                         <ActiveManagementTab
                             booking={booking}
-                            onUpdate={fetchBooking}
+                            onUpdate={fetchWorkspaceData}
+                            onEditCustomer={() => setIsCustomerModalOpen(true)}
                         />
                     ) : booking.status === 'ready_for_delivery' ? (
                         <FinalDeliveryTab
                             booking={booking}
-                            onUpdate={fetchBooking}
+                            onUpdate={fetchWorkspaceData}
+                            onEditCustomer={() => setIsCustomerModalOpen(true)}
                             onComplete={() => onComplete && onComplete(tabId)}
                         />
                     ) : booking.status === 'completed' ? (
@@ -225,6 +240,13 @@ const FinanceWorkspaceContent = ({ enquiryId, tabId, onComplete }) => {
                     ) : null}
                 </div>
             </div>
+
+            <CustomerEditModal
+                isOpen={isCustomerModalOpen}
+                onClose={() => setIsCustomerModalOpen(false)}
+                customer={booking?.enquiry?.customer || enquiry?.customer}
+                onUpdate={fetchWorkspaceData}
+            />
         </div>
     );
 };

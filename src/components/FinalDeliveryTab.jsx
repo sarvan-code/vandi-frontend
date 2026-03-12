@@ -3,8 +3,9 @@ import { CheckCircle, AlertTriangle, FileText, Car as CarIcon, User } from 'luci
 import clsx from 'clsx';
 import api from '../api';
 import { useToast } from '../context/ToastContext';
+import CustomerContactInfo from './CustomerContactInfo';
 
-const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) => {
+const FinalDeliveryTab = ({ booking, onUpdate, onComplete, onEditCustomer, readOnly = false }) => {
     const { showToast } = useToast();
     const [finalPayment, setFinalPayment] = useState({
         amount: booking.balanceAmount || 0,
@@ -189,6 +190,15 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, readOnly = false }) =
                         </div>
                     </div>
                 </div>
+
+                {booking?.enquiry?.customer && (
+                    <div className="p-6 pt-0 animate-in fade-in slide-in-from-top-2 duration-500">
+                        <CustomerContactInfo 
+                            customer={booking.enquiry.customer} 
+                            onEdit={onEditCustomer} 
+                        />
+                    </div>
+                )}
             </div>
 
             {/* Transactional Audit */}

@@ -4,8 +4,9 @@ import { useToast } from '../context/ToastContext';
 import VehicleAutocomplete from './VehicleAutocomplete';
 import { X, Car as CarIcon, IndianRupee, Calendar } from 'lucide-react';
 import clsx from 'clsx';
+import CustomerContactInfo from './CustomerContactInfo';
 
-const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
+const InitialBookingTab = ({ enquiryId, enquiry, onBookingCreated, onEditCustomer }) => {
     const { showToast } = useToast();
     const [formData, setFormData] = useState({
         carId: '',
@@ -43,23 +44,13 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
     });
 
     const [selectedCar, setSelectedCar] = useState(null);
-    const [enquiry, setEnquiry] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        fetchData();
-    }, [enquiryId]);
-
-    const fetchData = async () => {
-        try {
-            // Fetch enquiry details
-            const enquiryResponse = await api.get(`/enquiries/${enquiryId}`);
-            setEnquiry(enquiryResponse.data);
-
+        if (enquiry) {
             // Auto-fill car from last follow-up if available for new booking
-            const followUps = enquiryResponse.data.followUps || [];
-            if (followUps.length > 0) {
+            const followUps = enquiry.followUps || [];
+            if (followUps.length > 0 && !formData.carId) {
                 const lastFollowUp = followUps[followUps.length - 1];
                 if (lastFollowUp.followupCarId && lastFollowUp.car) {
                     setFormData(prev => ({
@@ -70,14 +61,8 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                     setSelectedCar(lastFollowUp.car);
                 }
             }
-
-            setLoading(false);
-        } catch (error) {
-            console.error('Error fetching initial data:', error);
-            showToast('Error loading enquiry data', 'error');
-            setLoading(false);
         }
-    };
+    }, [enquiry]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -129,9 +114,6 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
         : 0;
     const totalNegotiatedDiscount = formData.agreedPrice ? netBenefit - parseFloat(formData.agreedPrice) : 0;
 
-    if (loading) {
-        return <div className="text-center py-8">Loading...</div>;
-    }
 
     return (
         <form onSubmit={handleSubmit} className="space-y-12 animate-fade-in">
@@ -319,6 +301,15 @@ const InitialBookingTab = ({ enquiryId, onBookingCreated }) => {
                     </div>
 
                     <div className="space-y-8 flex-1">
+                        {enquiry?.customer && (
+                            <div className="mb-6 animate-in fade-in slide-in-from-top-2 duration-500">
+                                <CustomerContactInfo 
+                                    customer={enquiry.customer} 
+                                    onEdit={onEditCustomer} 
+                                />
+                            </div>
+                        )}
+
                         <div className="flex bg-[var(--bg-tertiary)] p-1 rounded-xl w-fit border border-[var(--border)]">
                             <button
                                 type="button"
