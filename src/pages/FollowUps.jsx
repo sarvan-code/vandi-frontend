@@ -286,7 +286,7 @@ const FollowUps = () => {
     const columns = [
         {
             key: 'customer',
-            label: 'Stakeholder Identity',
+            label: 'Customer Info',
             render: (row) => (
                 <div className="flex flex-col">
                     <span className="font-semibold text-[var(--text-primary)]">{row.enquiry?.customer?.fullName || 'N/A'}</span>
@@ -296,7 +296,7 @@ const FollowUps = () => {
         },
         {
             key: 'followupMode',
-            label: 'Interaction Channel',
+            label: 'How we talked',
             render: (row) => (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border border-[var(--border)]">
                     {row.followupMode}
@@ -312,7 +312,7 @@ const FollowUps = () => {
         },
         {
             key: 'followupResults',
-            label: 'Engagement Outcome',
+            label: 'Result',
             render: (row) => (
                 <span className={clsx(
                     "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider",
@@ -326,7 +326,7 @@ const FollowUps = () => {
         },
         {
             key: 'followupRemarks',
-            label: 'Discussion Notes',
+            label: 'Notes',
             render: (row) => <span className="text-xs text-[var(--text-secondary)] truncate block max-w-[200px] italic">"{row.followupRemarks}"</span>
         },
         {
@@ -361,27 +361,27 @@ const FollowUps = () => {
                                         <User size={18} />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--text-secondary)]">Stakeholder Identity</h3>
-                                        <p className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-widest">Primary Contact & Classification</p>
+                                        <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--text-secondary)]">Customer Info</h3>
+                                        <p className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-widest">Contact details and type</p>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-8">
                                     <div>
-                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Full Legal Name</p>
+                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Full Name</p>
                                         <p className="text-lg font-semibold text-[var(--text-primary)]">{enquiryDetails.customer?.fullName}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Business Classification</p>
+                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Type</p>
                                         <span className={clsx(
                                             "inline-flex items-center px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider",
                                             enquiryDetails.customer?.customerType === 'Customer' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                                         )}>
-                                            {enquiryDetails.customer?.customerType || 'PROSPECT'}
+                                            {enquiryDetails.customer?.customerType || 'LEAD'}
                                         </span>
                                     </div>
                                     <div className="col-span-2">
-                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Communication Channel</p>
+                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Phone Number</p>
                                         <p className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-3">
                                             {enquiryDetails.customer?.phone}
                                             {enquiryDetails.customer?.altPhone && <span className="text-[var(--text-muted)] font-normal text-xs"> / {enquiryDetails.customer?.altPhone}</span>}
@@ -397,23 +397,23 @@ const FollowUps = () => {
                                         <Car size={18} />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--text-secondary)]">Acquisition Context</h3>
-                                        <p className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-widest">Requirement Profile & lifecycle</p>
+                                        <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--text-secondary)]">What they want</h3>
+                                        <p className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-widest">Requirements and status</p>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-8">
                                     <div className="col-span-2">
-                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Vehicle Match</p>
+                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Car Interest</p>
                                         <p className="text-sm font-bold text-[var(--accent)] lg:truncate" title={enquiryDetails.carDetails?.map(car => car.carModel).join(' • ')}>
                                             {enquiryDetails.carDetails && enquiryDetails.carDetails.length > 0
                                                 ? enquiryDetails.carDetails.map(car => car.carModel).join(' • ')
-                                                : 'UNSPECIFIED ASSET'
+                                                : 'ANY'
                                             }
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Current Lifecycle</p>
+                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Status</p>
                                         <span className={clsx(
                                             "inline-flex items-center px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider",
                                             enquiryDetails.status === 'new' ? 'bg-indigo-100 text-indigo-700' :
@@ -423,8 +423,8 @@ const FollowUps = () => {
                                         </span>
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Allocated Budget</p>
-                                        <p className="text-sm font-bold">{enquiryDetails.budgetRange || 'OPEN BUDGET'}</p>
+                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Budget</p>
+                                        <p className="text-sm font-bold">{enquiryDetails.budgetRange || 'ANY'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -436,7 +436,7 @@ const FollowUps = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-8 animate-fade-in">
                 <div>
                     <h1 className="text-4xl font-semibold mb-2 text-[var(--text-primary)]">Follow-ups</h1>
-                    <p className="text-sm font-medium text-[var(--text-secondary)]">Traceable communication logs and customer engagement history.</p>
+                    <p className="text-sm font-medium text-[var(--text-secondary)]">List of customer talks and notes.</p>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -467,7 +467,7 @@ const FollowUps = () => {
                         }}
                         className="btn-primary flex items-center gap-3 !py-2 !px-6"
                     >
-                        <Plus size={18} /> New Interaction
+                        <Plus size={18} /> New Talk
                     </button>
                 </div>
             </div>
@@ -482,7 +482,7 @@ const FollowUps = () => {
                                     <h2 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">
                                         {isViewMode ? 'Interaction Details' : (currentFollowUp?.followUpId ? 'Update Interaction' : 'New Interaction')}
                                     </h2>
-                                    <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em] mt-1">Logged communication and engagement outcomes</p>
+                                    <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em] mt-1">Recorded talks and results</p>
                                 </div>
                                 <button
                                     onClick={() => setIsModalOpen(false)}
@@ -526,13 +526,13 @@ const FollowUps = () => {
                                                     {currentFollowUp.enquiry?.customer?.fullName?.charAt(0) || 'S'}
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--accent)] mb-2">Authenticated Stakeholder</p>
-                                                    <h4 className="text-xl font-semibold tracking-tight text-[var(--text-primary)] leading-none">{currentFollowUp.enquiry?.customer?.fullName || 'UNREGISTERED'}</h4>
+                                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--accent)] mb-2">Selected Customer</p>
+                                                    <h4 className="text-xl font-semibold tracking-tight text-[var(--text-primary)] leading-none">{currentFollowUp.enquiry?.customer?.fullName || 'NO NAME'}</h4>
                                                     <p className="text-xs font-bold text-[var(--text-muted)] mt-2 uppercase tracking-widest">{currentFollowUp.enquiry?.customer?.phone}</p>
                                                 </div>
                                             </div>
                                             <div className="md:text-right px-6 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-sm">
-                                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)] mb-1">Portfolio Lifecycle</p>
+                                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)] mb-1">Status</p>
                                                 <span className="text-xs font-bold text-[var(--accent)] uppercase tracking-widest">
                                                     {currentFollowUp.enquiry?.status || 'N/A'}
                                                 </span>
@@ -542,7 +542,7 @@ const FollowUps = () => {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-2">
-                                            <label className="form-label">Interaction Mode <span className="text-red-500">*</span></label>
+                                            <label className="form-label">How we talked <span className="text-red-500">*</span></label>
                                             <select
                                                 className="input-field"
                                                 value={currentFollowUp?.followupMode || ''}
@@ -553,7 +553,7 @@ const FollowUps = () => {
                                             </select>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="form-label">Interaction Type <span className="text-red-500">*</span></label>
+                                            <label className="form-label">Talk Type <span className="text-red-500">*</span></label>
                                             <select
                                                 className="input-field disabled:opacity-50"
                                                 value={currentFollowUp?.followupType || ''}
@@ -604,7 +604,7 @@ const FollowUps = () => {
                                             </select>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="form-label">Next Visit/Follow-up Date
+                                            <label className="form-label">Next Follow-up Date
                                                 {NEXT_VISIT_ACTIONS.includes(currentFollowUp?.followupResults?.toLowerCase()) ? <span className="text-[var(--text-muted)] font-normal font-sans ml-1">(Optional)</span> : <span className="text-red-500">*</span>}
                                             </label>
                                             <input
@@ -616,7 +616,7 @@ const FollowUps = () => {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="form-label">Interaction Remarks</label>
+                                            <label className="form-label">Notes</label>
                                             <textarea
                                                 className="input-field min-h-[42px] py-2 resize-none"
                                                 placeholder="Key discussion points..."
@@ -633,14 +633,14 @@ const FollowUps = () => {
                                         onClick={() => setIsModalOpen(false)}
                                         className="px-8 py-3 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl text-[10px] font-bold uppercase tracking-widest text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-all shadow-sm"
                                     >
-                                        {isViewMode ? 'Exit Transcript' : 'Discard Record'}
+                                        {isViewMode ? 'Exit' : 'Discard'}
                                     </button>
                                     {!isViewMode && (
                                         <button
                                             type="submit"
                                             className="btn-primary px-10 py-3 shadow-lg shadow-[var(--accent)]/20"
                                         >
-                                            Authenticate & Save Record
+                                            Save Record
                                         </button>
                                     )}
                                 </div>

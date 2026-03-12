@@ -376,7 +376,7 @@ const ActiveManagementTab = ({ booking, onUpdate, onEditCustomer }) => {
                             <div className="w-8 h-8 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center text-[var(--accent)]">
                                 <Phone size={16} />
                             </div>
-                            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Follow-ups</h3>
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Recent Talks</h3>
                         </div>
                         <button
                             onClick={() => setShowFollowUpForm(!showFollowUpForm)}
@@ -456,7 +456,7 @@ const ActiveManagementTab = ({ booking, onUpdate, onEditCustomer }) => {
                                                 <span>{formatDate(followUp.createdAt)}</span>
                                                 {followUp.nextActionDate && (
                                                     <span className="badge py-0.5 px-2 bg-rose-50 text-rose-600 rounded-md border border-rose-100">
-                                                        RE-ENGAGE: {new Date(followUp.nextActionDate).toLocaleDateString('en-IN')}
+                                                        FOLLOW UP: {new Date(followUp.nextActionDate).toLocaleDateString('en-IN')}
                                                     </span>
                                                 )}
                                             </div>

@@ -26,7 +26,7 @@ const EnquirySnapshot = ({ enquiry, customer, getOptionList, showCustomer = true
             {/* Snapshot Card */}
             <div className="card overflow-hidden">
                 <div className="px-4 py-3 border-b flex items-center gap-2 font-semibold" style={{ background: 'var(--bg-tertiary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}>
-                    <Info size={18} /> {showCustomer ? 'Enquiry & Customer Snapshot' : 'Enquiry Details'}
+                    <Info size={18} /> {showCustomer ? 'Summary of Enquiry' : 'Enquiry Details'}
                 </div>
                 <div className={`p-4 grid grid-cols-1 ${showCustomer ? 'md:grid-cols-2 gap-8' : 'md:grid-cols-1'}`}>
                     {/* Left: Customer */}
@@ -100,7 +100,7 @@ const EnquirySnapshot = ({ enquiry, customer, getOptionList, showCustomer = true
             {/* Followups */}
             <div className="card overflow-hidden">
                 <div className="px-4 py-3 border-b font-semibold flex items-center gap-2" style={{ background: 'var(--bg-tertiary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}>
-                    <ClipboardList size={18} style={{ color: 'var(--text-muted)' }} /> Follow-up History
+                    <ClipboardList size={18} style={{ color: 'var(--text-muted)' }} /> Recent Talks
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
 import Logo from './Logo';
 
-const CustomerSearch = ({ customers, onSearch, onSelect, selectedCustomer, disabled }) => {
+const CustomerSearch = ({ customers, onSearch, onSelect, onSearchTermChange, selectedCustomer, disabled }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -10,7 +10,7 @@ const CustomerSearch = ({ customers, onSearch, onSelect, selectedCustomer, disab
 
     useEffect(() => {
         if (selectedCustomer) {
-            setSearchTerm(selectedCustomer.fullName);
+            setSearchTerm(selectedCustomer.phone);
         } else {
             setSearchTerm('');
         }
@@ -31,6 +31,7 @@ const CustomerSearch = ({ customers, onSearch, onSelect, selectedCustomer, disab
     const handleInputChange = async (e) => {
         const value = e.target.value;
         setSearchTerm(value);
+        if (onSearchTermChange) onSearchTermChange(value);
         setIsOpen(true);
         if (value.length > 2) {
             setIsLoading(true);
@@ -39,17 +40,15 @@ const CustomerSearch = ({ customers, onSearch, onSelect, selectedCustomer, disab
             } finally {
                 setIsLoading(false);
             }
-        } else {
-            // Optional: Clear results if input is too short
-            // onSearch(''); 
-        }
+        } 
         if (!value) {
             onSelect(null);
         }
     };
 
     const handleSelect = (customer) => {
-        setSearchTerm(customer.fullName);
+        setSearchTerm(customer.phone);
+        if (onSearchTermChange) onSearchTermChange(customer.phone);
         onSelect(customer);
         setIsOpen(false);
     };

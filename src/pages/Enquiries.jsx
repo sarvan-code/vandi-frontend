@@ -58,6 +58,11 @@ const Enquiries = () => {
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [totalEnquiries, setTotalEnquiries] = useState(0);
+    
+    // Quick add customer state
+    const [lastTypedSearch, setLastTypedSearch] = useState('');
+    const [quickAddFullName, setQuickAddFullName] = useState('');
+    const [isQuickSaving, setIsQuickSaving] = useState(false);
 
     // Update filter when URL changes
     useEffect(() => {
@@ -139,6 +144,35 @@ const Enquiries = () => {
             }
         } catch (error) {
             console.error('Error searching customers:', error);
+        }
+    };
+
+    const handleQuickAddCustomer = async () => {
+        if (!quickAddFullName || !lastTypedSearch) {
+            showToast("Please provide both name and phone number.", "warning");
+            return;
+        }
+
+        setIsQuickSaving(true);
+        try {
+            const response = await api.post('/customers', {
+                fullName: quickAddFullName,
+                phone: lastTypedSearch,
+                customerType: 'Individual' // Default for quick add
+            });
+            const newCustomer = response.data;
+            showToast('Customer created and selected!', 'success');
+            
+            // Auto-select the new customer
+            handleCustomerSelect(newCustomer);
+            
+            // Clear quick add state
+            setQuickAddFullName('');
+        } catch (error) {
+            console.error('Error quick adding customer:', error);
+            showToast(error.response?.data?.error || 'Failed to quick add customer', 'error');
+        } finally {
+            setIsQuickSaving(false);
         }
     };
 
@@ -381,10 +415,10 @@ const Enquiries = () => {
                                 </div>
                                 <div>
                                     <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                                        {isViewMode ? 'Enquiry Overview' : (currentEnquiry?.enquiryId ? 'Update Enquiry' : 'New Enquiry')}
+                                        {isViewMode ? 'Enquiry Details' : (currentEnquiry?.enquiryId ? 'Update Enquiry' : 'New Enquiry')}
                                     </h2>
                                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1" style={{ color: 'var(--text-secondary)' }}>
-                                        {isViewMode ? 'View enquiry summary' : 'Enter vehicle and customer details'}
+                                        {isViewMode ? 'See enquiry details' : 'Enter car and customer details'}
                                     </p>
                                 </div>
                                 {(isViewMode || currentEnquiry?.enquiryId) && (
@@ -433,17 +467,47 @@ const Enquiries = () => {
                                                         customers={customers}
                                                         onSearch={searchCustomers}
                                                         onSelect={handleCustomerSelect}
+                                                        onSearchTermChange={setLastTypedSearch}
                                                         selectedCustomer={selectedCustomer || customerProfile}
                                                         disabled={!!currentEnquiry?.enquiryId || isViewMode || (!!filterCustomerId && !currentEnquiry?.enquiryId)}
                                                     />
                                                 </div>
-                                                {currentEnquiry?.enquiryId && (
-                                                    <div className="text-right">
-                                                        <label className="form-label mb-2 block">Ref ID</label>
-                                                        <p className="text-sm font-bold px-4 py-2 rounded-md border shadow-sm" style={{ color: 'var(--text-primary)', background: 'var(--surface)', borderColor: 'var(--border)' }}>
-                                                            {currentEnquiry.enquiryId}
-                                                        </p>
+                                                
+                                                {/* Quick Add Form or Customer Name Display */}
+                                                {!selectedCustomer && !customerProfile && lastTypedSearch.length >= 3 && customers.length === 0 && !currentEnquiry?.enquiryId && !isViewMode ? (
+                                                    <div className="flex flex-col md:flex-row items-end gap-3 animate-fade-in-up">
+                                                        <div className="flex-grow">
+                                                            <label className="form-label mb-2 block text-[10px] uppercase">New Customer Name</label>
+                                                            <input
+                                                                type="text"
+                                                                className="input-field h-10 font-bold"
+                                                                placeholder="Enter Full Name..."
+                                                                value={quickAddFullName}
+                                                                onChange={(e) => setQuickAddFullName(e.target.value)}
+                                                            />
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleQuickAddCustomer}
+                                                            disabled={isQuickSaving || !quickAddFullName}
+                                                            className="btn-primary !h-10 !py-0 px-6 flex items-center gap-2 whitespace-nowrap"
+                                                        >
+                                                            {isQuickSaving ? (
+                                                                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                                            ) : (
+                                                                <>Quick Save</>
+                                                            )}
+                                                        </button>
                                                     </div>
+                                                ) : (
+                                                    (currentEnquiry?.enquiryId || selectedCustomer || customerProfile) && (
+                                                        <div className="text-right">
+                                                            <label className="form-label mb-2 block">Customer Name</label>
+                                                            <p className="text-sm font-bold px-4 py-2 rounded-md border shadow-sm" style={{ color: 'var(--text-primary)', background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                                                                {selectedCustomer?.fullName || customerProfile?.fullName || currentEnquiry?.customer?.fullName || '—'}
+                                                            </p>
+                                                        </div>
+                                                    )
                                                 )}
                                             </div>
                                         </div>

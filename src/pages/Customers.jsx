@@ -198,10 +198,10 @@ const Customers = () => {
                         </div>
                         <div>
                             <h2 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">
-                                {isViewMode ? 'Customer Profile' : (currentCustomer?.customerId ? 'Update Customer' : 'New Customer')}
+                                {isViewMode ? 'Customer Details' : (currentCustomer?.customerId ? 'Update Customer' : 'New Customer')}
                             </h2>
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] mt-1">
-                                {isViewMode ? 'Comprehensive customer overview' : 'Registration of a new stakeholder entity'}
+                                {isViewMode ? 'Full customer details' : 'Add a new customer'}
                             </p>
                         </div>
                     </div>

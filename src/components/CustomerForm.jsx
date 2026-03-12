@@ -73,7 +73,7 @@ const CustomerForm = ({ customer, setCustomer, readOnly = false }) => {
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="form-label">Profession / Industry</label>
+                        <label className="form-label">Job / Business</label>
                         <select
                             className="input-field"
                             value={customer?.profession || ''}
@@ -84,7 +84,7 @@ const CustomerForm = ({ customer, setCustomer, readOnly = false }) => {
                         </select>
                     </div>
                     <div className="space-y-2">
-                        <label className="form-label">Classification</label>
+                        <label className="form-label">Type</label>
                         <div className="flex gap-4">
                             {['Lead', 'Customer'].map(type => (
                                 <label key={type} className="flex-1">
@@ -112,7 +112,7 @@ const CustomerForm = ({ customer, setCustomer, readOnly = false }) => {
 
                 <div className="space-y-6">
                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--accent)] border-b pb-2 mb-6 flex items-center gap-2" style={{ borderColor: 'var(--accent-bg)' }}>
-                        External Referrals
+                        Referred by
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-2">
@@ -140,11 +140,11 @@ const CustomerForm = ({ customer, setCustomer, readOnly = false }) => {
 
                 <div className="space-y-6">
                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--accent)] border-b pb-2 mb-6 flex items-center gap-2" style={{ borderColor: 'var(--accent-bg)' }}>
-                        Geographic Details
+                        Address
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         <div className="md:col-span-2 lg:col-span-4 space-y-2">
-                            <label className="form-label">Communication Address</label>
+                            <label className="form-label">Full Address</label>
                             <input
                                 className="input-field"
                                 placeholder="Street, locality, and unit details..."
@@ -153,7 +153,7 @@ const CustomerForm = ({ customer, setCustomer, readOnly = false }) => {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="form-label">Locality / Landmark</label>
+                            <label className="form-label">Landmark</label>
                             <input
                                 className="input-field"
                                 placeholder="e.g. Near Market Square"
@@ -192,7 +192,7 @@ const CustomerForm = ({ customer, setCustomer, readOnly = false }) => {
                 </div>
 
                 <div>
-                    <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3 block">Notes / Remarks</label>
+                    <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3 block">Notes</label>
                     <textarea
                         className="input-field min-h-[120px] p-4 text-sm font-medium"
                         placeholder="Enter any relevant observations, interaction history or specific preferences..."

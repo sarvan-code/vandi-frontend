@@ -534,7 +534,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                             </div>
                         </div>
                         <div className="space-y-1">
-                            <label className="form-label">Digital Handle</label>
+                            <label className="form-label">Social Media</label>
                             <input className="input-field" placeholder="@username" value={customer.instaid || ''} onChange={e => setCustomer({ ...customer, instaid: e.target.value })} />
                         </div>
 
@@ -591,7 +591,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
 
                     <div className="mt-6 pt-6 border-t border-dashed" style={{ borderColor: 'var(--border)' }}>
                         <label className="form-label mb-2 flex items-center gap-2">
-                            <MapPin size={12} /> Address Details
+                            <MapPin size={12} /> Address
                         </label>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             <input className="input-field md:col-span-2" placeholder="Street Address / Area" value={customer.address || ''} onChange={e => setCustomer({ ...customer, address: e.target.value })} />
@@ -615,7 +615,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                     {isNewEnquiry ? 'New Enquiry' : 'Update Enquiry'}
                                 </h3>
                                 <p className="text-[10px] uppercase font-bold tracking-widest" style={{ color: 'var(--text-muted)' }}>
-                                    {isNewEnquiry ? 'Establishing Requirements' : 'Refining Specifications'}
+                                    {isNewEnquiry ? 'New Enquiry' : 'Updating Details'}
                                 </p>
                             </div>
                         </div>
@@ -717,7 +717,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                     <div className="bg-[var(--bg-tertiary)]/50 p-5 rounded-lg border border-[var(--border)] mb-6">
                         <div className="flex justify-between items-center mb-6">
                             <label className="form-label !mb-0 flex items-center gap-2">
-                                <Car size={16} className="text-[var(--accent)]" /> Interested Vehicles
+                                <Car size={16} className="text-[var(--accent)]" /> Selected Cars
                             </label>
                             <button type="button" onClick={() => {
                                 const mk = [...(enquiry.carDetails || [])];
