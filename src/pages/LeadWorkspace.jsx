@@ -172,16 +172,18 @@ const LeadWorkspace = ({ isMinimized, onMinimize, onClose }) => {
 
     return (
         <div
-            style={{ paddingBottom: 'var(--safe-area-bottom)', bottom: 'var(--safe-area-bottom)' }}
             className={clsx(
-                "fixed right-8 z-[9997] transition-all duration-500 flex flex-col overflow-hidden shadow-2xl border",
+                "fixed z-[9997] transition-all duration-500 flex flex-col overflow-hidden shadow-2xl border",
                 "bg-[var(--bg-primary)] border-[var(--border)]",
-                isMinimized ? "h-14 w-80 rounded-t-xl" : "h-[88vh] w-[95vw] lg:w-[85vw] xl:w-[75vw] rounded-t-2xl"
+                isMinimized 
+                    ? "h-14 w-72 md:w-80 rounded-t-xl right-4 md:right-8 bottom-[var(--safe-area-bottom)]" 
+                    : "h-[88vh] w-[98vw] md:w-[95vw] lg:w-[85vw] xl:w-[70vw] rounded-t-2xl left-1/2 -translate-x-1/2 bottom-[var(--safe-area-bottom)]"
             )}
+            style={{ paddingBottom: 'var(--safe-area-bottom)' }}
         >
             {/* Header / Tab Bar */}
             <div
-                className="bg-[var(--bg-tertiary)] flex items-center px-4 pt-3 gap-1 overflow-x-auto shrink-0 cursor-default border-b border-[var(--border)]"
+                className="bg-[var(--bg-tertiary)] flex items-center px-2 md:px-4 pt-3 gap-0.5 md:gap-1 overflow-x-auto shrink-0 cursor-default border-b border-[var(--border)]"
                 onClick={(e) => isMinimized && onMinimize()}
             >
                 <div
@@ -199,7 +201,7 @@ const LeadWorkspace = ({ isMinimized, onMinimize, onClose }) => {
                             key={tab.id}
                             onClick={() => setActiveTabId(tab.id)}
                             className={clsx(
-                                "group flex items-center gap-3 px-5 py-2.5 rounded-t-lg cursor-pointer min-w-[140px] max-w-[200px] justify-between transition-all relative border-t border-x",
+                                "group flex items-center gap-2 md:gap-3 px-3 md:px-5 py-2.5 rounded-t-lg cursor-pointer min-w-[100px] md:min-w-[140px] max-w-[200px] justify-between transition-all relative border-t border-x",
                                 activeTabId === tab.id
                                     ? 'bg-[var(--bg-primary)] font-bold border-[var(--border)] z-10'
                                     : 'bg-transparent text-[var(--text-secondary)] border-transparent hover:bg-[var(--bg-secondary)]'
@@ -229,7 +231,7 @@ const LeadWorkspace = ({ isMinimized, onMinimize, onClose }) => {
                     <Plus className="h-5 w-5" />
                 </button>
 
-                <div className="ml-auto flex items-center gap-1 pr-2 border-l border-[var(--border)] pl-2">
+                <div className="ml-auto flex items-center gap-0.5 md:gap-1 pr-1 md:pr-2 border-l border-[var(--border)] pl-1 md:pl-2">
                     <button
                         onClick={onMinimize}
                         className="p-2 hover:bg-[var(--bg-tertiary)] rounded-lg text-[var(--text-secondary)] transition-colors"

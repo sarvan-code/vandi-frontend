@@ -419,8 +419,8 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
             <form onSubmit={handleSubmit} className="flex-1 space-y-6" autoComplete="off">
 
                 {/* Customer Details Section */}
-                <div className="card p-6 transition-all duration-300">
-                    <div className="flex justify-between items-center mb-6 pb-4 border-b" style={{ borderColor: 'var(--border)' }}>
+                <div className="card p-4 md:p-6 transition-all duration-300">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 pb-4 border-b gap-4" style={{ borderColor: 'var(--border)' }}>
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ background: 'var(--accent)' }}>
                                 <User size={20} />
@@ -604,8 +604,8 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                 </div>
 
                 {/* Enquiry Details Section */}
-                <div className="card p-6 transition-all duration-300">
-                    <div className="flex justify-between items-center mb-6 pb-4 border-b" style={{ borderColor: 'var(--border)' }}>
+                <div className="card p-4 md:p-6 transition-all duration-300">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 pb-4 border-b gap-4" style={{ borderColor: 'var(--border)' }}>
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ background: isNewEnquiry ? 'var(--success)' : 'var(--accent)' }}>
                                 <Briefcase size={20} />
@@ -620,7 +620,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-wrap">
                             {!isNewEnquiry && (
                                 <button
                                     type="button"
@@ -715,7 +715,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                     </div>
 
                     <div className="bg-[var(--bg-tertiary)]/50 p-5 rounded-lg border border-[var(--border)] mb-6">
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
                             <label className="form-label !mb-0 flex items-center gap-2">
                                 <Car size={16} className="text-[var(--accent)]" /> Selected Cars
                             </label>
@@ -862,8 +862,8 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                 </div>
 
                 {/* Follow-up Section */}
-                <div className="card p-6 transition-all duration-300">
-                    <div className="flex justify-between items-center mb-6 pb-4 border-b" style={{ borderColor: 'var(--border)' }}>
+                <div className="card p-4 md:p-6 transition-all duration-300">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 pb-4 border-b gap-4" style={{ borderColor: 'var(--border)' }}>
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ background: 'var(--warning)' }}>
                                 <Calendar size={20} />
@@ -887,7 +887,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
 
                     {
                         showFollowUpHistory && enquiry.followUps && (
-                            <div className="mb-6 bg-amber-50/50 rounded-2xl border border-amber-100 overflow-hidden animate-in fade-in slide-in-from-top-4">
+                            <div className="mb-6 bg-amber-50/50 rounded-2xl border border-amber-100 overflow-scroll animate-in fade-in slide-in-from-top-4">
                                 <table className="w-full text-left text-xs">
                                     <thead className="bg-amber-100/30 text-amber-900 font-bold border-b border-amber-100 uppercase tracking-wider">
                                         <tr>
@@ -1012,7 +1012,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-6 pb-10">
+                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 pb-10">
                     <button type="button" onClick={() => {
                         if (tabId) localStorage.removeItem(`vandi_lead_form_${tabId}`);
                         onCancel();

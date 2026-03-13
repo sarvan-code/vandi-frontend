@@ -400,7 +400,7 @@ const Enquiries = () => {
                 <div id="modal-container" className="mb-12 animate-fade-in space-y-8 scroll-mt-20">
                     {/* Enquiry Intake/Summary Block */}
                     {currentEnquiry && (
-                        <div className="card p-8 border border-[var(--border)] shadow-xl relative overflow-visible animate-fade-in">
+                        <div className="card p-4 md:p-8 border border-[var(--border)] shadow-xl relative overflow-visible animate-fade-in">
                             <button
                                 onClick={closeEnquiryBlock}
                                 className="absolute top-6 right-6 p-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors text-[var(--text-muted)]"
@@ -409,20 +409,22 @@ const Enquiries = () => {
                                 <X size={20} />
                             </button>
 
-                            <div className="flex items-center gap-4 mb-10 pb-6 border-b" style={{ borderColor: 'var(--border)' }}>
-                                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-sm" style={{ background: 'var(--accent)' }}>
-                                    <ClipboardList size={24} />
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                                        {isViewMode ? 'Enquiry Details' : (currentEnquiry?.enquiryId ? 'Update Enquiry' : 'New Enquiry')}
-                                    </h2>
-                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1" style={{ color: 'var(--text-secondary)' }}>
-                                        {isViewMode ? 'See enquiry details' : 'Enter car and customer details'}
-                                    </p>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-10 pb-6 border-b" style={{ borderColor: 'var(--border)' }}>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-sm" style={{ background: 'var(--accent)' }}>
+                                        <ClipboardList size={24} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                                            {isViewMode ? 'Enquiry Details' : (currentEnquiry?.enquiryId ? 'Update Enquiry' : 'New Enquiry')}
+                                        </h2>
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1" style={{ color: 'var(--text-secondary)' }}>
+                                            {isViewMode ? 'See enquiry details' : 'Enter car and customer details'}
+                                        </p>
+                                    </div>
                                 </div>
                                 {(isViewMode || currentEnquiry?.enquiryId) && (
-                                    <div className="ml-auto flex gap-6 text-[10px] font-bold uppercase tracking-wider">
+                                    <div className="sm:ml-auto flex gap-6 text-[10px] font-bold uppercase tracking-wider">
                                         <div className="text-right">
                                             <div className="text-[var(--text-muted)] mb-0.5">Created By</div>
                                             <div className="text-[var(--text-primary)]">{currentEnquiry?.createdBy?.fullName || '—'}</div>
