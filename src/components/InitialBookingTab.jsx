@@ -118,7 +118,7 @@ const InitialBookingTab = ({ enquiryId, enquiry, onBookingCreated, onEditCustome
     return (
         <form onSubmit={handleSubmit} className="space-y-12 animate-fade-in">
             {/* Select Vehicle */}
-            <div className="card p-8 relative overflow-hidden group border-[var(--border)]">
+            <div className="card p-4 sm:p-8 relative overflow-hidden group border-[var(--border)]">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center text-[var(--accent)]">
                         <CarIcon size={20} />
@@ -191,7 +191,7 @@ const InitialBookingTab = ({ enquiryId, enquiry, onBookingCreated, onEditCustome
             </div>
 
             {/* Financial Details */}
-            <div className="card p-8 border border-[var(--border)]">
+            <div className="card p-4 sm:p-8 border border-[var(--border)]">
                 <div className="flex items-center gap-3 mb-8">
                     <div className="w-10 h-10 bg-emerald-600/10 rounded-lg flex items-center justify-center text-emerald-600">
                         <IndianRupee size={20} />
@@ -289,7 +289,7 @@ const InitialBookingTab = ({ enquiryId, enquiry, onBookingCreated, onEditCustome
             {/* Regulatory & Verification */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* RTO Options */}
-                <div className="card p-8 border border-[var(--border)] flex flex-col">
+                <div className="card p-4 sm:p-8 border border-[var(--border)] flex flex-col">
                     <div className="flex items-center gap-3 mb-8">
                         <div className="w-10 h-10 bg-amber-600/10 rounded-lg flex items-center justify-center text-amber-600">
                             <Calendar size={20} />
@@ -389,7 +389,7 @@ const InitialBookingTab = ({ enquiryId, enquiry, onBookingCreated, onEditCustome
                 </div>
 
                 {/* Verification */}
-                <div className="card p-8 border border-[var(--border)]">
+                <div className="card p-4 sm:p-8 border border-[var(--border)]">
                     <div className="flex items-center gap-3 mb-8">
                         <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center text-[var(--accent)]">
                             <X size={20} className="rotate-45" />
@@ -460,7 +460,7 @@ const InitialBookingTab = ({ enquiryId, enquiry, onBookingCreated, onEditCustome
                 <button
                     type="submit"
                     disabled={submitting}
-                    className="btn-primary text-base px-16 py-4 flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+                    className="btn-primary text-sm sm:text-base px-8 sm:px-16 py-3 sm:py-4 flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
                 >
                     {submitting ? (
                         <>

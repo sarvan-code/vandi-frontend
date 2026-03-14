@@ -68,11 +68,11 @@ const FinanceWorkspaceContent = ({ enquiryId, tabId, onComplete }) => {
         <div className="space-y-6">
             {/* Financial Summary Card */}
             {booking && (
-                <div className="card p-6 border border-[var(--border)] shadow-sm relative overflow-hidden">
+                <div className="card p-4 sm:p-6 border border-[var(--border)] shadow-sm relative overflow-hidden">
                     {/* Subtle Indigo Accent for Financial Context */}
                     <div className="absolute top-0 left-0 w-1 h-full bg-[var(--accent)] opacity-20"></div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 relative z-10">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <IndianRupee size={14} className="text-[var(--text-muted)]" />
@@ -163,7 +163,7 @@ const FinanceWorkspaceContent = ({ enquiryId, tabId, onComplete }) => {
                     <div className="mt-6 pt-6 border-t border-[var(--border)] relative z-10">
                         <p className="text-[var(--text-muted)] text-[9px] uppercase tracking-widest font-bold mb-3">Contractual Commitments</p>
                         <div className="bg-[var(--bg-tertiary)]/50 p-4 rounded-xl border border-[var(--border)]">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                                 {booking.commitments && Object.entries(booking.commitments).map(([key, val]) => (
                                     <div key={key} className="flex flex-col gap-1">
                                         <span className="text-[var(--text-muted)] text-[8px] uppercase font-bold">{key.replace(/([A-Z])/g, ' $1')}</span>

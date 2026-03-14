@@ -149,7 +149,7 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, onEditCustomer, readO
                     </div>
                 </div>
 
-                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Vehicle Metadata */}
                     <div className="bg-[var(--bg-tertiary)] rounded-xl p-6 border border-[var(--border)] relative overflow-hidden group">
                         <div className="relative z-10">
@@ -209,7 +209,7 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, onEditCustomer, readO
                     </div>
                     <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Payment Records</h3>
                 </div>
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         <div className="bg-[var(--bg-secondary)] border border-[var(--border)] p-4 rounded-xl">
                             <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-1">Contract Value</p>
@@ -280,7 +280,7 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, onEditCustomer, readO
                         </h3>
                     </div>
 
-                    <div className="p-6">
+                    <div className="p-4 sm:p-6">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="space-y-2">
                                 <label className="form-label ml-1 text-amber-900/70">Final Payment (₹)</label>
@@ -328,8 +328,8 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, onEditCustomer, readO
                         <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-400">Delivery Confirmation</h3>
                     </div>
 
-                    <div className="p-6">
-                        <div className="bg-[var(--bg-tertiary)] rounded-xl p-8 mb-8 border border-[var(--border)] relative overflow-hidden">
+                    <div className="p-4 sm:p-6">
+                        <div className="bg-[var(--bg-tertiary)] rounded-xl p-4 sm:p-8 mb-8 border border-[var(--border)] relative overflow-hidden">
                             <div className="relative z-10">
                                 <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-4">Customer Acceptance</p>
                                 <p className="text-[var(--text-primary)] font-bold italic text-base leading-relaxed mb-8 max-w-2xl opacity-70">
@@ -372,7 +372,7 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, onEditCustomer, readO
 
             {/* Final Success State & Invoice Download */}
             {booking.status === 'completed' && (
-                <div className="card p-8 border border-emerald-200 bg-emerald-50/20 flex flex-col items-center gap-6 animate-in zoom-in-95 duration-500">
+                <div className="card p-4 sm:p-8 border border-emerald-200 bg-emerald-50/20 flex flex-col items-center gap-6 animate-in zoom-in-95 duration-500">
                     <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
                         <CheckCircle size={32} />
                     </div>

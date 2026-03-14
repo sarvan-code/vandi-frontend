@@ -209,7 +209,7 @@ const ActiveManagementTab = ({ booking, onUpdate, onEditCustomer }) => {
         <div className="space-y-12 animate-fade-in">
             {/* Status Transition Action */}
             {booking.status !== 'ready_for_delivery' && booking.status !== 'COMPLETED' && (
-                <div className="card p-6 border border-[var(--border)] bg-[var(--bg-tertiary)] flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="card p-4 sm:p-6 border border-[var(--border)] bg-[var(--bg-tertiary)] flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-amber-600/10 rounded-lg flex items-center justify-center text-amber-600">
                             <Plus size={24} className="rotate-45" />
@@ -258,7 +258,7 @@ const ActiveManagementTab = ({ booking, onUpdate, onEditCustomer }) => {
                 </div>
 
                 {showPaymentForm && (
-                    <form onSubmit={handlePaymentSubmit} className="p-8 bg-[var(--bg-secondary)] border-b border-[var(--border)] animate-in slide-in-from-top-4 duration-300">
+                    <form onSubmit={handlePaymentSubmit} className="p-4 sm:p-8 bg-[var(--bg-secondary)] border-b border-[var(--border)] animate-in slide-in-from-top-4 duration-300">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                             <div className="space-y-2">
                                 <label className="form-label ml-1">Payment Amount (₹)</label>
@@ -435,7 +435,7 @@ const ActiveManagementTab = ({ booking, onUpdate, onEditCustomer }) => {
                             </div>
                         </form>
                     )}
-                    <div className="p-6 flex-1 overflow-auto max-h-[500px] no-scrollbar">
+                    <div className="p-4 sm:p-6 flex-1 overflow-auto max-h-[500px] no-scrollbar">
                         {booking.followUps && booking.followUps.length > 0 ? (
                             <div className="space-y-8 relative before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-[1px] before:bg-[var(--border)]">
                                 {booking.followUps.map((followUp) => (
@@ -489,7 +489,7 @@ const ActiveManagementTab = ({ booking, onUpdate, onEditCustomer }) => {
                             Update RTO
                         </button>
                     </div>
-                    <div className="p-6 flex-1 space-y-8">
+                    <div className="p-4 sm:p-6 flex-1 space-y-8">
                         {booking?.enquiry?.customer && (
                             <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-500">
                                 <CustomerContactInfo 
