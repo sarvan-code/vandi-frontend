@@ -1,14 +1,317 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import api from '../api';
 import { useNavigate } from 'react-router-dom';
-import { Users, FileText, Calendar, Car, UserPlus, UserX, CheckCircle, XCircle, Database, Clock, ArrowRight, Activity, Zap, Search, TrendingUp } from 'lucide-react';
+import {
+    Users, FileText, Calendar, UserPlus, UserX, CheckCircle,
+    XCircle, Database, Clock, ArrowRight, Activity, Zap, Search,
+    TrendingUp, ChevronDown, Building2, User
+} from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
+import clsx from 'clsx';
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const today = () => new Date().toISOString().split('T')[0];
+
+const formatCount = (n) => (n === undefined || n === null ? '—' : String(n));
+
+// ─── Date Range Mode Helpers ──────────────────────────────────────────────────
+
+const MODES = [
+    { id: 'day',   label: 'Day' },
+    { id: 'range', label: 'Range' },
+    { id: 'month', label: 'Month' },
+    { id: 'year',  label: 'Year' },
+];
+
+const currentYear = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: 10 }, (_, i) => currentYear - i);
+
+/** Given a mode + its inputs, return { startDate, endDate } as ISO date strings */
+const resolveDateRange = (mode, { day, rangeFrom, rangeTo, month, year }) => {
+    const clampToday = (d) => (d > today() ? today() : d);
+    switch (mode) {
+        case 'day':
+            return { startDate: day, endDate: day };
+        case 'range':
+            return { startDate: rangeFrom, endDate: clampToday(rangeTo) };
+        case 'month': {
+            // month value from <input type="month"> is "YYYY-MM"
+            if (!month) return { startDate: today(), endDate: today() };
+            const [y, m] = month.split('-').map(Number);
+            const start  = `${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}-01`;
+            // Last day of month
+            const lastDay = new Date(y, m, 0).getDate();
+            const end     = `${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+            return { startDate: start, endDate: clampToday(end) };
+        }
+        case 'year': {
+            const y = year || currentYear;
+            return {
+                startDate: `${y}-01-01`,
+                endDate: clampToday(`${y}-12-31`),
+            };
+        }
+        default:
+            return { startDate: today(), endDate: today() };
+    }
+};
+
+// ─── Period label shown inside stat card ──────────────────────────────────────
+
+const periodLabel = (mode, { day, rangeFrom, rangeTo, month, year }) => {
+    switch (mode) {
+        case 'day':   return day === today() ? 'Today' : day;
+        case 'range': return `${rangeFrom} → ${rangeTo}`;
+        case 'month': return month || '—';
+        case 'year':  return String(year || currentYear);
+        default:      return '';
+    }
+};
+
+// ─── Activity Block ───────────────────────────────────────────────────────────
+
+const DailyActivityBlock = ({ user }) => {
+    const role = user?.role;
+    const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE'].includes(role);
+    const isSalesMgr  = role === 'SALES_MGR';
+    const showUserDropdown = isSuperUser || isSalesMgr;
+
+    // ── Date mode state ──
+    const [mode, setMode]           = useState('day');
+    const [day, setDay]             = useState(today());
+    const [rangeFrom, setRangeFrom] = useState(today());
+    const [rangeTo, setRangeTo]     = useState(today());
+    const [month, setMonth]         = useState(() => today().slice(0, 7)); // "YYYY-MM"
+    const [year, setYear]           = useState(currentYear);
+
+    // ── Filter state ──
+    const [branchId, setBranchId]   = useState('');
+    const [userId, setUserId]       = useState('');
+
+    // ── Data state ──
+    const [stats, setStats]         = useState({ enquiryCount: null, followUpCount: null });
+    const [loading, setLoading]     = useState(false);
+    const [branches, setBranches]   = useState([]);
+    const [salesUsers, setSalesUsers] = useState([]);
+    const [usersLoading, setUsersLoading] = useState(false);
+
+    // Fetch branches once (super users)
+    useEffect(() => {
+        if (!isSuperUser) return;
+        api.get('/branches').then(r => setBranches(r.data)).catch(() => {});
+    }, [isSuperUser]);
+
+    // Fetch assignable users on branch change
+    useEffect(() => {
+        if (!showUserDropdown) return;
+        setUsersLoading(true);
+        setUserId('');
+        const params = {};
+        if (branchId) params.branchId = branchId;
+        api.get('/users/assignable', { params })
+            .then(r => setSalesUsers(r.data))
+            .catch(() => setSalesUsers([]))
+            .finally(() => setUsersLoading(false));
+    }, [branchId, showUserDropdown]);
+
+    // Fetch stats on any filter / date change
+    const dateInputs = { day, rangeFrom, rangeTo, month, year };
+    const fetchStats = useCallback(async () => {
+        const { startDate, endDate } = resolveDateRange(mode, dateInputs);
+        if (!startDate || !endDate) return;
+        setLoading(true);
+        try {
+            const params = { startDate, endDate };
+            if (isSuperUser && branchId) params.branchId = branchId;
+            if ((isSuperUser || isSalesMgr) && userId) params.userId = userId;
+            const res = await api.get('/dashboard/daily-stats', { params });
+            setStats(res.data);
+        } catch {
+            setStats({ enquiryCount: 0, followUpCount: 0 });
+        } finally {
+            setLoading(false);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mode, day, rangeFrom, rangeTo, month, year, branchId, userId, isSuperUser, isSalesMgr]);
+
+    useEffect(() => { fetchStats(); }, [fetchStats]);
+
+    const label = periodLabel(mode, dateInputs);
+    const maxMonth = today().slice(0, 7);
+
+    return (
+        <div className="card overflow-hidden border border-[var(--border)] shadow-sm">
+            {/* ── Header ── */}
+            <div className="px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-tertiary)]">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                    {/* Title */}
+                    <div className="flex items-center gap-3 flex-1">
+                        <div className="w-8 h-8 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center text-[var(--accent)]">
+                            <Activity size={16} />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-[var(--text-primary)]">Activity Stats</h3>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+                                {isSuperUser ? 'All Branches' : 'Your Branch'} · {role === 'SALES_REP' ? 'Personal Stats' : 'Filterable Stats'}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Controls */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        {/* Mode Tabs */}
+                        <div className="flex rounded-lg overflow-hidden border border-[var(--border)] bg-[var(--bg-secondary)]">
+                            {MODES.map(m => (
+                                <button
+                                    key={m.id}
+                                    onClick={() => setMode(m.id)}
+                                    className={clsx(
+                                        'px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all',
+                                        mode === m.id
+                                            ? 'bg-[var(--accent)] text-white shadow-sm'
+                                            : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                                    )}
+                                >
+                                    {m.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Date Inputs — vary by mode */}
+                        {mode === 'day' && (
+                            <input type="date" value={day} max={today()}
+                                onChange={e => setDay(e.target.value)}
+                                className="input-field text-xs font-bold py-1.5 px-3 cursor-pointer" />
+                        )}
+                        {mode === 'range' && (
+                            <div className="flex items-center gap-1">
+                                <input type="date" value={rangeFrom} max={today()}
+                                    onChange={e => setRangeFrom(e.target.value)}
+                                    className="input-field text-xs font-bold py-1.5 px-3 cursor-pointer" style={{ minWidth: 120 }} />
+                                <span className="text-[var(--text-muted)] text-xs font-bold">→</span>
+                                <input type="date" value={rangeTo} min={rangeFrom} max={today()}
+                                    onChange={e => setRangeTo(e.target.value)}
+                                    className="input-field text-xs font-bold py-1.5 px-3 cursor-pointer" style={{ minWidth: 120 }} />
+                            </div>
+                        )}
+                        {mode === 'month' && (
+                            <input type="month" value={month} max={maxMonth}
+                                onChange={e => setMonth(e.target.value)}
+                                className="input-field text-xs font-bold py-1.5 px-3 cursor-pointer" />
+                        )}
+                        {mode === 'year' && (
+                            <div className="relative">
+                                <select value={year} onChange={e => setYear(Number(e.target.value))}
+                                    className="input-field text-xs font-bold py-1.5 px-3 pr-7 cursor-pointer appearance-none">
+                                    {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                            </div>
+                        )}
+
+                        {/* Branch Dropdown — Super Users only */}
+                        {isSuperUser && (
+                            <div className="relative">
+                                <Building2 size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                                <select value={branchId} onChange={e => setBranchId(e.target.value)}
+                                    className="input-field text-xs font-bold py-1.5 pl-7 pr-7 cursor-pointer appearance-none" style={{ minWidth: 140 }}>
+                                    <option value="">All Branches</option>
+                                    {branches.map(b => <option key={b.id} value={b.id}>{b.displayName}</option>)}
+                                </select>
+                                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                            </div>
+                        )}
+
+                        {/* User Dropdown — SALES_MGR + Super Users */}
+                        {showUserDropdown && (
+                            <div className="relative">
+                                <User size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                                <select value={userId} onChange={e => setUserId(e.target.value)}
+                                    disabled={usersLoading}
+                                    className="input-field text-xs font-bold py-1.5 pl-7 pr-7 cursor-pointer appearance-none disabled:opacity-60" style={{ minWidth: 160 }}>
+                                    <option value="">All Users</option>
+                                    {salesUsers.map(u => (
+                                        <option key={u.userId} value={u.userId}>
+                                            {u.fullName} ({u.role.replace('_', ' ')})
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Stat Cards ── */}
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* Enquiries */}
+                <div className="bg-amber-50/60 border border-amber-100 rounded-xl p-6 relative overflow-hidden group hover:shadow-md transition-all">
+                    <div className="absolute top-0 right-0 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <FileText size={80} className="text-amber-600" />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600">
+                                <FileText size={20} />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Enquiries Assigned</p>
+                                <p className="text-[10px] text-amber-500 font-semibold">{label}</p>
+                            </div>
+                        </div>
+                        <div className={clsx('transition-all', loading && 'opacity-40 blur-[1px]')}>
+                            <h2 className="text-5xl font-black text-amber-700 tracking-tighter">
+                                {formatCount(stats.enquiryCount)}
+                            </h2>
+                            <p className="text-xs text-amber-600/70 font-semibold mt-2 uppercase tracking-wide">
+                                {role === 'SALES_REP' ? 'Assigned to you' : userId ? 'For selected user' : 'All users in scope'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Follow-ups */}
+                <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-6 relative overflow-hidden group hover:shadow-md transition-all">
+                    <div className="absolute top-0 right-0 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Calendar size={80} className="text-indigo-600" />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600">
+                                <Calendar size={20} />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-700">Follow-ups Added</p>
+                                <p className="text-[10px] text-indigo-500 font-semibold">{label}</p>
+                            </div>
+                        </div>
+                        <div className={clsx('transition-all', loading && 'opacity-40 blur-[1px]')}>
+                            <h2 className="text-5xl font-black text-indigo-700 tracking-tighter">
+                                {formatCount(stats.followUpCount)}
+                            </h2>
+                            <p className="text-xs text-indigo-600/70 font-semibold mt-2 uppercase tracking-wide">
+                                {role === 'SALES_REP' ? 'Added by you' : userId ? 'For selected user' : 'All users in scope'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 const Dashboard = () => {
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
     const [stats, setStats] = useState({});
     const [loading, setLoading] = useState(true);
+
+    const role = user?.role;
+    const isSalesRole = ['SALES_REP', 'SALES_MGR', 'APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE'].includes(role);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -21,12 +324,10 @@ const Dashboard = () => {
                 setLoading(false);
             }
         };
-
         fetchStats();
     }, []);
 
     const getCards = () => {
-        const role = user?.role;
         const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE'].includes(role);
 
         if (role === 'ACCOUNTANT') {
@@ -70,8 +371,8 @@ const Dashboard = () => {
     }
 
     return (
-        <div className="animate-fade-in">
-            <header className="mb-10">
+        <div className="animate-fade-in space-y-10">
+            <header>
                 <div className="flex items-center gap-6">
                     <div className="w-16 h-16 bg-[var(--accent)]/10 rounded-2xl flex items-center justify-center text-[var(--accent)] shadow-sm border border-[var(--accent)]/20">
                         <Activity size={32} />
@@ -82,8 +383,12 @@ const Dashboard = () => {
                     </div>
                 </div>
             </header>
+            
+            {/* Daily Activity Block — visible to all sales roles (Moved to First Block) */}
+            {isSalesRole && <DailyActivityBlock user={user} />}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+            {/* Summary Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {cards.map((card, idx) => (
                     <div key={idx} className="card p-8 hover:shadow-lg transition-all relative overflow-hidden group">
                         <div className="flex items-center justify-between mb-8">
@@ -102,6 +407,7 @@ const Dashboard = () => {
                 ))}
             </div>
 
+            {/* Bottom Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Recent Activity */}
                 <div className="lg:col-span-2 card p-8">
@@ -114,7 +420,6 @@ const Dashboard = () => {
                             Activity Logs
                         </p>
                     </div>
-
                     <div className="flex flex-col items-center justify-center py-20 rounded-2xl border-2 border-dashed border-[var(--border)] bg-[var(--bg-secondary)]/30">
                         <div className="w-16 h-16 bg-[var(--bg-tertiary)] rounded-full flex items-center justify-center mb-6 shadow-sm border">
                             <Database size={28} className="text-[var(--text-muted)] opacity-50" />
@@ -134,16 +439,16 @@ const Dashboard = () => {
                                     <Search size={22} />
                                 </div>
                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] mb-1">Enquiries</span>
-                                <span className="text-sm font-bold text-[var(--text-primary)] group-hover:translate-x-1 transition-transform flex items-center gap-2"> Access Enquiries <ArrowRight size={14} /> </span>
+                                <span className="text-sm font-bold text-[var(--text-primary)] group-hover:translate-x-1 transition-transform flex items-center gap-2">Access Enquiries <ArrowRight size={14} /></span>
                             </button>
 
-                            {(user?.role === 'ACCOUNTANT' || ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE'].includes(user?.role)) ? (
+                            {(role === 'ACCOUNTANT' || ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE'].includes(role)) ? (
                                 <button onClick={() => navigate('/bookings')} className="group flex flex-col p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)] hover:border-emerald-500 hover:shadow-xl transition-all shadow-sm active:scale-95 text-left">
                                     <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shadow-sm group-hover:bg-emerald-600 group-hover:text-white transition-all mb-4">
                                         <TrendingUp size={22} />
                                     </div>
                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-900/40 mb-1">Bookings</span>
-                                    <span className="text-sm font-bold text-emerald-900 group-hover:translate-x-1 transition-transform flex items-center gap-2"> Manage Bookings <ArrowRight size={14} /> </span>
+                                    <span className="text-sm font-bold text-emerald-900 group-hover:translate-x-1 transition-transform flex items-center gap-2">Manage Bookings <ArrowRight size={14} /></span>
                                 </button>
                             ) : (
                                 <button onClick={() => navigate('/followups')} className="group flex flex-col p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)] hover:border-amber-500 hover:shadow-xl transition-all shadow-sm active:scale-95 text-left">
@@ -151,7 +456,7 @@ const Dashboard = () => {
                                         <Calendar size={22} />
                                     </div>
                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/40 mb-1">Follow-ups</span>
-                                    <span className="text-sm font-bold text-amber-900 group-hover:translate-x-1 transition-transform flex items-center gap-2"> Manage Follow-ups <ArrowRight size={14} /> </span>
+                                    <span className="text-sm font-bold text-amber-900 group-hover:translate-x-1 transition-transform flex items-center gap-2">Manage Follow-ups <ArrowRight size={14} /></span>
                                 </button>
                             )}
 
@@ -165,9 +470,7 @@ const Dashboard = () => {
                                         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60">Tip</span>
                                     </div>
                                     <h4 className="text-xl font-bold mb-3 tracking-tight">Navigation Tip</h4>
-                                    <p className="text-white/80 leading-relaxed text-xs">
-                                        Use the sidebar to quickly access different modules.
-                                    </p>
+                                    <p className="text-white/80 leading-relaxed text-xs">Use the sidebar to quickly access different modules.</p>
                                 </div>
                             </div>
                         </div>
@@ -179,4 +482,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
