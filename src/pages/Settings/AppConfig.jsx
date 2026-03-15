@@ -614,7 +614,23 @@ const OptionRelationManager = ({ showToast }) => {
     const handleCreateRelation = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/option-relations', newRelation);
+            // Find the actual option objects to get category and value
+            const parentOpt = parentOptions.find(o => String(o.id) === String(newRelation.parentOptionId));
+            const childOpt = childOptions.find(o => String(o.id) === String(newRelation.childOptionId));
+
+            if (!parentOpt || !childOpt) {
+                showToast("Source/Target options not found", "error");
+                return;
+            }
+
+            const payload = {
+                parentCategory: parentOpt.category,
+                parentValue: parentOpt.value,
+                childCategory: childOpt.category,
+                childValue: childOpt.value
+            };
+
+            await api.post('/option-relations', payload);
             showToast("Relation created successfully", "success");
             fetchRelations();
             setNewRelation({ parentOptionId: '', childOptionId: '' });
