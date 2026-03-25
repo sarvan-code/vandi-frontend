@@ -40,7 +40,27 @@ const InitialBookingTab = ({ enquiryId, enquiry, onBookingCreated, onEditCustome
             photos: false,
             pan: false,
             aadhar: false
-        }
+        },
+        // New fields
+        billNo: '',
+        rtoPerson: '',
+        remarks: '',
+        engineNo: '',
+        chassisNo: '',
+        color: '',
+        mfgYear: '',
+        kilometerage: '',
+        priceBreakdown: {
+            vehiclePrice: '',
+            rtoCharges: '',
+            insurance: '',
+            secondKey: ''
+        },
+        financeDetails: {
+            companyName: '',
+            amountFinanced: ''
+        },
+        warrantyApplied: false
     });
 
     const [selectedCar, setSelectedCar] = useState(null);
@@ -96,7 +116,19 @@ const InitialBookingTab = ({ enquiryId, enquiry, onBookingCreated, onEditCustome
                 nomineeName: formData.registrationType === 'OTHER' ? formData.nomineeName : null,
                 nomineeAddress: formData.registrationType === 'OTHER' ? formData.nomineeAddress : null,
                 nomineePhone: formData.registrationType === 'OTHER' ? formData.nomineePhone : null,
-                documentsSubmitted: formData.documentsSubmitted
+                documentsSubmitted: formData.documentsSubmitted,
+                // New fields
+                billNo: formData.billNo,
+                priceBreakdown: formData.priceBreakdown,
+                financeDetails: formData.financeDetails,
+                rtoPerson: formData.rtoPerson,
+                remarks: formData.remarks,
+                engineNo: formData.engineNo,
+                chassisNo: formData.chassisNo,
+                color: formData.color,
+                mfgYear: formData.mfgYear,
+                kilometerage: formData.kilometerage,
+                warrantyApplied: formData.warrantyApplied
             });
             showToast('Booking created successfully!', 'success');
             onBookingCreated(response.data);
@@ -130,31 +162,92 @@ const InitialBookingTab = ({ enquiryId, enquiry, onBookingCreated, onEditCustome
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="space-y-3">
-                        <label className="form-label ml-1">
-                            Search for Car
-                        </label>
-                        <VehicleAutocomplete
-                            value={formData.carRegistration}
-                            onChange={(val) => {
-                                if (typeof val === 'object' && val !== null) {
-                                    setFormData({
-                                        ...formData,
-                                        carId: val.carId,
-                                        carRegistration: val.registrationNumber
-                                    });
-                                    setSelectedCar(val);
-                                } else {
-                                    setFormData({
-                                        ...formData,
-                                        carRegistration: val,
-                                        carId: ''
-                                    });
-                                    setSelectedCar(null);
-                                }
-                            }}
-                            placeholder="Search by ID, make or model..."
-                        />
+                    <div className="space-y-6">
+                        <div className="space-y-3">
+                            <label className="form-label ml-1">
+                                Search for Car
+                            </label>
+                            <VehicleAutocomplete
+                                value={formData.carRegistration}
+                                onChange={(val) => {
+                                    if (typeof val === 'object' && val !== null) {
+                                        setFormData({
+                                            ...formData,
+                                            carId: val.carId,
+                                            carRegistration: val.registrationNumber,
+                                            // Pre-fill some defaults if available
+                                            engineNo: val.engineNo || '',
+                                            chassisNo: val.chassisNo || '',
+                                            color: val.color || '',
+                                            mfgYear: val.manufacturingYear || '',
+                                            kilometerage: val.kilometerage || ''
+                                        });
+                                        setSelectedCar(val);
+                                    } else {
+                                        setFormData({
+                                            ...formData,
+                                            carRegistration: val,
+                                            carId: ''
+                                        });
+                                        setSelectedCar(null);
+                                    }
+                                }}
+                                placeholder="Search by ID, make or model..."
+                            />
+                        </div>
+
+                        {/* Extended Car Details */}
+                        <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase ml-1">Engine No</label>
+                                <input 
+                                    type="text" 
+                                    value={formData.engineNo}
+                                    onChange={(e) => setFormData({...formData, engineNo: e.target.value})}
+                                    className="input-field p-2 text-xs font-bold"
+                                    placeholder="Engine number..."
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase ml-1">Chassis No</label>
+                                <input 
+                                    type="text" 
+                                    value={formData.chassisNo}
+                                    onChange={(e) => setFormData({...formData, chassisNo: e.target.value})}
+                                    className="input-field p-2 text-xs font-bold"
+                                    placeholder="Chassis number..."
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase ml-1">Color / Year</label>
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        value={formData.color}
+                                        onChange={(e) => setFormData({...formData, color: e.target.value})}
+                                        className="input-field p-2 text-xs font-bold w-1/2"
+                                        placeholder="Color"
+                                    />
+                                    <input 
+                                        type="text" 
+                                        value={formData.mfgYear}
+                                        onChange={(e) => setFormData({...formData, mfgYear: e.target.value})}
+                                        className="input-field p-2 text-xs font-bold w-1/2"
+                                        placeholder="Year"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase ml-1">Kilometers</label>
+                                <input 
+                                    type="number" 
+                                    value={formData.kilometerage}
+                                    onChange={(e) => setFormData({...formData, kilometerage: e.target.value})}
+                                    className="input-field p-2 text-xs font-bold"
+                                    placeholder="KM reading..."
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     {selectedCar && (
@@ -191,27 +284,67 @@ const InitialBookingTab = ({ enquiryId, enquiry, onBookingCreated, onEditCustome
             </div>
 
             {/* Financial Details */}
-            <div className="card p-4 sm:p-8 border border-[var(--border)]">
-                <div className="flex items-center gap-3 mb-8">
-                    <div className="w-10 h-10 bg-emerald-600/10 rounded-lg flex items-center justify-center text-emerald-600">
-                        <IndianRupee size={20} />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                    <div className="space-y-3">
+                        <label className="form-label ml-1">Vehicle Price (₹)</label>
+                        <input
+                            type="number"
+                            value={formData.priceBreakdown.vehiclePrice}
+                            onChange={(e) => setFormData({ 
+                                ...formData, 
+                                priceBreakdown: { ...formData.priceBreakdown, vehiclePrice: e.target.value },
+                                agreedPrice: e.target.value // Sync with total for simple flow if needed
+                            })}
+                            className="input-field p-3 font-bold"
+                            placeholder="Basic price..."
+                        />
                     </div>
-                    <div>
-                        <h3 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Payment Details</h3>
-                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-0.5">Payment and responsibility details</p>
+                    <div className="space-y-3">
+                        <label className="form-label ml-1">RTO Charges (₹)</label>
+                        <input
+                            type="number"
+                            value={formData.priceBreakdown.rtoCharges}
+                            onChange={(e) => setFormData({ 
+                                ...formData, 
+                                priceBreakdown: { ...formData.priceBreakdown, rtoCharges: e.target.value } 
+                            })}
+                            className="input-field p-3 font-bold"
+                        />
+                    </div>
+                    <div className="space-y-3">
+                        <label className="form-label ml-1">Insurance (₹)</label>
+                        <input
+                            type="number"
+                            value={formData.priceBreakdown.insurance}
+                            onChange={(e) => setFormData({ 
+                                ...formData, 
+                                priceBreakdown: { ...formData.priceBreakdown, insurance: e.target.value } 
+                            })}
+                            className="input-field p-3 font-bold"
+                        />
+                    </div>
+                    <div className="space-y-3">
+                        <label className="form-label ml-1">Bill / SL No</label>
+                        <input
+                            type="text"
+                            value={formData.billNo}
+                            onChange={(e) => setFormData({ ...formData, billNo: e.target.value })}
+                            className="input-field p-3 font-bold"
+                            placeholder="e.g. 5042"
+                        />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
                     <div className="space-y-3">
                         <label className="form-label ml-1">
-                            Agreed Price (₹)
+                            Final Negotiated Price (₹)
                         </label>
                         <input
                             type="number"
                             value={formData.agreedPrice}
                             onChange={(e) => setFormData({ ...formData, agreedPrice: e.target.value })}
-                            className="input-field p-3 font-bold text-lg"
+                            className="input-field p-3 font-bold text-lg border-emerald-500/30 bg-emerald-50/10"
                             placeholder="Final Value..."
                             required
                         />
@@ -237,54 +370,73 @@ const InitialBookingTab = ({ enquiryId, enquiry, onBookingCreated, onEditCustome
                     </div>
                 </div>
 
-                {selectedCar && formData.agreedPrice && (
-                    <div className="bg-rose-50 dark:bg-rose-900/10 p-6 rounded-xl border border-rose-100 dark:border-rose-900/20 animate-in fade-in slide-in-from-bottom-2 mb-10">
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-rose-500/10 rounded-full flex items-center justify-center text-rose-600">
-                                    <IndianRupee size={16} />
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-rose-900 dark:text-rose-400 uppercase tracking-tight">Total Discount</p>
-                                    <p className="text-[9px] font-bold text-rose-500 uppercase tracking-widest">Discount on showroom price</p>
-                                </div>
-                            </div>
-                            <p className="text-2xl font-extrabold text-rose-600 tracking-tight">
-                                ₹{totalNegotiatedDiscount.toLocaleString('en-IN')}
-                            </p>
-                        </div>
+                {/* Finance Section */}
+                <div className="bg-[var(--bg-tertiary)] p-6 rounded-xl border border-[var(--border)] mb-10">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                        Finance Details (Optional)
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input 
+                            type="text" 
+                            placeholder="Finance Company Name"
+                            value={formData.financeDetails.companyName}
+                            onChange={(e) => setFormData({
+                                ...formData,
+                                financeDetails: { ...formData.financeDetails, companyName: e.target.value }
+                            })}
+                            className="input-field p-3 text-sm font-bold"
+                        />
+                        <input 
+                            type="number" 
+                            placeholder="Amount to be Financed"
+                            value={formData.financeDetails.amountFinanced}
+                            onChange={(e) => setFormData({
+                                ...formData,
+                                financeDetails: { ...formData.financeDetails, amountFinanced: e.target.value }
+                            })}
+                            className="input-field p-3 text-sm font-bold"
+                        />
                     </div>
-                )}
+                </div>
 
                 {/* Responsibility Options */}
                 <div className="mt-8">
-                    <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-6 text-center flex items-center justify-center gap-4">
-                        <span className="w-8 h-[1px] bg-[var(--border)]"></span>
-                        Work Responsibilities
-                        <span className="w-8 h-[1px] bg-[var(--border)]"></span>
-                    </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {Object.entries(formData.commitments).map(([key, value]) => (
-                            <div key={key} className="p-3 card bg-[var(--bg-tertiary)] border-[var(--border)] shadow-none hover:bg-[var(--bg-secondary)] transition-all">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-bold text-[var(--text-primary)] uppercase tracking-tight">{key.replace(/([A-Z])/g, ' $1')}</span>
-                                    <select
-                                        value={value}
-                                        onChange={(e) => setFormData({
-                                            ...formData,
-                                            commitments: { ...formData.commitments, [key]: e.target.value }
-                                        })}
-                                        className="bg-transparent font-bold text-[9px] text-[var(--accent)] uppercase tracking-wider focus:outline-none cursor-pointer"
-                                    >
-                                        <option value="COMPANY">Showroom</option>
-                                        <option value="CUSTOMER">Customer</option>
-                                    </select>
-                                </div>
+                        <div className="p-3 card bg-[var(--bg-tertiary)] border-[var(--border)] shadow-none">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-[var(--text-primary)] uppercase tracking-tight">Warranty</span>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        className="sr-only peer"
+                                        checked={formData.warrantyApplied}
+                                        onChange={(e) => setFormData({...formData, warrantyApplied: e.target.checked})}
+                                    />
+                                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--accent)]"></div>
+                                </label>
                             </div>
-                        ))}
+                        </div>
+                        <div className="p-3 card bg-[var(--bg-tertiary)] border-[var(--border)] shadow-none col-span-2">
+                            <input 
+                                type="text" 
+                                placeholder="RTO Person Name/Contact (Optional)"
+                                value={formData.rtoPerson}
+                                onChange={(e) => setFormData({...formData, rtoPerson: e.target.value})}
+                                className="bg-transparent w-full text-xs font-bold focus:outline-none"
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
+
+                <div className="mt-6">
+                    <textarea 
+                        placeholder="Additional Remarks / Notes..."
+                        value={formData.remarks}
+                        onChange={(e) => setFormData({...formData, remarks: e.target.value})}
+                        className="input-field p-3 text-xs font-bold w-full h-16 resize-none"
+                    />
+                </div>
 
             {/* Regulatory & Verification */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

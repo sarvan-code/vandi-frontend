@@ -385,7 +385,7 @@ const FinalDeliveryTab = ({ booking, onUpdate, onComplete, onEditCustomer, readO
                         className="btn-primary !bg-emerald-600 hover:!bg-emerald-700 !px-12 !py-4 flex items-center gap-3 shadow-lg"
                     >
                         <FileText size={20} />
-                        Download Final Invoice
+                        Download Agreement for Sale
                     </button>
                 </div>
             )}
