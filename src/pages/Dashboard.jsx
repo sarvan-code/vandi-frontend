@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Users, FileText, Calendar, UserPlus, UserX, CheckCircle,
     XCircle, Database, Clock, ArrowRight, Activity, Zap, Search,
-    TrendingUp, ChevronDown, Building2, User
+    TrendingUp, ChevronDown, Building2, User, Car, ShoppingCart, Package
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import clsx from 'clsx';
@@ -302,6 +302,236 @@ const DailyActivityBlock = ({ user }) => {
     );
 };
 
+// ─── Vehicle Stats Block ──────────────────────────────────────────────────────
+
+const VehicleStatsBlock = ({ user }) => {
+    const role = user?.role;
+    const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE'].includes(role);
+
+    // ── Date mode state ──
+    const [mode, setMode]           = useState('day');
+    const [day, setDay]             = useState(today());
+    const [rangeFrom, setRangeFrom] = useState(today());
+    const [rangeTo, setRangeTo]     = useState(today());
+    const [month, setMonth]         = useState(() => today().slice(0, 7));
+    const [year, setYear]           = useState(currentYear);
+
+    // ── Filter state ──
+    const [branchId, setBranchId]   = useState('');
+
+    // ── Data state ──
+    const [stats, setStats]         = useState({ stockCount: null, addedCount: null, bookedCount: null, deliveredCount: null });
+    const [loading, setLoading]     = useState(false);
+    const [branches, setBranches]   = useState([]);
+
+    // Fetch branches once (super users)
+    useEffect(() => {
+        if (!isSuperUser) return;
+        api.get('/branches').then(r => setBranches(r.data)).catch(() => {});
+    }, [isSuperUser]);
+
+    const dateInputs = { day, rangeFrom, rangeTo, month, year };
+    const fetchStats = useCallback(async () => {
+        const { startDate, endDate } = resolveDateRange(mode, dateInputs);
+        if (!startDate || !endDate) return;
+        setLoading(true);
+        try {
+            const params = { startDate, endDate };
+            if (isSuperUser && branchId) params.branchId = branchId;
+            const res = await api.get('/dashboard/vehicle-stats', { params });
+            setStats(res.data);
+        } catch {
+            setStats({ stockCount: 0, addedCount: 0, bookedCount: 0, deliveredCount: 0 });
+        } finally {
+            setLoading(false);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mode, day, rangeFrom, rangeTo, month, year, branchId, isSuperUser]);
+
+    useEffect(() => { fetchStats(); }, [fetchStats]);
+
+    const label = periodLabel(mode, dateInputs);
+    const maxMonth = today().slice(0, 7);
+
+    return (
+        <div className="card overflow-hidden border border-[var(--border)] shadow-sm">
+            {/* ── Header ── */}
+            <div className="px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-tertiary)]">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                    <div className="flex items-center gap-3 flex-1">
+                        <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-600">
+                            <Car size={16} />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-[var(--text-primary)]">Vehicle Stats</h3>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+                                {isSuperUser ? 'All Branches' : 'Your Branch'} · Performance & Inventory
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex rounded-lg overflow-hidden border border-[var(--border)] bg-[var(--bg-secondary)]">
+                            {MODES.map(m => (
+                                <button
+                                    key={m.id}
+                                    onClick={() => setMode(m.id)}
+                                    className={clsx(
+                                        'px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all',
+                                        mode === m.id
+                                            ? 'bg-blue-600 text-white shadow-sm'
+                                            : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                                    )}
+                                >
+                                    {m.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {mode === 'day' && (
+                            <input type="date" value={day} max={today()}
+                                onChange={e => setDay(e.target.value)}
+                                className="input-field text-xs font-bold py-1.5 px-3 cursor-pointer" />
+                        )}
+                        {mode === 'range' && (
+                            <div className="flex items-center gap-1">
+                                <input type="date" value={rangeFrom} max={today()}
+                                    onChange={e => setRangeFrom(e.target.value)}
+                                    className="input-field text-xs font-bold py-1.5 px-3 cursor-pointer" style={{ minWidth: 120 }} />
+                                <span className="text-[var(--text-muted)] text-xs font-bold">→</span>
+                                <input type="date" value={rangeTo} min={rangeFrom} max={today()}
+                                    onChange={e => setRangeTo(e.target.value)}
+                                    className="input-field text-xs font-bold py-1.5 px-3 cursor-pointer" style={{ minWidth: 120 }} />
+                            </div>
+                        )}
+                        {mode === 'month' && (
+                            <input type="month" value={month} max={maxMonth}
+                                onChange={e => setMonth(e.target.value)}
+                                className="input-field text-xs font-bold py-1.5 px-3 cursor-pointer" />
+                        )}
+                        {mode === 'year' && (
+                            <div className="relative">
+                                <select value={year} onChange={e => setYear(Number(e.target.value))}
+                                    className="input-field text-xs font-bold py-1.5 px-3 pr-7 cursor-pointer appearance-none">
+                                    {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                            </div>
+                        )}
+
+                        {isSuperUser && (
+                            <div className="relative">
+                                <Building2 size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                                <select value={branchId} onChange={e => setBranchId(e.target.value)}
+                                    className="input-field text-xs font-bold py-1.5 pl-7 pr-7 cursor-pointer appearance-none" style={{ minWidth: 140 }}>
+                                    <option value="">All Branches</option>
+                                    {branches.map(b => <option key={b.id} value={b.id}>{b.displayName}</option>)}
+                                </select>
+                                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Stock - Total Ready for Sale */}
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-6 relative overflow-hidden group hover:shadow-md transition-all">
+                    <div className="absolute top-0 right-0 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Package size={80} className="text-slate-600" />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600">
+                                <Package size={20} />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Stock Count</p>
+                                <p className="text-[10px] text-slate-500 font-semibold italic">Ready for Sale</p>
+                            </div>
+                        </div>
+                        <div className={clsx('transition-all', loading && 'opacity-40 blur-[1px]')}>
+                            <h2 className="text-5xl font-black text-slate-700 tracking-tighter">
+                                {formatCount(stats.stockCount)}
+                            </h2>
+                            <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-wide">Current Snapshot</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Cars Added */}
+                <div className="bg-emerald-50/60 border border-emerald-100 rounded-xl p-6 relative overflow-hidden group hover:shadow-md transition-all">
+                    <div className="absolute top-0 right-0 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Car size={80} className="text-emerald-600" />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
+                                <Car size={20} />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">Cars Added</p>
+                                <p className="text-[10px] text-emerald-500 font-semibold">{label}</p>
+                            </div>
+                        </div>
+                        <div className={clsx('transition-all', loading && 'opacity-40 blur-[1px]')}>
+                            <h2 className="text-5xl font-black text-emerald-700 tracking-tighter">
+                                {formatCount(stats.addedCount)}
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Cars Booked */}
+                <div className="bg-blue-50/60 border border-blue-100 rounded-xl p-6 relative overflow-hidden group hover:shadow-md transition-all">
+                    <div className="absolute top-0 right-0 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <ShoppingCart size={80} className="text-blue-600" />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+                                <ShoppingCart size={20} />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-blue-700">Cars Booked</p>
+                                <p className="text-[10px] text-blue-500 font-semibold">{label}</p>
+                            </div>
+                        </div>
+                        <div className={clsx('transition-all', loading && 'opacity-40 blur-[1px]')}>
+                            <h2 className="text-5xl font-black text-blue-700 tracking-tighter">
+                                {formatCount(stats.bookedCount)}
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Cars Delivered */}
+                <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-6 relative overflow-hidden group hover:shadow-md transition-all">
+                    <div className="absolute top-0 right-0 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <CheckCircle size={80} className="text-indigo-600" />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600">
+                                <CheckCircle size={20} />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-700">Cars Delivered</p>
+                                <p className="text-[10px] text-indigo-500 font-semibold">{label}</p>
+                            </div>
+                        </div>
+                        <div className={clsx('transition-all', loading && 'opacity-40 blur-[1px]')}>
+                            <h2 className="text-5xl font-black text-indigo-700 tracking-tighter">
+                                {formatCount(stats.deliveredCount)}
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 const Dashboard = () => {
@@ -385,7 +615,12 @@ const Dashboard = () => {
             </header>
             
             {/* Daily Activity Block — visible to all sales roles (Moved to First Block) */}
-            {isSalesRole && <DailyActivityBlock user={user} />}
+            {isSalesRole && (
+                <div className="space-y-6">
+                    <DailyActivityBlock user={user} />
+                    <VehicleStatsBlock user={user} />
+                </div>
+            )}
 
             {/* Summary Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
