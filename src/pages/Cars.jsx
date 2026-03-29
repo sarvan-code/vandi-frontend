@@ -75,6 +75,7 @@ const Cars = () => {
         make: '',
         carType: '',
         model: '',
+        modelTypeId: '',
         variant: ''
     });
 
@@ -99,14 +100,16 @@ const Cars = () => {
                     break;
                 case 'Model':
                     newValue = newMasterValues.model;
+                    const selectedTypeIdForModel = newMasterValues.modelTypeId || (selectedTypeObj ? selectedTypeObj.id : null);
+                    
                     if (!newValue) return showToast('Please enter a Model name', 'warning');
                     if (!currentCar.make || !selectedBrandObj) return showToast('Please select a valid Brand first', 'warning');
-                    if (!currentCar.carType || !selectedTypeObj) return showToast('Please select a valid Type first', 'warning');
+                    if (!selectedTypeIdForModel) return showToast('Please select a valid Type first', 'warning');
 
                     payload = {
                         name: newValue,
                         brandId: selectedBrandObj.id,
-                        typeId: selectedTypeObj.id
+                        typeId: selectedTypeIdForModel
                     };
                     endpoint = '/vehicles/models';
                     break;
@@ -145,9 +148,16 @@ const Cars = () => {
                     break;
                 case 'Model':
                     setManualEntry(prev => ({ ...prev, model: false }));
-                    setNewMasterValues(prev => ({ ...prev, model: '' }));
-                    // Since model depends on brand/type, these should be set already
-                    setCurrentCar(prev => ({ ...prev, model: newValue }));
+                    const createdModelTypeId = newMasterValues.modelTypeId || (selectedTypeObj ? selectedTypeObj.id : null);
+                    const matchingTypeObj = vehicleTypes.find(t => t.id === Number(createdModelTypeId));
+                    
+                    setNewMasterValues(prev => ({ ...prev, model: '', modelTypeId: '' }));
+                    
+                    setCurrentCar(prev => ({ 
+                        ...prev, 
+                        model: newValue,
+                        carType: matchingTypeObj ? matchingTypeObj.name : prev.carType 
+                    }));
                     break;
                 case 'Variant':
                     setManualEntry(prev => ({ ...prev, variant: false }));
@@ -176,7 +186,7 @@ const Cars = () => {
                 break;
             case 'Model':
                 setManualEntry(prev => ({ ...prev, model: false }));
-                setNewMasterValues(prev => ({ ...prev, model: '' }));
+                setNewMasterValues(prev => ({ ...prev, model: '', modelTypeId: '' }));
                 setCurrentCar(prev => ({ ...prev, model: '' }));
                 break;
             case 'Variant':
@@ -297,9 +307,11 @@ const Cars = () => {
     const typesForBrand = selectedBrandObj
         ? new Set(vehicleModels.filter(m => m.brandId === selectedBrandObj.id).map(m => m.typeId))
         : null;
-    const availableTypes = (selectedBrandObj && typesForBrand && typesForBrand.size > 0)
+    
+    // Strict filtering based on Selected Manufacturer Brand
+    const availableTypes = selectedBrandObj
         ? vehicleTypes.filter(t => typesForBrand.has(t.id))
-        : vehicleTypes; // Fallback to all types if Brand allows it or no models yet
+        : [];
 
     const typeTerm = (currentCar?.carType || '').trim().toLowerCase();
     const selectedTypeObj = vehicleTypes.find(t => t.name.toLowerCase() === typeTerm);
@@ -589,11 +601,12 @@ const Cars = () => {
                                 <label className="form-label">Vehicle Segment</label>
                                 <select
                                     className="input-field font-semibold"
-                                    value={manualEntry.carType ? '__OTHER__' : (currentCar?.carType || '')}
+                                    value={currentCar?.carType || ''}
                                     onChange={(e) => {
                                         if (e.target.value === '__OTHER__') {
-                                            setManualEntry(prev => ({ ...prev, carType: true }));
-                                            setCurrentCar({ ...currentCar, carType: '' });
+                                            setManualEntry(prev => ({ ...prev, carType: false, model: true }));
+                                            setCurrentCar({ ...currentCar, carType: '', model: '', variant: '' });
+                                            setNewMasterValues(prev => ({ ...prev, modelTypeId: '' }));
                                         } else {
                                             setManualEntry(prev => ({ ...prev, carType: false }));
                                             setCurrentCar({ ...currentCar, carType: e.target.value, model: '', variant: '' });
@@ -606,35 +619,6 @@ const Cars = () => {
                                     {availableTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
                                     <option value="__OTHER__">Other (Add New)</option>
                                 </select>
-                                {manualEntry.carType && (
-                                    <div className="mt-3 relative">
-                                        <input
-                                            type="text"
-                                            className="input-field pr-24"
-                                            placeholder="Enter New Type"
-                                            value={newMasterValues.carType}
-                                            onChange={(e) => setNewMasterValues({ ...newMasterValues, carType: e.target.value })}
-                                        />
-                                        <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleCreateMaster('Type')}
-                                                className="bg-indigo-600 text-white p-1.5 rounded-xl hover:bg-indigo-700 shadow-md transition-all"
-                                                title="Save to Master"
-                                            >
-                                                <Plus size={16} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleCancelMaster('Type')}
-                                                className="bg-slate-200 text-slate-600 p-1.5 rounded-xl hover:bg-slate-300 transition-all"
-                                                title="Cancel"
-                                            >
-                                                <X size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
 
                             {/* MODEL */}
@@ -647,10 +631,12 @@ const Cars = () => {
                                         if (e.target.value === '__OTHER__') {
                                             setManualEntry(prev => ({ ...prev, model: true }));
                                             setCurrentCar({ ...currentCar, model: '' });
+                                            const typeObj = vehicleTypes.find(t => t.name.toLowerCase() === (currentCar?.carType || '').trim().toLowerCase());
+                                            setNewMasterValues(prev => ({ ...prev, modelTypeId: typeObj ? typeObj.id : '' }));
                                         } else {
                                             setManualEntry(prev => ({ ...prev, model: false }));
                                             setCurrentCar({ ...currentCar, model: e.target.value, variant: '' });
-                                            setNewMasterValues(prev => ({ ...prev, model: '' }));
+                                            setNewMasterValues(prev => ({ ...prev, model: '', modelTypeId: '' }));
                                         }
                                     }}
                                     required={!manualEntry.make}
@@ -660,31 +646,47 @@ const Cars = () => {
                                     <option value="__OTHER__">Other (Add New)</option>
                                 </select>
                                 {manualEntry.model && (
-                                    <div className="mt-3 relative">
-                                        <input
-                                            type="text"
-                                            className="input-field pr-24"
-                                            placeholder="Enter New Model"
-                                            value={newMasterValues.model}
-                                            onChange={(e) => setNewMasterValues({ ...newMasterValues, model: e.target.value })}
-                                        />
-                                        <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleCreateMaster('Model')}
-                                                className="bg-indigo-600 text-white p-1.5 rounded-xl hover:bg-indigo-700 shadow-md transition-all"
-                                                title="Save to Master"
+                                    <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl relative space-y-3 shadow-inner">
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1.5 block">Vehicle Segment</label>
+                                            <select
+                                                className="input-field py-2 text-sm"
+                                                value={newMasterValues.modelTypeId || ''}
+                                                onChange={(e) => setNewMasterValues({ ...newMasterValues, modelTypeId: e.target.value })}
                                             >
-                                                <Plus size={16} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleCancelMaster('Model')}
-                                                className="bg-slate-200 text-slate-600 p-1.5 rounded-xl hover:bg-slate-300 transition-all"
-                                                title="Cancel"
-                                            >
-                                                <X size={16} />
-                                            </button>
+                                                <option value="">Select Type</option>
+                                                {vehicleTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1.5 block">Enter New Model Name</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    className="input-field pr-24"
+                                                    placeholder="Enter New Model"
+                                                    value={newMasterValues.model}
+                                                    onChange={(e) => setNewMasterValues({ ...newMasterValues, model: e.target.value })}
+                                                />
+                                                <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCreateMaster('Model')}
+                                                        className="bg-indigo-600 text-white p-1.5 rounded-xl hover:bg-indigo-700 shadow-md transition-all"
+                                                        title="Save to Master"
+                                                    >
+                                                        <Plus size={16} />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCancelMaster('Model')}
+                                                        className="bg-slate-200 text-slate-600 p-1.5 rounded-xl hover:bg-slate-300 transition-all"
+                                                        title="Cancel"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
