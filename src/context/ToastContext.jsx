@@ -49,7 +49,7 @@ export const ToastProvider = ({ children }) => {
         <ToastContext.Provider value={{ showToast }}>
             {children}
             <div
-                className="fixed right-4 z-[9998] flex flex-col gap-2 pointer-events-none"
+                className="fixed right-4 z-[9999999] flex flex-col gap-2 pointer-events-none"
                 style={{ bottom: 'calc(1rem + var(--safe-area-bottom))' }}
             >
                 {toasts.map(toast => (

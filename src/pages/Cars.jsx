@@ -89,12 +89,18 @@ const Cars = () => {
                 case 'Brand':
                     newValue = newMasterValues.make;
                     if (!newValue) return showToast('Please enter a Brand name', 'warning');
+                    if (vehicleBrands.some(b => b.name.toLowerCase() === newValue.toLowerCase().trim())) {
+                        return showToast('This Brand already exists. Please choose it from the list.', 'warning');
+                    }
                     payload = { name: newValue };
                     endpoint = '/vehicles/brands';
                     break;
                 case 'Type':
                     newValue = newMasterValues.carType;
                     if (!newValue) return showToast('Please enter a Type', 'warning');
+                    if (vehicleTypes.some(t => t.name.toLowerCase() === newValue.toLowerCase().trim())) {
+                        return showToast('This Type already exists. Please choose it from the list.', 'warning');
+                    }
                     payload = { name: newValue };
                     endpoint = '/vehicles/types';
                     break;
@@ -105,6 +111,10 @@ const Cars = () => {
                     if (!newValue) return showToast('Please enter a Model name', 'warning');
                     if (!currentCar.make || !selectedBrandObj) return showToast('Please select a valid Brand first', 'warning');
                     if (!selectedTypeIdForModel) return showToast('Please select a valid Type first', 'warning');
+                    
+                    if (vehicleModels.some(m => m.name.toLowerCase() === newValue.toLowerCase().trim() && Number(m.brandId) === Number(selectedBrandObj.id))) {
+                        return showToast('This Model already exists for this Brand.', 'warning');
+                    }
 
                     payload = {
                         name: newValue,
@@ -117,6 +127,10 @@ const Cars = () => {
                     newValue = newMasterValues.variant;
                     if (!newValue) return showToast('Please enter a Variant name', 'warning');
                     if (!currentCar.model || !selectedModelObj) return showToast('Please select a valid Model first', 'warning');
+                    
+                    if (vehicleVariants.some(v => v.name.toLowerCase() === newValue.toLowerCase().trim() && Number(v.modelId) === Number(selectedModelObj.id))) {
+                         return showToast('This Variant already exists for this Model.', 'warning');
+                    }
 
                     payload = {
                         name: newValue,
@@ -332,7 +346,7 @@ const Cars = () => {
 
     // Variant Logic
     const modelTerm = (currentCar?.model || '').trim().toLowerCase();
-    const selectedModelObj = filteredModels.find(m => m.name.toLowerCase() === modelTerm);
+    const selectedModelObj = vehicleModels.find(m => m.name.toLowerCase().trim() === modelTerm && Number(m.brandId) === Number(selectedBrandObj?.id));
 
     // If Model is manual -> No filtered variants
     const filteredVariants = vehicleVariants.filter(v => {
@@ -548,52 +562,15 @@ const Cars = () => {
                                 <label className="form-label">Manufacturer Brand</label>
                                 <select
                                     className="input-field font-semibold"
-                                    value={manualEntry.make ? '__OTHER__' : (currentCar?.make || '')}
+                                    value={currentCar?.make || ''}
                                     onChange={(e) => {
-                                        if (e.target.value === '__OTHER__') {
-                                            setManualEntry(prev => ({ ...prev, make: true }));
-                                            setCurrentCar({ ...currentCar, make: '' });
-                                        } else {
-                                            setManualEntry(prev => ({ ...prev, make: false }));
-                                            setCurrentCar({ ...currentCar, make: e.target.value, carType: '', model: '', variant: '' });
-                                            setNewMasterValues(prev => ({ ...prev, make: '' }));
-                                        }
+                                        setCurrentCar({ ...currentCar, make: e.target.value, carType: '', model: '', variant: '' });
                                     }}
                                     required
                                 >
                                     <option value="">Select Brand</option>
                                     {vehicleBrands.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
-                                    <option value="__OTHER__">Other (Add New)</option>
                                 </select>
-                                {manualEntry.make && (
-                                    <div className="mt-3 relative">
-                                        <input
-                                            type="text"
-                                            className="input-field pr-24"
-                                            placeholder="Enter New Brand"
-                                            value={newMasterValues.make}
-                                            onChange={(e) => setNewMasterValues({ ...newMasterValues, make: e.target.value })}
-                                        />
-                                        <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleCreateMaster('Brand')}
-                                                className="bg-indigo-600 text-white p-1.5 rounded-xl hover:bg-indigo-700 shadow-md transition-all"
-                                                title="Save to Master"
-                                            >
-                                                <Plus size={16} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleCancelMaster('Brand')}
-                                                className="bg-slate-200 text-slate-600 p-1.5 rounded-xl hover:bg-slate-300 transition-all"
-                                                title="Cancel"
-                                            >
-                                                <X size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
 
                             {/* TYPE */}
@@ -742,6 +719,67 @@ const Cars = () => {
                                         </div>
                                     </div>
                                 )}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6 p-6 rounded-xl border shadow-inner mb-8 bg-[var(--bg-secondary)]" style={{ borderColor: 'var(--border)' }}>
+                            <div className="col-span-2 flex items-center gap-3 mb-2">
+                                <div className="w-8 h-8 bg-slate-500/10 rounded-lg flex items-center justify-center text-[var(--text-secondary)]">
+                                    <Filter size={14} />
+                                </div>
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-secondary)]">Identification & Usage</label>
+                            </div>
+                            <div className="col-span-2 md:col-span-1 space-y-2">
+                                <label className="form-label">Color Description</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Pearl White"
+                                    className="input-field font-semibold"
+                                    value={currentCar?.color || ''}
+                                    onChange={(e) => setCurrentCar({ ...currentCar, color: e.target.value })}
+                                />
+                            </div>
+                            <div className="col-span-2 md:col-span-1 space-y-2">
+                                <label className="form-label">Manufacturing Year</label>
+                                <input
+                                    type="text"
+                                    placeholder="YYYY"
+                                    className="input-field font-semibold"
+                                    maxLength="4"
+                                    value={currentCar?.mfgYear || ''}
+                                    onChange={(e) => setCurrentCar({ ...currentCar, mfgYear: e.target.value.replace(/\D/g, '') })}
+                                />
+                            </div>
+                            <div className="col-span-2 md:col-span-1 space-y-2">
+                                <label className="form-label">Engine Number</label>
+                                <input
+                                    type="text"
+                                    className="input-field font-semibold uppercase"
+                                    placeholder="Engine No."
+                                    value={currentCar?.engineNo || ''}
+                                    onChange={(e) => setCurrentCar({ ...currentCar, engineNo: e.target.value.toUpperCase() })}
+                                />
+                            </div>
+                            <div className="col-span-2 md:col-span-1 space-y-2">
+                                <label className="form-label">Chassis Number / VIN</label>
+                                <input
+                                    type="text"
+                                    className="input-field font-semibold uppercase"
+                                    placeholder="Chassis No."
+                                    value={currentCar?.chassisNo || ''}
+                                    onChange={(e) => setCurrentCar({ ...currentCar, chassisNo: e.target.value.toUpperCase() })}
+                                />
+                            </div>
+                            <div className="col-span-2 space-y-2">
+                                <label className="form-label">Odometer Reading (KM)</label>
+                                <input
+                                    type="number"
+                                    placeholder="0"
+                                    min="0"
+                                    className="input-field font-semibold"
+                                    value={currentCar?.kilometerage || ''}
+                                    onChange={(e) => setCurrentCar({ ...currentCar, kilometerage: e.target.value ? parseInt(e.target.value, 10) : '' })}
+                                />
                             </div>
                         </div>
 

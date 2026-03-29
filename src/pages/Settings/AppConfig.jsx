@@ -20,22 +20,22 @@ const AppConfig = () => {
             </header>
 
             {/* Main Tabs */}
-            <div className="flex bg-[var(--bg-secondary)] p-1.5 rounded-[2rem] mb-10 self-start border border-[var(--border)] backdrop-blur-sm">
+            <div className="flex overflow-x-auto no-scrollbar items-center gap-6 sm:gap-8 border-b border-[var(--border)] mb-10 pb-0 w-full">
                 <button
                     onClick={() => setActiveTab('general')}
-                    className={`px-8 py-3 font-bold text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 transition-all rounded-full ${activeTab === 'general' ? 'bg-[var(--accent)] text-white shadow-xl shadow-[var(--accent)]/30 scale-[1.05]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                    className={`pb-4 pt-2 font-bold text-[10px] sm:text-xs uppercase tracking-[0.2em] flex items-center shrink-0 gap-2 sm:gap-3 transition-all border-b-2 ${activeTab === 'general' ? 'border-[var(--accent)] text-[var(--accent)]' : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 >
                     <SettingsIcon size={16} /> Settings & Categories
                 </button>
                 <button
                     onClick={() => setActiveTab('vehicles')}
-                    className={`px-8 py-3 font-bold text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 transition-all rounded-full ${activeTab === 'vehicles' ? 'bg-[var(--accent)] text-white shadow-xl shadow-[var(--accent)]/30 scale-[1.05]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                    className={`pb-4 pt-2 font-bold text-[10px] sm:text-xs uppercase tracking-[0.2em] flex items-center shrink-0 gap-2 sm:gap-3 transition-all border-b-2 ${activeTab === 'vehicles' ? 'border-[var(--accent)] text-[var(--accent)]' : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 >
                     <Car size={16} /> Vehicle Master
                 </button>
                 <button
                     onClick={() => setActiveTab('relations')}
-                    className={`px-8 py-3 font-bold text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 transition-all rounded-full ${activeTab === 'relations' ? 'bg-[var(--accent)] text-white shadow-xl shadow-[var(--accent)]/30 scale-[1.05]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                    className={`pb-4 pt-2 font-bold text-[10px] sm:text-xs uppercase tracking-[0.2em] flex items-center shrink-0 gap-2 sm:gap-3 transition-all border-b-2 ${activeTab === 'relations' ? 'border-[var(--accent)] text-[var(--accent)]' : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 >
                     <Plus size={16} /> Relationship Manager
                 </button>
@@ -127,8 +127,8 @@ const GeneralOptionsManager = ({ showToast }) => {
                 <div className="card border border-[var(--border)] overflow-hidden animate-fade-in-up">
                     <div className="p-8 border-b border-[var(--border)] flex justify-between items-center bg-[var(--bg-tertiary)]/40">
                         <div>
-                            <h3 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">{selectedCategory} Taxonomy</h3>
-                            <p className="text-[10px] text-[var(--accent)] font-black uppercase tracking-[0.2em] mt-2 opacity-60">Constituent Population</p>
+                            <h3 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">{selectedCategory} Options</h3>
+                            <p className="text-[10px] text-[var(--accent)] font-black uppercase tracking-[0.2em] mt-2 opacity-60">List of options for this category</p>
                         </div>
                     </div>
                     {loading ? (
@@ -141,8 +141,8 @@ const GeneralOptionsManager = ({ showToast }) => {
                             <table className="w-full text-left">
                                 <thead className="bg-[var(--bg-secondary)] text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] border-b border-[var(--border)]">
                                     <tr>
-                                        <th className="px-8 py-6">System Code</th>
-                                        <th className="px-8 py-6">Display Name</th>
+                                        <th className="px-8 py-6">Value</th>
+                                        <th className="px-8 py-6">Label</th>
                                         <th className="px-8 py-6 text-center">Status</th>
                                         <th className="px-8 py-6 text-right">Actions</th>
                                     </tr>
@@ -202,32 +202,32 @@ const GeneralOptionsManager = ({ showToast }) => {
                 <Modal
                     isOpen={!!editingOption}
                     onClose={() => setEditingOption(null)}
-                    title={editingOption.id ? 'Refine Technical Specification' : 'Provision New Option'}
-                    subtitle="Organizational Master Data"
+                    title={editingOption.id ? 'Edit Option' : 'Add New Option'}
+                    subtitle="Manage Option Details"
                     icon={SettingsIcon}
                     maxWidth="max-w-md"
                     footer={
-                        <>
+                        <div className="flex flex-col-reverse sm:flex-row justify-end w-full gap-4">
                             <button
                                 type="button"
                                 onClick={() => setEditingOption(null)}
-                                className="px-6 py-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] font-bold text-[10px] uppercase tracking-widest transition-all"
+                                className="px-6 py-3 w-full sm:w-auto text-[var(--text-muted)] hover:text-[var(--text-primary)] font-bold text-[10px] uppercase tracking-widest transition-all text-center"
                             >
-                                Cease Operations
+                                Cancel
                             </button>
                             <button
                                 type="submit"
                                 form="option-form"
-                                className="btn-primary py-3 px-8 text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-[var(--accent)]/20 active:scale-95 transition-all text-white"
+                                className="btn-primary py-3 px-8 w-full sm:w-auto text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-[var(--accent)]/20 active:scale-95 transition-all text-white text-center"
                             >
-                                Commit Structural Change
+                                Save Details
                             </button>
-                        </>
+                        </div>
                     }
                 >
                     <form id="option-form" onSubmit={handleSave} className="space-y-6">
                         <div>
-                            <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">System Code</label>
+                            <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Value Code</label>
                             <input
                                 className="input-field font-bold"
                                 value={editingOption.value}
@@ -237,7 +237,7 @@ const GeneralOptionsManager = ({ showToast }) => {
                             />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Display Name</label>
+                            <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Label</label>
                             <input
                                 className="input-field font-bold"
                                 value={editingOption.label || ''}
@@ -327,6 +327,24 @@ const VehicleMasterManager = ({ showToast }) => {
 
     const handleSave = async (e) => {
         e.preventDefault();
+
+        const lowerName = (editItem.name || '').trim().toLowerCase();
+        let isDuplicate = false;
+
+        if (subTab === 'types') {
+            isDuplicate = types.some(t => t.name.toLowerCase() === lowerName && t.id !== editItem.id);
+        } else if (subTab === 'brands') {
+            isDuplicate = brands.some(b => b.name.toLowerCase() === lowerName && b.id !== editItem.id);
+        } else if (subTab === 'models') {
+            isDuplicate = models.some(m => m.name.toLowerCase() === lowerName && Number(m.brandId) === Number(editItem.brandId) && m.id !== editItem.id);
+        } else if (subTab === 'variants') {
+            isDuplicate = variants.some(v => v.name.toLowerCase() === lowerName && Number(v.modelId) === Number(editItem.modelId) && v.id !== editItem.id);
+        }
+
+        if (isDuplicate) {
+            return showToast(`This ${subTab.slice(0, -1)} already exists. Please use a different name.`, 'warning');
+        }
+
         try {
             const endpoint = `/vehicles/${subTab}`; // types, brands, models, variants
             const payload = { ...editItem };
@@ -353,14 +371,14 @@ const VehicleMasterManager = ({ showToast }) => {
     };
 
     return (
-        <div className="space-y-8 animate-fade-in">
+        <div className="space-y-4 sm:space-y-8 animate-fade-in">
             {/* Sub Tabs */}
-            <div className="flex bg-[var(--bg-secondary)] p-1.5 rounded-2xl self-start w-fit border border-[var(--border)]">
+            <div className="flex overflow-x-auto no-scrollbar items-center gap-6 border-b border-[var(--border)] w-full pb-0 mb-6">
                 {['types', 'brands', 'models', 'variants'].map(tab => (
                     <button
                         key={tab}
                         onClick={() => setSubTab(tab)}
-                        className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] transition-all ${subTab === tab ? 'bg-[var(--accent)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                        className={`pb-3 pt-1 shrink-0 text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] transition-all border-b-2 ${subTab === tab ? 'border-[var(--accent)] text-[var(--accent)]' : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                     >
                         {tab.toUpperCase()}
                     </button>
@@ -372,13 +390,13 @@ const VehicleMasterManager = ({ showToast }) => {
                 <div className="flex flex-wrap gap-4">
                     {(subTab === 'models' || subTab === 'variants') && (
                         <div className="card flex items-center gap-4 px-5 py-2 border border-[var(--border)] shadow-sm transition-all focus-within:ring-2 focus-within:ring-[var(--accent)]/20 bg-[var(--bg-secondary)]">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] border-r border-[var(--border)] pr-5">Entity Filter</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] border-r border-[var(--border)] pr-5 hidden sm:inline-block">Entity Filter</span>
                             <select
-                                className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-bold text-[var(--text-primary)] min-w-[180px] cursor-pointer outline-none h-10 px-2 shadow-sm"
+                                className="bg-transparent border border-[var(--border)] sm:border-none rounded-md sm:focus:ring-0 focus:ring-1 focus:ring-[var(--accent)] text-sm font-bold text-[var(--text-primary)] min-w-[140px] sm:min-w-[180px] cursor-pointer outline-none h-10 px-2 sm:px-0 shadow-sm sm:shadow-none"
                                 value={filterBrandId}
                                 onChange={e => { setFilterBrandId(e.target.value); setFilterModelId(''); }}
                             >
-                                <option value="">Unified Organizational Hierarchy</option>
+                                <option value="">All Brands</option>
                                 {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                             </select>
                         </div>
@@ -399,23 +417,23 @@ const VehicleMasterManager = ({ showToast }) => {
                 </div>
                 <button
                     onClick={openNew}
-                    className="btn-primary flex items-center gap-3 px-8 py-3 text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-[var(--accent)]/30 active:scale-95 transition-all"
+                    className="btn-primary w-full md:w-auto flex items-center justify-center gap-3 px-8 py-3 text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-[var(--accent)]/30 active:scale-95 transition-all"
                 >
-                    <Plus size={20} /> Provision Technical Spec
+                    <Plus size={20} /> Add New
                 </button>
             </div>
 
             {/* List View */}
-            <div className="card shadow-2xl border border-slate-100 overflow-hidden">
+            <div className="card shadow-2xl border border-[var(--border)] overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className="bg-[var(--bg-secondary)] text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] border-b border-[var(--border)]">
                             <tr>
-                                <th className="px-8 py-6">Reference ID</th>
-                                <th className="px-8 py-6">Constituent Classification</th>
-                                {subTab === 'models' && <th className="px-8 py-6">Structural Alignment</th>}
-                                {subTab === 'variants' && <th className="px-8 py-6">Parent Model Hierarchy</th>}
-                                <th className="px-8 py-6 text-right">Registry Action</th>
+                                <th className="px-8 py-6">ID</th>
+                                <th className="px-8 py-6">Name</th>
+                                {subTab === 'models' && <th className="px-8 py-6">Brand / Type</th>}
+                                {subTab === 'variants' && <th className="px-8 py-6">Model Name</th>}
+                                <th className="px-8 py-6 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
@@ -472,7 +490,7 @@ const VehicleMasterManager = ({ showToast }) => {
                             {((subTab === 'types' && types.length === 0) || (subTab === 'brands' && brands.length === 0) || (subTab === 'models' && models.length === 0) || (subTab === 'variants' && variants.length === 0)) && (
                                 <tr>
                                     <td colSpan="5" className="px-8 py-20 text-center">
-                                        <p className="font-bold text-[var(--text-muted)] text-[10px] uppercase tracking-[0.3em] opacity-30">No technical specifications localized for the current selection.</p>
+                                        <p className="font-bold text-[var(--text-muted)] text-[10px] uppercase tracking-[0.3em] opacity-30">No items found for the current selection.</p>
                                     </td>
                                 </tr>
                             )}
@@ -485,49 +503,49 @@ const VehicleMasterManager = ({ showToast }) => {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={editItem?.id ? `Refine ${subTab.slice(0, -1).toUpperCase()}` : `Provision ${subTab.slice(0, -1).toUpperCase()}`}
-                subtitle="Technical Data Protocol"
+                title={editItem?.id ? `Edit ${subTab.slice(0, -1).toUpperCase()}` : `Add ${subTab.slice(0, -1).toUpperCase()}`}
+                subtitle="Details"
                 icon={Car}
                 maxWidth="max-w-md"
                 footer={
-                    <>
+                    <div className="flex flex-col-reverse sm:flex-row justify-end w-full gap-4">
                         <button
                             type="button"
                             onClick={() => setIsModalOpen(false)}
-                            className="px-6 py-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] font-bold text-[10px] uppercase tracking-widest transition-all"
+                            className="px-6 py-3 w-full sm:w-auto text-[var(--text-muted)] hover:text-[var(--text-primary)] font-bold text-[10px] uppercase tracking-widest transition-all text-center"
                         >
-                            Cease Operations
+                            Cancel
                         </button>
                         <button
                             type="submit"
                             form="vehicle-form"
-                            className="btn-primary py-3 px-8 text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-[var(--accent)]/20 active:scale-95 transition-all text-white"
+                            className="btn-primary py-3 px-8 w-full sm:w-auto text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-[var(--accent)]/20 active:scale-95 transition-all text-white text-center"
                         >
-                            Finalize Provisioning
+                            Save Details
                         </button>
-                    </>
+                    </div>
                 }
             >
                 {editItem && (
                     <form id="vehicle-form" onSubmit={handleSave} className="space-y-6">
                         <div>
-                            <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Item Code</label>
+                            <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Name</label>
                             <input className="input-field font-bold" value={editItem.name || ''} onChange={e => setEditItem({ ...editItem, name: e.target.value })} required placeholder={`e.g. BMW / LUXURY_ELITE`} />
                         </div>
 
                         {subTab === 'models' && (
                             <>
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Corporate Brand Portfolio</label>
+                                    <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Brand</label>
                                     <select className="input-field font-bold text-sm" value={editItem.brandId || ''} onChange={e => setEditItem({ ...editItem, brandId: e.target.value })} required>
-                                        <option value="">Select Brand Hierarchy...</option>
+                                        <option value="">Select Brand...</option>
                                         {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Vehicular Classification</label>
+                                    <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Type</label>
                                     <select className="input-field font-bold text-sm" value={editItem.typeId || ''} onChange={e => setEditItem({ ...editItem, typeId: e.target.value })} required>
-                                        <option value="">Select Type Designation...</option>
+                                        <option value="">Select Type...</option>
                                         {types.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                     </select>
                                 </div>
@@ -536,9 +554,9 @@ const VehicleMasterManager = ({ showToast }) => {
 
                         {subTab === 'variants' && (
                             <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Base Model Prototype</label>
+                                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3">Model</label>
                                 <select className="input-field font-bold text-sm" value={editItem.modelId || ''} onChange={e => setEditItem({ ...editItem, modelId: e.target.value })} required>
-                                    <option value="">Select Anchor Model...</option>
+                                    <option value="">Select Model...</option>
                                     {models.sort((a, b) => a.name.localeCompare(b.name)).map(m => <option key={m.id} value={m.id}>{m.name} ({m.brand?.name})</option>)}
                                 </select>
                             </div>
@@ -549,8 +567,8 @@ const VehicleMasterManager = ({ showToast }) => {
 
             <ConfirmDialog
                 isOpen={deleteConfirm.isOpen}
-                title="De-register Entity"
-                message={`Are you certain you wish to remove this ${deleteConfirm.type?.slice(0, -1)} specification? This action is irrevocable.`}
+                title="Delete Item"
+                message={`Are you sure you want to delete this ${deleteConfirm.type?.slice(0, -1)}? This action cannot be undone.`}
                 onConfirm={confirmDelete}
                 onCancel={() => setDeleteConfirm({ isOpen: false, id: null, type: null })}
             />
@@ -640,10 +658,10 @@ const OptionRelationManager = ({ showToast }) => {
     };
 
     const handleDeleteRelation = async (id) => {
-        if (!window.confirm("Are you certain you wish to dissolve this relationship?")) return;
+        if (!window.confirm("Are you sure you want to delete this relation?")) return;
         try {
             await api.delete(`/option-relations/${id}`);
-            showToast("Relation dissolved", "success");
+            showToast("Relation deleted", "success");
             fetchRelations();
         } catch (error) {
             showToast("Dissolution failed", "error");
@@ -653,17 +671,17 @@ const OptionRelationManager = ({ showToast }) => {
     return (
         <div className="space-y-10 animate-fade-in">
             {/* Creator Form */}
-            <div className="card p-10 border border-[var(--border)] relative overflow-hidden">
+            <div className="card p-6 sm:p-10 border border-[var(--border)] relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--accent)]/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-                <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight mb-10 flex items-center gap-4">
-                    <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-xl flex items-center justify-center text-[var(--accent)]">
+                <h3 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] tracking-tight mb-8 sm:mb-10 flex items-center gap-4">
+                    <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-xl flex items-center justify-center text-[var(--accent)] shrink-0">
                         <Plus size={20} />
                     </div>
-                    Relational Connectivity Architect
+                    Add New Relation
                 </h3>
-                <form onSubmit={handleCreateRelation} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-end">
+                <form onSubmit={handleCreateRelation} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 items-end">
                     <div className="space-y-4">
-                        <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1">A: Primary Domain</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1">Parent Category</label>
                         <select
                             className="input-field font-bold text-sm cursor-pointer"
                             value={parentCategory}
@@ -674,7 +692,7 @@ const OptionRelationManager = ({ showToast }) => {
                         </select>
                     </div>
                     <div className="space-y-4">
-                        <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1">Primary Constituent</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1">Parent Option</label>
                         <select
                             className="input-field font-bold text-sm cursor-pointer"
                             value={newRelation.parentOptionId}
@@ -687,7 +705,7 @@ const OptionRelationManager = ({ showToast }) => {
                         </select>
                     </div>
                     <div className="space-y-4">
-                        <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1">B: Secondary Domain</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1">Child Category</label>
                         <select
                             className="input-field font-bold text-sm cursor-pointer"
                             value={childCategory}
@@ -698,7 +716,7 @@ const OptionRelationManager = ({ showToast }) => {
                         </select>
                     </div>
                     <div className="space-y-4">
-                        <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1">Secondary Constituent</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1">Child Option</label>
                         <select
                             className="input-field font-bold text-sm cursor-pointer"
                             value={newRelation.childOptionId}
@@ -710,27 +728,27 @@ const OptionRelationManager = ({ showToast }) => {
                             {childOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.label || opt.value}</option>)}
                         </select>
                     </div>
-                    <div className="lg:col-span-4 flex justify-end pt-8 border-t border-[var(--border)]">
+                    <div className="col-span-1 md:col-span-2 lg:col-span-4 flex flex-col sm:flex-row justify-end pt-6 sm:pt-8 border-t border-[var(--border)]">
                         <button
                             type="submit"
-                            className="btn-primary py-3 px-10 text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-[var(--accent)]/20 active:scale-95 transition-all text-white flex items-center gap-3"
+                            className="btn-primary w-full sm:w-auto py-3 px-10 text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl shadow-[var(--accent)]/20 active:scale-95 transition-all text-white flex items-center justify-center gap-3"
                             disabled={!newRelation.parentOptionId || !newRelation.childOptionId}
                         >
-                            <Save size={18} /> Establish Relational Link
+                            <Save size={18} /> Save Relation
                         </button>
                     </div>
                 </form>
             </div>
 
             {/* List Table */}
-            <div className="card shadow-2xl border border-slate-100 overflow-hidden animate-fade-in-up">
-                <div className="p-8 border-b border-[var(--border)] flex justify-between items-center bg-[var(--bg-secondary)]/30">
+            <div className="card shadow-2xl border border-[var(--border)] overflow-hidden animate-fade-in-up">
+                <div className="p-6 sm:p-8 border-b border-[var(--border)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--bg-secondary)]/30">
                     <div>
-                        <h3 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">Established Relational Links</h3>
-                        <p className="text-[10px] text-[var(--accent)] font-black uppercase tracking-[0.2em] mt-2 opacity-60">Relationship Catalog</p>
+                        <h3 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">Relations List</h3>
+                        <p className="text-[10px] text-[var(--accent)] font-black uppercase tracking-[0.2em] mt-2 opacity-60">All parent-child relations</p>
                     </div>
-                    <button onClick={fetchRelations} className="text-[var(--accent)] font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-2">
-                        <Plus className="rotate-45" size={14} /> Clear Default Selections
+                    <button onClick={fetchRelations} className="text-[var(--accent)] font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-2 border border-[var(--accent)]/20 px-4 py-2 rounded-full sm:border-none sm:px-0 sm:py-0">
+                        <Plus className="rotate-45" size={14} /> Refresh
                     </button>
                 </div>
                 {loading ? (
@@ -743,10 +761,10 @@ const OptionRelationManager = ({ showToast }) => {
                         <table className="w-full text-left">
                             <thead className="bg-[var(--bg-secondary)] text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] border-b border-[var(--border)]">
                                 <tr>
-                                    <th className="px-8 py-6">Primary Domain Node (A)</th>
-                                    <th className="px-8 py-6 text-center">Structural Link</th>
-                                    <th className="px-8 py-6">Secondary Domain Node (B)</th>
-                                    <th className="px-8 py-6 text-right">Relational Action</th>
+                                    <th className="px-6 md:px-8 py-6">Parent</th>
+                                    <th className="px-6 md:px-8 py-6 text-center">Link</th>
+                                    <th className="px-6 md:px-8 py-6">Child</th>
+                                    <th className="px-6 md:px-8 py-6 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
