@@ -546,7 +546,7 @@ const Enquiries = () => {
                                                 </div>
                                             </div>
 
-                                            {(!currentEnquiry?.enquiryId || (['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE', 'SALES_MGR'].includes(user?.role))) && (
+                                            {(!currentEnquiry?.enquiryId || (['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE', 'SALES_MGR', 'BRANCH_MGR'].includes(user?.role))) && (
                                                 <div className="md:col-span-2">
                                                     <label className="form-label mb-3 block">Assigned To</label>
                                                     <select
@@ -959,7 +959,7 @@ const Enquiries = () => {
                             title: 'Edit Enquiry'
                         }] : []),
                         // Show Lead Workspace only if authorized and active
-                        ...((['SALES_REP', 'SALES_MGR', 'EXECUTIVE'].includes(user?.role) || isSuperUser) && ['new', 'in-followup'].includes(selectedEnquiry?.status) ? [{
+                        ...((['SALES_REP', 'SALES_MGR', 'BRANCH_MGR', 'EXECUTIVE'].includes(user?.role) || isSuperUser) && ['new', 'in-followup'].includes(selectedEnquiry?.status) ? [{
                             icon: Briefcase,
                             label: 'Lead Workspace',
                             onClick: (enq) => openWorkspaceWithEnquiry(enq.enquiryId, enq.customerId, enq.customer?.phone, enq.branchId, enq),

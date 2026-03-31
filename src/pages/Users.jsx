@@ -25,6 +25,7 @@ const Users = () => {
 
     const globalRoles = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE', 'HR_MGR', 'HR_ASSIS', 'AUTH_USER', 'GUEST'];
     const isGlobalUser = globalRoles.includes(user?.role);
+    const isBranchMgr = user?.role === 'BRANCH_MGR';
 
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -136,7 +137,7 @@ const Users = () => {
                     </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                    {isGlobalUser && (
+                    {(isGlobalUser && !isBranchMgr) && (
                         <div className="search-box !w-auto">
                             <Filter size={18} className="search-icon" />
                             <select

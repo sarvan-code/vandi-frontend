@@ -32,10 +32,11 @@ const Layout = () => {
         const isSales = ['SALES_REP', 'SALES_MGR'].includes(role);
         const isExecutive = role === 'EXECUTIVE';
         const isAccountant = role === 'ACCOUNTANT';
+        const isBranchMgr = role === 'BRANCH_MGR';
 
         navItems.push({ name: 'Dashboard', path: '/', icon: LayoutDashboard });
 
-        if (isSales || isExecutive || isSuperUser) {
+        if (isSales || isExecutive || isSuperUser || isBranchMgr) {
             navItems.push({
                 name: 'Lead Workspace',
                 icon: Briefcase,
@@ -44,16 +45,16 @@ const Layout = () => {
             navItems.push({ name: 'Enquiries', path: '/enquiries', icon: MessageSquare });
         }
 
-        if (isSuperUser || isExecutive) {
+        if (isSuperUser || isExecutive || isBranchMgr) {
             navItems.push({ name: 'Customers', path: '/customers', icon: Users });
             navItems.push({ name: 'Follow Ups', path: '/follow-ups', icon: Calendar });
         }
 
-        if (isSuperUser || isExecutive || isSales) {
+        if (isSuperUser || isExecutive || isSales || isBranchMgr) {
             navItems.push({ name: 'Cars', path: '/cars', icon: Car });
         }
 
-        if (isSuperUser || isAccountant) {
+        if (isSuperUser || isAccountant || isBranchMgr) {
             navItems.push({
                 name: 'Finance Workspace',
                 icon: IndianRupee,
@@ -68,7 +69,7 @@ const Layout = () => {
             navItems.push({ name: 'Bookings', path: '/bookings', icon: Database });
         }
 
-        if (isSuperUser || isExecutive || isHR) {
+        if (isSuperUser || isExecutive || isHR || isBranchMgr) {
             navItems.push({ name: 'Users', path: '/users', icon: Users });
         }
 

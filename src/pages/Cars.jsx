@@ -35,7 +35,7 @@ const Cars = () => {
 
     const globalRoles = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE', 'HR_MGR', 'HR_ASSIS', 'AUTH_USER', 'GUEST'];
     const isGlobalUser = globalRoles.includes(user?.role);
-    const canManageCars = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE', 'SALES_MGR'].includes(user?.role);
+    const canManageCars = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE', 'SALES_MGR', 'BRANCH_MGR'].includes(user?.role);
 
     useEffect(() => {
         fetchCars(pagination.page);
@@ -783,7 +783,7 @@ const Cars = () => {
                             </div>
                         </div>
 
-                        {!['SALES_MGR', 'SALES_REP'].includes(user?.role) && (
+                        {!['SALES_MGR', 'SALES_REP', 'BRANCH_MGR'].includes(user?.role) && (
                             <div className="space-y-2">
                                 <label className="form-label">Branch Store</label>
                                 <select

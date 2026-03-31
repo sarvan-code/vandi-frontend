@@ -20,6 +20,7 @@ const UserConfig = () => {
     const [selectedBranchId, setSelectedBranchId] = useState('');
     const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(currentUser?.role);
     const isHR = currentUser?.role === 'HR_MGR';
+    const isBranchMgr = currentUser?.role === 'BRANCH_MGR';
 
     const superRoles = ['APP_OWNER', 'SYS_ADMIN', 'DEV'];
 
@@ -121,7 +122,7 @@ const UserConfig = () => {
             password: '',
             role: 'SALES_REP',
             userStatus: 'NEW',
-            branchId: isHR ? currentUser.branchId : ''
+            branchId: (isHR || isBranchMgr) ? currentUser.branchId : ''
         });
         setIsCreateMode(true);
         setIsModalOpen(true);
@@ -247,7 +248,7 @@ const UserConfig = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                    {(isSuperUser || isHR) && (
+                    {((isSuperUser || isHR) && !isBranchMgr) && (
                         <div className="flex items-center gap-3 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl shadow-sm transition-all focus-within:ring-2 focus-within:ring-[var(--accent)]/20">
                             <Building size={18} className="text-[var(--text-muted)]" />
                             <select
@@ -310,7 +311,7 @@ const UserConfig = () => {
                                     color: 'blue',
                                     title: 'Edit Details'
                                 },
-                                ...(isSuperUser ? [{
+                                ...((isSuperUser || isBranchMgr) ? [{
                                     icon: Key,
                                     label: 'Reset Password',
                                     onClick: openResetPasswordModal,
@@ -430,7 +431,7 @@ const UserConfig = () => {
                                     ))}
                                 </select>
                             </div>
-                            {(isSuperUser || isHR || isCreateMode) && (
+                            {((isSuperUser || isHR || isCreateMode) && !isBranchMgr) && (
                                 <div>
                                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1 mb-3 block">Branch Assignment</label>
                                     <select

@@ -74,7 +74,7 @@ const periodLabel = (mode, { day, rangeFrom, rangeTo, month, year }) => {
 const DailyActivityBlock = ({ user }) => {
     const role = user?.role;
     const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE'].includes(role);
-    const isSalesMgr  = role === 'SALES_MGR';
+    const isSalesMgr  = role === 'SALES_MGR' || role === 'BRANCH_MGR';
     const showUserDropdown = isSuperUser || isSalesMgr;
 
     // ── Date mode state ──
@@ -541,7 +541,7 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
 
     const role = user?.role;
-    const isSalesRole = ['SALES_REP', 'SALES_MGR', 'APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE'].includes(role);
+    const isSalesRole = ['SALES_REP', 'SALES_MGR', 'APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE', 'BRANCH_MGR'].includes(role);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -576,8 +576,8 @@ const Dashboard = () => {
             ];
         }
 
-        if (role === 'SALES_REP' || role === 'SALES_MGR' || isSuperUser) {
-            const labelPrefix = isSuperUser ? 'Global' : (role === 'SALES_MGR' ? 'Branch' : 'Personal');
+        if (role === 'SALES_REP' || role === 'SALES_MGR' || role === 'BRANCH_MGR' || isSuperUser) {
+            const labelPrefix = isSuperUser ? 'Global' : (['SALES_MGR', 'BRANCH_MGR'].includes(role) ? 'Branch' : 'Personal');
             return [
                 { label: `${labelPrefix} Enquiries`, value: stats.pending || stats.pendingEnquiries, icon: <FileText size={22} className="text-amber-600" />, bg: 'bg-amber-100/50', text: 'text-amber-700' },
                 { label: `${labelPrefix} Conversions`, value: stats.closed || stats.closedEnquiries, icon: <CheckCircle size={22} className="text-emerald-600" />, bg: 'bg-emerald-100/50', text: 'text-emerald-700' },

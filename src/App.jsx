@@ -44,23 +44,23 @@ function App() {
 
                     <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                       <Route index element={<Dashboard />} />
-                      <Route path="enquiries" element={<ProtectedRoute allowedRoles={['SALES_REP', 'SALES_MGR', 'EXECUTIVE']}><Enquiries /></ProtectedRoute>} />
+                      <Route path="enquiries" element={<ProtectedRoute allowedRoles={['SALES_REP', 'SALES_MGR', 'EXECUTIVE', 'BRANCH_MGR']}><Enquiries /></ProtectedRoute>} />
                       <Route path="profile" element={<UserProfile />} />
 
                       {/* Admin/Super User Only Pages */}
-                      <Route path="customers" element={<ProtectedRoute allowedRoles={['EXECUTIVE']}><Customers /></ProtectedRoute>} />
-                      <Route path="follow-ups" element={<ProtectedRoute allowedRoles={['EXECUTIVE']}><FollowUps /></ProtectedRoute>} />
-                      <Route path="cars" element={<ProtectedRoute allowedRoles={['EXECUTIVE', 'SALES_REP', 'SALES_MGR']}><Cars /></ProtectedRoute>} />
-                      <Route path="users" element={<ProtectedRoute allowedRoles={['HR_MGR', 'HR_ASSIS', 'EXECUTIVE']}><Users /></ProtectedRoute>} />
+                      <Route path="customers" element={<ProtectedRoute allowedRoles={['EXECUTIVE', 'BRANCH_MGR']}><Customers /></ProtectedRoute>} />
+                      <Route path="follow-ups" element={<ProtectedRoute allowedRoles={['EXECUTIVE', 'BRANCH_MGR']}><FollowUps /></ProtectedRoute>} />
+                      <Route path="cars" element={<ProtectedRoute allowedRoles={['EXECUTIVE', 'SALES_REP', 'SALES_MGR', 'BRANCH_MGR']}><Cars /></ProtectedRoute>} />
+                      <Route path="users" element={<ProtectedRoute allowedRoles={['HR_MGR', 'HR_ASSIS', 'EXECUTIVE', 'BRANCH_MGR']}><Users /></ProtectedRoute>} />
 
                       {/* Finance Routes */}
-                      <Route path="bookings" element={<ProtectedRoute allowedRoles={['ACCOUNTANT', 'EXECUTIVE']}><Bookings /></ProtectedRoute>} />
+                      <Route path="bookings" element={<ProtectedRoute allowedRoles={['ACCOUNTANT', 'EXECUTIVE', 'BRANCH_MGR']}><Bookings /></ProtectedRoute>} />
 
-                      <Route path="settings" element={<ProtectedRoute allowedRoles={['HR_MGR', 'HR_ASSIS']}><Settings /></ProtectedRoute>}>
+                      <Route path="settings" element={<ProtectedRoute allowedRoles={['HR_MGR', 'HR_ASSIS', 'BRANCH_MGR']}><Settings /></ProtectedRoute>}>
                         <Route index element={<SettingsRedirect />} />
                         <Route path="app-config" element={<ProtectedRoute allowedRoles={['APP_OWNER', 'SYS_ADMIN', 'DEV']}><AppConfig /></ProtectedRoute>} />
                         <Route path="role-config" element={<ProtectedRoute allowedRoles={['APP_OWNER', 'SYS_ADMIN', 'DEV']}><RoleConfig /></ProtectedRoute>} />
-                        <Route path="user-config" element={<ProtectedRoute allowedRoles={['HR_MGR', 'HR_ASSIS']}><UserConfig /></ProtectedRoute>} />
+                        <Route path="user-config" element={<ProtectedRoute allowedRoles={['HR_MGR', 'HR_ASSIS', 'BRANCH_MGR']}><UserConfig /></ProtectedRoute>} />
                         <Route path="branch-config" element={<ProtectedRoute allowedRoles={['APP_OWNER', 'SYS_ADMIN', 'DEV']}><BranchConfig /></ProtectedRoute>} />
                       </Route>
                     </Route>
@@ -78,6 +78,8 @@ function App() {
 const SettingsRedirect = () => {
   const { user } = useContext(AuthContext);
   const isHR = ['HR_MGR', 'HR_ASSIS'].includes(user?.role);
+  const isBranchMgr = user?.role === 'BRANCH_MGR';
+  if (isBranchMgr) return <Navigate to="user-config" replace />;
   return <Navigate to={isHR ? "user-config" : "app-config"} replace />;
 };
 
