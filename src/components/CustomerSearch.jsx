@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
 import Logo from './Logo';
 
-const CustomerSearch = ({ customers, onSearch, onSelect, onSearchTermChange, selectedCustomer, disabled }) => {
+const CustomerSearch = ({ customers, onSearch, onSelect, onSearchTermChange, selectedCustomer, disabled, label = "Customer" }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -55,7 +55,7 @@ const CustomerSearch = ({ customers, onSearch, onSelect, onSearchTermChange, sel
 
     return (
         <div className="relative" ref={wrapperRef}>
-            <label className="form-label">Customer</label>
+            <label className="form-label">{label}</label>
             <div className="search-box relative">
                 <Search className="search-icon absolute left-3 top-1/2 transform -translate-y-1/2" />
                 <input

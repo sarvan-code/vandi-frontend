@@ -2,9 +2,10 @@ import React, { useState, useEffect, useContext } from 'react';
 import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Save, History, PlusCircle, Search, X, Plus, Trash2, User, Phone, Mail, MapPin, Briefcase, Calendar, Car, ArrowRight } from 'lucide-react';
+import { Save, History, PlusCircle, X, Plus, Trash2, User, Phone, Mail, MapPin, Briefcase, Calendar, Car, ArrowRight } from 'lucide-react';
 import { useOptions } from '../context/OptionsContext';
 import VehicleAutocomplete from './VehicleAutocomplete';
+import CustomerSearch from './CustomerSearch';
 import clsx from 'clsx';
 import Logo from './Logo';
 
@@ -21,10 +22,7 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
     const [loading, setLoading] = useState(false);
 
     // Search / Autocomplete State
-    const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
-    const [isSearching, setIsSearching] = useState(false);
-    const [showDropdown, setShowDropdown] = useState(false);
 
     // Data Objects
     const [customer, setCustomer] = useState({
@@ -135,36 +133,40 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
     // Helper to get options from context
     const getOpt = (key) => getOptionList(key);
 
-    useEffect(() => {
-        const delayDebounceFn = setTimeout(async () => {
-            if (searchQuery.length >= 3) {
-                if (isSuperUser && !selectedBranchId) {
-                    showToast("Please select a Branch first.", "warning");
-                    setIsSearching(false);
-                    return;
-                }
-                setIsSearching(true);
-                try {
-                    const res = await api.get(`/leads/search?term=${searchQuery}${selectedBranchId ? `&branchId=${selectedBranchId}` : ''}`, { hideLoader: true });
-                    if (res.data.found && res.data.data) {
-                        setSearchResults(res.data.data);
-                        setShowDropdown(true);
-                    } else {
-                        setSearchResults([]);
-                        setShowDropdown(false);
-                    }
-                } catch (error) {
-                    console.error("Search error", error);
-                } finally {
-                    setIsSearching(false);
-                }
+    const handleCustomerSearch = async (term) => {
+        if (isSuperUser && !selectedBranchId) {
+            showToast("Please select a Branch first.", "warning");
+            return;
+        }
+        try {
+            const res = await api.get(`/leads/search?term=${term}${selectedBranchId ? `&branchId=${selectedBranchId}` : ''}`, { hideLoader: true });
+            if (res.data.found && res.data.data) {
+                setSearchResults(res.data.data);
             } else {
                 setSearchResults([]);
-                setShowDropdown(false);
             }
-        }, 500);
-        return () => clearTimeout(delayDebounceFn);
-    }, [searchQuery, selectedBranchId, isSuperUser]);
+        } catch (error) {
+            console.error("Search error", error);
+        }
+    };
+
+    const handleCustomerSelect = (flatCustomer) => {
+        if (!flatCustomer) {
+            // If cleared, we don't necessarily reset the entire customer object,
+            // but we might want to if the user is explicitly starting over.
+            // For now, let's just keep the phone number if they are typing.
+            return;
+        }
+
+        const fullResult = searchResults.find(r =>
+            (r.customer.customerId && r.customer.customerId === flatCustomer.customerId) ||
+            (r.customer.phone === flatCustomer.phone)
+        );
+
+        if (fullResult) {
+            handleSelectResult(fullResult);
+        }
+    };
 
     useEffect(() => {
         if (followUp.followupMode) {
@@ -307,8 +309,6 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
             setInitialEnquiry(null);
             setIsNewEnquiry(true);
         }
-        setShowDropdown(false);
-        setSearchQuery('');
     };
 
     const fetchHistory = async () => {
@@ -448,82 +448,24 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                         )}
                     </div>
 
-                    <div className="mb-6 relative">
-                        <div className="search-box">
-                            <Search className="search-icon" />
-                            <input
-                                type="text"
-                                name="lead_search"
-                                className="input-field !pl-10 !pr-10"
-                                placeholder="Search by name or phone..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                autoComplete="off"
-                            />
-                            {searchQuery && (
-                                <button
-                                    type="button"
-                                    onClick={() => { setSearchQuery(''); setSearchResults([]); }}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--danger)] transition-colors p-1"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
-                            )}
-                        </div>
-                        {showDropdown && searchResults.length > 0 && (
-                            <div className="absolute z-50 w-full backdrop-blur-xl mt-2 border rounded-2xl shadow-2xl max-h-60 overflow-auto custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-200"
-                                style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-                                {searchResults.map((res) => (
-                                    <div
-                                        key={res.customer.customerId || res.customer.phone || res.customer.id}
-                                        onClick={() => handleSelectResult(res)}
-                                        className="p-4 cursor-pointer border-b last:border-b-0 flex justify-between items-center group/item"
-                                        style={{ borderColor: 'var(--border)' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-tertiary)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                    >
-                                        <div>
-                                            <div className="font-bold group-hover/item:text-[var(--accent)] transition-colors" style={{ color: 'var(--text-primary)' }}>{res.customer.fullName}</div>
-                                            <div className="text-xs font-bold flex items-center gap-1 mt-1" style={{ color: 'var(--text-muted)' }}>
-                                                <Phone size={10} /> {res.customer.phone}
-                                            </div>
-                                        </div>
-                                        {res.activeEnquiry && (
-                                            <span className="text-[10px] bg-[var(--success-bg)] text-[var(--success)] px-3 py-1 rounded-full font-semibold uppercase tracking-wider shadow-sm">
-                                                Active Enquiry
-                                            </span>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        {isSearching && (
-                            <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-2 pr-2 pointer-events-none">
-                                <Logo size={24} color="blue" isAnimating={true} />
-                            </div>
-                        )}
-                    </div>
+                    {/* Global search removed as it is now integrated into the Phone Number field */}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+                        <CustomerSearch
+                            label="Phone Number *"
+                            customers={searchResults.map(r => r.customer)}
+                            onSearch={handleCustomerSearch}
+                            onSelect={handleCustomerSelect}
+                            onSearchTermChange={(phone) => setCustomer({ ...customer, phone })}
+                            selectedCustomer={customer.customerId ? customer : null}
+
+                        />
                         <div className="space-y-1">
                             <label className="form-label">Full Name *</label>
                             <div className="relative">
                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
                                 <input className="input-field !pl-10" placeholder="John Doe" value={customer.fullName} onChange={e => setCustomer({ ...customer, fullName: e.target.value })} required />
-                            </div>
-                        </div>
-                        <div className="space-y-1">
-                            <label className="form-label">Phone Number *</label>
-                            <div className="relative">
-                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
-                                <input
-                                    className={clsx("input-field !pl-10", customer.customerId && 'bg-[var(--bg-tertiary)] cursor-not-allowed')}
-                                    placeholder="9876543210"
-                                    value={customer.phone}
-                                    onChange={e => setCustomer({ ...customer, phone: e.target.value })}
-                                    required
-                                    readOnly={!!customer.customerId}
-                                />
                             </div>
                         </div>
                         <div className="space-y-1">

@@ -30,7 +30,7 @@ api.interceptors.response.use(
         if (!error.config || !error.config.hideLoader) {
             hideLoading();
         }
-        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        if (error.response && error.response.status === 401) {
             // Token expired or invalid
             localStorage.removeItem('token');
             localStorage.removeItem('user');

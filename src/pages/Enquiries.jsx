@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Eye, Edit, Trash, X, Plus, Calendar, Building, Briefcase, ClipboardList, Phone, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, Edit, Trash, X, Plus, Calendar, Building, Briefcase, ClipboardList, Phone, ChevronLeft, ChevronRight, DollarSign, FileText, Droplet, Navigation, CreditCard } from 'lucide-react';
 import clsx from 'clsx';
 import api from '../api';
 import Table from '../components/Table';
@@ -58,7 +58,7 @@ const Enquiries = () => {
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [totalEnquiries, setTotalEnquiries] = useState(0);
-    
+
     // Quick add customer state
     const [lastTypedSearch, setLastTypedSearch] = useState('');
     const [quickAddFullName, setQuickAddFullName] = useState('');
@@ -162,10 +162,10 @@ const Enquiries = () => {
             });
             const newCustomer = response.data;
             showToast('Customer created and selected!', 'success');
-            
+
             // Auto-select the new customer
             handleCustomerSelect(newCustomer);
-            
+
             // Clear quick add state
             setQuickAddFullName('');
         } catch (error) {
@@ -182,6 +182,7 @@ const Enquiries = () => {
             ...enquiry,
             carDetails: enquiry.carDetails || [],
             exchange: enquiry.exchange || false,
+            nextVisitDate: enquiry.nextVisitDate || ''
         });
         setIsViewMode(false);
         if (enquiry.customer) {
@@ -378,14 +379,24 @@ const Enquiries = () => {
             render: (row) => {
                 if (!row.followUps || row.followUps.length === 0) return <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider">No Activity</span>;
                 const last = row.followUps[0];
-                return last.nextVisitDate ? (
+                return row.nextVisitDate ? (
+                    <div className="text-[10px] space-y-0.5">
+                        <div className="flex items-center gap-2">
+                            <span className="text-[var(--text-muted)] font-semibold">{new Date(last.createdAt).toLocaleDateString()}</span>
+                            {last?.car?.registrationNumber && <span className="text-[var(--success)] font-bold">{last?.car.registrationNumber}</span>}
+                        </div>
+                    </div>
+                ) : <span className="text-[var(--text-muted)]">—</span>
+            }
+        },
+        {
+            key: 'nextVisitDate',
+            label: 'Next Date',
+            render: (row) => {
+                return row.nextVisitDate ? (
                     <div className="text-[10px] space-y-0.5">
                         <div className="flex items-center gap-2 text-[var(--accent)] font-bold">
                             <span className="text-xs">{row.nextVisitDate ? new Date(row.nextVisitDate).toLocaleDateString() + ' ' + new Date(row.nextVisitDate).toLocaleTimeString() : '—'}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-[var(--text-muted)] font-semibold">{new Date(last.createdAt).toLocaleDateString()}</span>
-                            {last.car?.registrationNumber && <span className="text-[var(--success)] font-bold">{last.car.registrationNumber}</span>}
                         </div>
                     </div>
                 ) : <span className="text-[var(--text-muted)]">—</span>
@@ -474,7 +485,7 @@ const Enquiries = () => {
                                                         disabled={!!currentEnquiry?.enquiryId || isViewMode || (!!filterCustomerId && !currentEnquiry?.enquiryId)}
                                                     />
                                                 </div>
-                                                
+
                                                 {/* Quick Add Form or Customer Name Display */}
                                                 {!selectedCustomer && !customerProfile && lastTypedSearch.length >= 3 && customers.length === 0 && !currentEnquiry?.enquiryId && !isViewMode ? (
                                                     <div className="flex flex-col md:flex-row items-end gap-3 animate-fade-in-up">
@@ -710,59 +721,119 @@ const Enquiries = () => {
                                         </div>
 
                                         {/* 4. Financial Parameters */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mb-12">
-                                            <div>
-                                                <label className="form-label mb-3 block">Budget Range</label>
-                                                <select
-                                                    className="input-field h-10 cursor-pointer font-semibold shadow-sm"
-                                                    value={currentEnquiry?.budgetRange || ''}
-                                                    onChange={(e) => setCurrentEnquiry({ ...currentEnquiry, budgetRange: e.target.value })}
-                                                >
-                                                    <option value="">Select Range</option>
-                                                    {getOpt('BUDGET_RANGES').map(b => <option key={b.value} value={b.value}>{b.label}</option>)}
-                                                </select>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 p-6 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border)] animate-fade-in-up">
+                                            <div className="space-y-2">
+                                                <label className="form-label mb-1 block">Budget Range</label>
+                                                <div className="relative group">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--accent)]">
+                                                        <DollarSign size={16} />
+                                                    </div>
+                                                    <select
+                                                        className="input-field h-11 pl-10 cursor-pointer font-bold w-full transition-all focus:ring-2 focus:ring-[var(--accent)]/20"
+                                                        value={currentEnquiry?.budgetRange || ''}
+                                                        onChange={(e) => setCurrentEnquiry({ ...currentEnquiry, budgetRange: e.target.value })}
+                                                    >
+                                                        <option value="">Select Range</option>
+                                                        {getOpt('BUDGET_RANGES').map(b => <option key={b.value} value={b.value}>{b.label}</option>)}
+                                                    </select>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className="form-label">Budget Notes</label>
-                                                <input
-                                                    className="input-field"
-                                                    placeholder="Flexible budget, loan needed..."
-                                                    value={currentEnquiry?.budgetRemarks || ''}
-                                                    onChange={e => setCurrentEnquiry({ ...currentEnquiry, budgetRemarks: e.target.value })}
-                                                />
+
+                                            <div className="space-y-2">
+                                                <label className="form-label mb-1 block">Budget Notes</label>
+                                                <div className="relative group">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--accent)]">
+                                                        <FileText size={16} />
+                                                    </div>
+                                                    <input
+                                                        className="input-field h-11 pl-10 font-bold w-full transition-all focus:ring-2 focus:ring-[var(--accent)]/20"
+                                                        placeholder="Flexible budget, loan needed..."
+                                                        value={currentEnquiry?.budgetRemarks || ''}
+                                                        onChange={e => setCurrentEnquiry({ ...currentEnquiry, budgetRemarks: e.target.value })}
+                                                    />
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className="form-label">Fuel Preference</label>
-                                                <select
-                                                    className="input-field cursor-pointer"
-                                                    value={currentEnquiry?.fuelType || ''}
-                                                    onChange={(e) => setCurrentEnquiry({ ...currentEnquiry, fuelType: e.target.value })}
-                                                >
-                                                    <option value="">Select Fuel</option>
-                                                    {getOpt('FUEL_TYPES').map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-                                                </select>
+
+                                            <div className="space-y-2">
+                                                <label className="form-label mb-1 block">Fuel Preference</label>
+                                                <div className="relative group">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--accent)]">
+                                                        <Droplet size={16} />
+                                                    </div>
+                                                    <select
+                                                        className="input-field h-11 pl-10 cursor-pointer font-bold w-full transition-all focus:ring-2 focus:ring-[var(--accent)]/20"
+                                                        value={currentEnquiry?.fuelType || ''}
+                                                        onChange={(e) => setCurrentEnquiry({ ...currentEnquiry, fuelType: e.target.value })}
+                                                    >
+                                                        <option value="">Select Fuel</option>
+                                                        {getOpt('FUEL_TYPES').map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                                                    </select>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className="form-label">Usage Purpose</label>
-                                                <select
-                                                    className="input-field cursor-pointer"
-                                                    value={currentEnquiry?.usageType || ''}
-                                                    onChange={(e) => setCurrentEnquiry({ ...currentEnquiry, usageType: e.target.value })}
-                                                >
-                                                    <option value="">Select Usage</option>
-                                                    {getOpt('USAGE_TYPES').map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
-                                                </select>
+
+                                            <div className="space-y-2">
+                                                <label className="form-label mb-1 block">Usage Purpose</label>
+                                                <div className="relative group">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--accent)]">
+                                                        <Navigation size={16} />
+                                                    </div>
+                                                    <select
+                                                        className="input-field h-11 pl-10 cursor-pointer font-bold w-full transition-all focus:ring-2 focus:ring-[var(--accent)]/20"
+                                                        value={currentEnquiry?.usageType || ''}
+                                                        onChange={(e) => setCurrentEnquiry({ ...currentEnquiry, usageType: e.target.value })}
+                                                    >
+                                                        <option value="">Select Usage</option>
+                                                        {getOpt('USAGE_TYPES').map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+                                                    </select>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className="form-label">Payment Method</label>
-                                                <select
-                                                    className="input-field cursor-pointer"
-                                                    value={currentEnquiry?.payment || ''}
-                                                    onChange={(e) => setCurrentEnquiry({ ...currentEnquiry, payment: e.target.value })}
-                                                >
-                                                    <option value="">Select Payment</option>
-                                                    {getOpt('PAYMENT_MODES').map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-                                                </select>
+
+                                            <div className="space-y-2 md:col-span-2">
+                                                <label className="form-label mb-1 block">Payment Method</label>
+                                                <div className="relative group">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--accent)]">
+                                                        <CreditCard size={16} />
+                                                    </div>
+                                                    <select
+                                                        className="input-field h-11 pl-10 cursor-pointer font-bold w-full transition-all focus:ring-2 focus:ring-[var(--accent)]/20"
+                                                        value={currentEnquiry?.payment || ''}
+                                                        onChange={(e) => setCurrentEnquiry({ ...currentEnquiry, payment: e.target.value })}
+                                                    >
+                                                        <option value="">Select Payment</option>
+                                                        {getOpt('PAYMENT_MODES').map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* 5. Next Visit / Follow-up Date */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-10 p-6 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border)] animate-fade-in-up">
+                                            <div className="space-y-3">
+                                                <label className="form-label mb-1 block">Next Follow-up / Visit Date</label>
+                                                <div className="relative group">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--accent)]">
+                                                        <Calendar size={16} />
+                                                    </div>
+                                                    <input
+                                                        type="datetime-local"
+                                                        className={clsx(
+                                                            "input-field h-11 pl-10 font-bold w-full transition-all",
+                                                            !!currentEnquiry?.enquiryId ? "bg-[var(--bg-secondary)] cursor-not-allowed border-dashed" : "focus:ring-2 focus:ring-[var(--accent)]/20"
+                                                        )}
+                                                        value={currentEnquiry?.nextVisitDate ? new Date(currentEnquiry.nextVisitDate).toISOString().slice(0, 16) : ''}
+                                                        readOnly={!!currentEnquiry?.enquiryId}
+                                                        onChange={e => setCurrentEnquiry({ ...currentEnquiry, nextVisitDate: e.target.value })}
+                                                    />
+                                                </div>
+                                                {!!currentEnquiry?.enquiryId ? (
+                                                    <p className="text-[10px] text-[var(--text-muted)] mt-2 italic font-semibold flex items-center gap-1.5">
+                                                        <ClipboardList size={12} /> This field is read-only for existing enquiries. Update follow-ups to schedule new visits.
+                                                    </p>
+                                                ) : (
+                                                    <p className="text-[10px] text-[var(--text-muted)] mt-2 italic font-semibold">
+                                                        Schedule the first follow-up or showroom visit for this new enquiry.
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
 
@@ -895,7 +966,7 @@ const Enquiries = () => {
                         {user?.role !== 'SALES_REP' && (
                             <button
                                 onClick={() => {
-                                    setCurrentEnquiry({ status: 'new', enquiryType: 'Buy', carDetails: [], assignedToUserId: user?.userId });
+                                    setCurrentEnquiry({ status: 'new', enquiryType: 'Buy', carDetails: [], assignedToUserId: user?.userId, nextVisitDate: '' });
                                     if (filterCustomerId && customerProfile) {
                                         setSelectedCustomer(customerProfile);
                                         setCurrentEnquiry(prev => ({ ...prev, customerId: customerProfile.customerId }));
