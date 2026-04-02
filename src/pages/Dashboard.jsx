@@ -8,6 +8,196 @@ import {
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import clsx from 'clsx';
+import { useToast } from '../context/ToastContext';
+
+// ─── Follow-up Summary Block ──────────────────────────────────────────────────
+
+const FollowupSummaryBlock = ({ user }) => {
+    const navigate = useNavigate();
+    const { showToast } = useToast();
+    const role = user?.role;
+    const isSuperUser = ['APP_OWNER', 'SYS_ADMIN', 'DEV', 'EXECUTIVE'].includes(role);
+    const isBranchMgr = role === 'BRANCH_MGR';
+    const isSalesMgr  = role === 'SALES_MGR';
+    const isSalesRole = ['SALES_REP', 'SALES_MGR', 'BRANCH_MGR', 'EXECUTIVE', 'APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(role);
+
+    // Show User Dropdown only for Super Users and Branch Managers (Sales Manager requested to hide it for themselves)
+    const showUserDropdown = isSuperUser || isBranchMgr;
+    const showBranchDropdown = isSuperUser;
+
+    const [branchId, setBranchId] = useState('');
+    const [userId, setUserId]     = useState('');
+    const [status, setStatus]     = useState('new');
+    const [count, setCount]       = useState(null);
+    const [loading, setLoading]   = useState(false);
+    const [branches, setBranches] = useState([]);
+    const [salesUsers, setSalesUsers] = useState([]);
+    const [usersLoading, setUsersLoading] = useState(false);
+
+    // Fetch branches once (super users)
+    useEffect(() => {
+        if (!showBranchDropdown) return;
+        api.get('/branches').then(r => setBranches(r.data)).catch(() => {});
+    }, [showBranchDropdown]);
+
+    // Fetch assignable users on branch change
+    useEffect(() => {
+        if (!showUserDropdown) return;
+        setUsersLoading(true);
+        setUserId('');
+        const params = {};
+        if (branchId) params.branchId = branchId;
+        api.get('/users/assignable', { params })
+            .then(r => setSalesUsers(r.data))
+            .catch(() => setSalesUsers([]))
+            .finally(() => setUsersLoading(false));
+    }, [branchId, showUserDropdown]);
+
+    const fetchFollowupCount = useCallback(async () => {
+        setLoading(true);
+        try {
+            const params = { status };
+            if (isSuperUser && branchId) params.branchId = branchId;
+            if (showUserDropdown && userId) params.userId = userId;
+            // If user dropdown is hidden but user is not super, backend handles filtering by branchId/userId from token
+            const res = await api.get('/dashboard/follow-up-count', { params });
+            setCount(res.data.count);
+        } catch (error) {
+            console.error("Error fetching follow-up count", error);
+            setCount(0);
+        } finally {
+            setLoading(false);
+        }
+    }, [branchId, userId, status, isSuperUser, showUserDropdown]);
+
+    useEffect(() => {
+        if (isSalesRole) fetchFollowupCount();
+    }, [fetchFollowupCount, isSalesRole]);
+
+    const handleNavigateToEnquiries = () => {
+        const todayStr = new Date().toISOString().split('T')[0];
+        let url = `/enquiries?status=${status}&nextVisitDate=${todayStr}`;
+        if (userId) url += `&assignedToUserId=${userId}`;
+        if (branchId && isSuperUser) url += `&branchId=${branchId}`;
+        navigate(url);
+    };
+
+    if (!isSalesRole) return null;
+
+    return (
+        <div className="card overflow-hidden border border-[var(--border)] shadow-md animate-fade-in mb-8">
+            <div className="px-6 py-6 bg-[var(--bg-tertiary)] border-b border-[var(--border)]">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 shadow-sm">
+                            <Calendar size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-[var(--text-primary)]">Follow-up Summary</h2>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] mt-1">
+                                Pending follow-ups as of today
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* Status Filter */}
+                        <div className="flex rounded-lg overflow-hidden border border-[var(--border)] bg-[var(--bg-secondary)] p-1">
+                            {[
+                                { id: 'new', label: 'New' },
+                                { id: 'in-followup', label: 'In Followup' }
+                            ].map(s => (
+                                <button
+                                    key={s.id}
+                                    onClick={() => setStatus(s.id)}
+                                    className={clsx(
+                                        'px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all rounded-md',
+                                        status === s.id
+                                            ? 'bg-amber-500 text-white shadow-sm'
+                                            : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
+                                    )}
+                                >
+                                    {s.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Branch Dropdown */}
+                        {showBranchDropdown && (
+                            <div className="relative group">
+                                <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--accent)] transition-colors pointer-events-none" />
+                                <select 
+                                    value={branchId} 
+                                    onChange={e => setBranchId(e.target.value)}
+                                    className="input-field text-xs font-bold py-2 pl-9 pr-8 cursor-pointer appearance-none bg-[var(--bg-secondary)] border-[var(--border)] focus:ring-2 focus:ring-amber-500/20" 
+                                    style={{ minWidth: 160 }}
+                                >
+                                    <option value="">All Branches</option>
+                                    {branches.map(b => <option key={b.id} value={b.id}>{b.displayName}</option>)}
+                                </select>
+                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                            </div>
+                        )}
+
+                        {/* User Dropdown */}
+                        {showUserDropdown && (
+                            <div className="relative group">
+                                <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--accent)] transition-colors pointer-events-none" />
+                                <select 
+                                    value={userId} 
+                                    onChange={e => setUserId(e.target.value)}
+                                    disabled={usersLoading}
+                                    className="input-field text-xs font-bold py-2 pl-9 pr-8 cursor-pointer appearance-none disabled:opacity-60 bg-[var(--bg-secondary)] border-[var(--border)] focus:ring-2 focus:ring-amber-500/20" 
+                                    style={{ minWidth: 180 }}
+                                >
+                                    <option value="">All Users</option>
+                                    {salesUsers.map(u => (
+                                        <option key={u.userId} value={u.userId}>
+                                            {u.fullName} ({u.role.replace('_', ' ')})
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-10">
+                <div className="flex-1 text-center md:text-left">
+                    <div className="flex items-baseline justify-center md:justify-start gap-4 mb-2">
+                        <div className={clsx('transition-all duration-300', loading ? 'opacity-30 blur-sm scale-95' : 'opacity-100')}>
+                            <span className="text-7xl font-black text-amber-600 tracking-tighter leading-none">
+                                {count ?? '—'}
+                            </span>
+                        </div>
+                        <div className="text-left">
+                            <span className="text-xl font-extrabold text-[var(--text-primary)] block">Pending Follow-ups</span>
+                            <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">Scheduled for Today</span>
+                        </div>
+                    </div>
+                    <p className="text-sm text-[var(--text-secondary)] font-medium max-w-lg">
+                        Total enquiries awaiting attention by the end of today based on their next visit schedule.
+                    </p>
+                </div>
+
+                <div className="flex flex-col items-center gap-4 w-full md:w-auto">
+                    <button 
+                        onClick={handleNavigateToEnquiries}
+                        className="btn-primary !h-14 !py-0 px-10 flex items-center gap-3 text-lg font-bold shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all w-full md:w-auto"
+                        style={{ backgroundColor: 'rgb(245 158 11)' }}
+                    >
+                        View Enquiries <ArrowRight size={20} />
+                    </button>
+                    <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                        Redirects to filtered enquiry list
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -616,7 +806,8 @@ const Dashboard = () => {
             
             {/* Daily Activity Block — visible to all sales roles (Moved to First Block) */}
             {isSalesRole && (
-                <div className="space-y-6">
+                <div className="space-y-10">
+                    <FollowupSummaryBlock user={user} />
                     <DailyActivityBlock user={user} />
                     <VehicleStatsBlock user={user} />
                 </div>

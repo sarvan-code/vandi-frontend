@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Eye, Edit, Trash, X, Plus, Calendar, Building, Briefcase, ClipboardList, Phone, ChevronLeft, ChevronRight, DollarSign, FileText, Droplet, Navigation, CreditCard } from 'lucide-react';
+import { Eye, Edit, Trash, X, Plus, Calendar, Building, Briefcase, ClipboardList, Phone, ChevronLeft, ChevronRight, DollarSign, FileText, Droplet, Navigation, CreditCard, Search } from 'lucide-react';
 import clsx from 'clsx';
 import api from '../api';
 import Table from '../components/Table';
@@ -43,7 +43,15 @@ const Enquiries = () => {
     const [filterCustomerId, setFilterCustomerId] = useState(initialCustomerId);
     const [selectedStatus, setSelectedStatus] = useState('new');
     const [selectedAssignedToUserId, setSelectedAssignedToUserId] = useState('');
+    const [nextVisitDateFilter, setNextVisitDateFilter] = useState('');
+    const [appliedFilters, setAppliedFilters] = useState({
+        status: 'new',
+        assignedToUserId: '',
+        nextVisitDate: ''
+    });
     const [assignableUsers, setAssignableUsers] = useState([]);
+
+    // ... (rest of states)
 
     // Delete confirmation dialog state
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, enquiry: null });
@@ -68,6 +76,21 @@ const Enquiries = () => {
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         setFilterCustomerId(params.get('customerId'));
+        
+        const status = params.get('status');
+        const assignedToUserId = params.get('assignedToUserId');
+        const nextVisitDate = params.get('nextVisitDate');
+
+        if (status !== null) setSelectedStatus(status);
+        if (assignedToUserId !== null) setSelectedAssignedToUserId(assignedToUserId);
+        if (nextVisitDate !== null) setNextVisitDateFilter(nextVisitDate);
+
+        setAppliedFilters({
+            status: status !== null ? status : 'new',
+            assignedToUserId: assignedToUserId !== null ? assignedToUserId : '',
+            nextVisitDate: nextVisitDate !== null ? nextVisitDate : ''
+        });
+
         setPage(1); // Reset to first page on filter change
     }, [location.search]);
 
@@ -81,15 +104,23 @@ const Enquiries = () => {
         } else {
             setCustomerProfile(null);
         }
-    }, [page, pageSize, filterCustomerId, selectedBranchId, selectedStatus, selectedAssignedToUserId, isSuperUser]);
+    }, [page, pageSize, filterCustomerId, selectedBranchId, appliedFilters, isSuperUser]);
 
-    const fetchBranches = null; // Removed in favor of OptionsContext
+    const handleSearch = () => {
+        setAppliedFilters({
+            status: selectedStatus,
+            assignedToUserId: selectedAssignedToUserId,
+            nextVisitDate: nextVisitDateFilter
+        });
+        setPage(1);
+    };
 
     // Helper for options
     const getOpt = (key) => getOptionList(key);
 
     const fetchEnquiries = async () => {
         try {
+            const { status, assignedToUserId, nextVisitDate } = appliedFilters;
             let url = `/enquiries?page=${page}&pageSize=${pageSize}`;
             if (filterCustomerId) {
                 url += `&customerId=${filterCustomerId}`;
@@ -97,11 +128,14 @@ const Enquiries = () => {
             if (selectedBranchId) {
                 url += `&branchId=${selectedBranchId}`;
             }
-            if (selectedStatus) {
-                url += `&status=${selectedStatus}`;
+            if (status) {
+                url += `&status=${status}`;
             }
-            if (selectedAssignedToUserId) {
-                url += `&assignedToUserId=${selectedAssignedToUserId}`;
+            if (assignedToUserId) {
+                url += `&assignedToUserId=${assignedToUserId}`;
+            }
+            if (nextVisitDate) {
+                url += `&nextVisitDate=${nextVisitDate}`;
             }
             const response = await api.get(url);
             if (response.data.data && response.data.meta) {
@@ -920,14 +954,11 @@ const Enquiries = () => {
                     <div className="search-box !w-auto">
                         <ClipboardList size={18} className="search-icon" />
                         <select
-                            className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-semibold text-[var(--text-primary)] min-w-[160px] cursor-pointer outline-none pl-10 h-10 shadow-sm"
+                            className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-semibold text-[var(--text-primary)] min-w-[150px] cursor-pointer outline-none pl-10 h-10 shadow-sm"
                             value={selectedStatus}
-                            onChange={(e) => {
-                                setSelectedStatus(e.target.value);
-                                setPage(1);
-                            }}
+                            onChange={(e) => setSelectedStatus(e.target.value)}
                         >
-                            <option value="" disabled>Status Filter...</option>
+                            <option value="">All Statuses</option>
                             {getOpt('ENQUIRY_STATUSES').map(s => (
                                 <option key={s.value} value={s.value}>{s.label}</option>
                             ))}
@@ -937,12 +968,9 @@ const Enquiries = () => {
                     <div className="search-box !w-auto">
                         <Briefcase size={18} className="search-icon" />
                         <select
-                            className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-semibold text-[var(--text-primary)] min-w-[160px] cursor-pointer outline-none pl-10 h-10 shadow-sm"
+                            className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-semibold text-[var(--text-primary)] min-w-[150px] cursor-pointer outline-none pl-10 h-10 shadow-sm"
                             value={selectedAssignedToUserId}
-                            onChange={(e) => {
-                                setSelectedAssignedToUserId(e.target.value);
-                                setPage(1);
-                            }}
+                            onChange={(e) => setSelectedAssignedToUserId(e.target.value)}
                         >
                             <option value="">All Users</option>
                             {assignableUsers.map(u => (
@@ -950,6 +978,24 @@ const Enquiries = () => {
                             ))}
                         </select>
                     </div>
+
+                    <div className="search-box !w-auto">
+                        <Calendar size={18} className="search-icon" />
+                        <input
+                            type="date"
+                            className="bg-transparent border border-[var(--border)] rounded-md focus:ring-1 focus:ring-[var(--accent)] text-sm font-semibold text-[var(--text-primary)] min-w-[150px] cursor-pointer outline-none pl-10 h-10 shadow-sm"
+                            value={nextVisitDateFilter}
+                            onChange={(e) => setNextVisitDateFilter(e.target.value)}
+                            title="Next Visit Date (On or before)"
+                        />
+                    </div>
+
+                    <button
+                        onClick={handleSearch}
+                        className="btn-primary !h-10 !py-0 px-6 flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
+                    >
+                        <Search size={18} /> Go
+                    </button>
 
                     <div className="flex items-center gap-3">
                         {filterCustomerId && (

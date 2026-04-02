@@ -177,9 +177,9 @@ const LeadWorkspace = ({ isMinimized, onMinimize, onClose }) => {
                 "bg-[var(--bg-primary)] border-[var(--border)]",
                 isMinimized 
                     ? "h-14 w-72 md:w-80 rounded-t-xl right-4 md:right-8 bottom-[var(--safe-area-bottom)]" 
-                    : "h-[88vh] w-[98vw] md:w-[95vw] lg:w-[85vw] xl:w-[70vw] rounded-t-2xl left-1/2 -translate-x-1/2 bottom-[var(--safe-area-bottom)]"
+                    : "h-[85vh] md:h-[88vh] w-[98vw] md:w-[95vw] lg:w-[85vw] xl:w-[70vw] rounded-t-2xl left-1/2 -translate-x-1/2 bottom-0 md:bottom-[var(--safe-area-bottom)]"
             )}
-            style={{ paddingBottom: 'var(--safe-area-bottom)' }}
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)' }}
         >
             {/* Header / Tab Bar */}
             <div
