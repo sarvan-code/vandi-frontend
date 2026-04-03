@@ -21,8 +21,8 @@ const FollowupSummaryBlock = ({ user }) => {
     const isSalesMgr  = role === 'SALES_MGR';
     const isSalesRole = ['SALES_REP', 'SALES_MGR', 'BRANCH_MGR', 'EXECUTIVE', 'APP_OWNER', 'SYS_ADMIN', 'DEV'].includes(role);
 
-    // Show User Dropdown only for Super Users and Branch Managers (Sales Manager requested to hide it for themselves)
-    const showUserDropdown = isSuperUser || isBranchMgr;
+    // Show User Dropdown for Super Users, Branch Managers, and Sales Managers
+    const showUserDropdown = isSuperUser || isBranchMgr || isSalesMgr;
     const showBranchDropdown = isSuperUser;
 
     const [branchId, setBranchId] = useState('');
