@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Save, History, PlusCircle, X, Plus, Trash2, User, Phone, Mail, MapPin, Briefcase, Calendar, Car, ArrowRight } from 'lucide-react';
+import { Save, History, PlusCircle, X, Plus, Trash2, User, Phone, Mail, MapPin, Briefcase, Calendar, Car, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { useOptions } from '../context/OptionsContext';
 import VehicleAutocomplete from './VehicleAutocomplete';
 import CustomerSearch from './CustomerSearch';
@@ -59,10 +59,20 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
     const [showHistory, setShowHistory] = useState(false);
     const [isHistoryLoading, setIsHistoryLoading] = useState(false);
     const [showFollowUpHistory, setShowFollowUpHistory] = useState(false);
+    const [showMoreCustomerDetails, setShowMoreCustomerDetails] = useState(false);
 
     // Initial Data for Change Detection
     const [initialCustomer, setInitialCustomer] = useState(null);
     const [initialEnquiry, setInitialEnquiry] = useState(null);
+
+    // Auto-expand More Details if customer already has optional data
+    useEffect(() => {
+        const hasExtra = customer.email || customer.instaid || customer.dateOfBirth ||
+            customer.marriageDate || customer.profession || customer.referredBy ||
+            customer.referredByName || customer.address || customer.district ||
+            customer.state || customer.country || customer.landMark;
+        if (hasExtra) setShowMoreCustomerDetails(true);
+    }, [customer.customerId]);
 
     const getMinDateTime = () => {
         const now = new Date();
@@ -468,81 +478,108 @@ const LeadForm = ({ onSave, onCancel, tabId, preloadedEnquiryId, preloadedCustom
                                 <input className="input-field !pl-10" placeholder="John Doe" value={customer.fullName} onChange={e => setCustomer({ ...customer, fullName: e.target.value })} required />
                             </div>
                         </div>
-                        <div className="space-y-1">
-                            <label className="form-label">Email</label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
-                                <input className="input-field !pl-10" placeholder="john@example.com" value={customer.email || ''} onChange={e => setCustomer({ ...customer, email: e.target.value })} />
-                            </div>
-                        </div>
-                        <div className="space-y-1">
-                            <label className="form-label">Social Media</label>
-                            <input className="input-field" placeholder="@username" value={customer.instaid || ''} onChange={e => setCustomer({ ...customer, instaid: e.target.value })} />
-                        </div>
-
-                        <div className="space-y-1">
-                            <label className="form-label">Date of Birth</label>
-                            <div className="relative group/date">
-                                <input type="date" className="input-field pr-8" max={new Date().toISOString().split("T")[0]} value={customer.dateOfBirth || ''} onChange={e => setCustomer({ ...customer, dateOfBirth: e.target.value })} />
-                                {customer.dateOfBirth && (
-                                    <button type="button" onClick={() => setCustomer({ ...customer, dateOfBirth: '' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--danger)]">
-                                        <X size={14} />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="space-y-1">
-                            <label className="form-label">Anniversary</label>
-                            <div className="relative group/date">
-                                <input type="date" className="input-field pr-8" max={new Date().toISOString().split("T")[0]} value={customer.marriageDate || ''} onChange={e => setCustomer({ ...customer, marriageDate: e.target.value })} />
-                                {customer.marriageDate && (
-                                    <button type="button" onClick={() => setCustomer({ ...customer, marriageDate: '' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--danger)]">
-                                        <X size={14} />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="space-y-1">
-                            <label className="form-label">Profession</label>
-                            <select className="input-field h-[38px]" value={customer.profession || ''} onChange={e => setCustomer({ ...customer, profession: e.target.value })}>
-                                <option value="">Select Profession</option>
-                                {getOpt('PROFESSIONS').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
-                            </select>
-                        </div>
-                        <div className="space-y-1">
-                            <label className="form-label">Type</label>
-                            <select className="input-field" value={customer.customerType || 'Lead'} onChange={e => setCustomer({ ...customer, customerType: e.target.value })}>
-                                <option value="Lead">Lead</option>
-                                <option value="Customer">Customer</option>
-                            </select>
-                        </div>
                     </div>
 
-                    <div className="mt-6 pt-6 border-t border-dashed" style={{ borderColor: 'var(--border)' }}>
-                        <label className="form-label mb-2">Referral Information</label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <select className="input-field h-[38px]" value={customer.referredBy || ''} onChange={e => setCustomer({ ...customer, referredBy: e.target.value })}>
-                                <option value="">Select Referral Source</option>
-                                {getOpt('REFERRAL_SOURCES').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
-                            </select>
-                            <input className="input-field" placeholder="Referrer Name / Details" value={customer.referredByName || ''} onChange={e => setCustomer({ ...customer, referredByName: e.target.value })} />
-                        </div>
-                    </div>
+                    {/* More Details Toggle */}
+                    <button
+                        type="button"
+                        onClick={() => setShowMoreCustomerDetails(v => !v)}
+                        className="mt-4 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors group"
+                    >
+                        {showMoreCustomerDetails ? (
+                            <>
+                                <ChevronUp size={14} className="transition-transform" />
+                                Hide Details
+                            </>
+                        ) : (
+                            <>
+                                <ChevronDown size={14} className="transition-transform" />
+                                More Details
+                            </>
+                        )}
+                    </button>
 
-                    <div className="mt-6 pt-6 border-t border-dashed" style={{ borderColor: 'var(--border)' }}>
-                        <label className="form-label mb-2 flex items-center gap-2">
-                            <MapPin size={12} /> Address
-                        </label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                            <input className="input-field md:col-span-2" placeholder="Street Address / Area" value={customer.address || ''} onChange={e => setCustomer({ ...customer, address: e.target.value })} />
-                            <input className="input-field" placeholder="Landmark" value={customer.landMark || ''} onChange={e => setCustomer({ ...customer, landMark: e.target.value })} />
-                            <input className="input-field" placeholder="District" value={customer.district || ''} onChange={e => setCustomer({ ...customer, district: e.target.value })} />
-                            <input className="input-field" placeholder="State" value={customer.state || ''} onChange={e => setCustomer({ ...customer, state: e.target.value })} />
-                            <input className="input-field" placeholder="Country" value={customer.country || ''} onChange={e => setCustomer({ ...customer, country: e.target.value })} />
+                    {/* Collapsible Extra Customer Fields */}
+                    {showMoreCustomerDetails && (
+                        <div className="mt-4 space-y-5 animate-fade-in">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                <div className="space-y-1">
+                                    <label className="form-label">Email</label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                                        <input className="input-field !pl-10" placeholder="john@example.com" value={customer.email || ''} onChange={e => setCustomer({ ...customer, email: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="form-label">Social Media</label>
+                                    <input className="input-field" placeholder="@username" value={customer.instaid || ''} onChange={e => setCustomer({ ...customer, instaid: e.target.value })} />
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="form-label">Date of Birth</label>
+                                    <div className="relative group/date">
+                                        <input type="date" className="input-field pr-8" max={new Date().toISOString().split("T")[0]} value={customer.dateOfBirth || ''} onChange={e => setCustomer({ ...customer, dateOfBirth: e.target.value })} />
+                                        {customer.dateOfBirth && (
+                                            <button type="button" onClick={() => setCustomer({ ...customer, dateOfBirth: '' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--danger)]">
+                                                <X size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="form-label">Anniversary</label>
+                                    <div className="relative group/date">
+                                        <input type="date" className="input-field pr-8" max={new Date().toISOString().split("T")[0]} value={customer.marriageDate || ''} onChange={e => setCustomer({ ...customer, marriageDate: e.target.value })} />
+                                        {customer.marriageDate && (
+                                            <button type="button" onClick={() => setCustomer({ ...customer, marriageDate: '' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--danger)]">
+                                                <X size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="form-label">Profession</label>
+                                    <select className="input-field h-[38px]" value={customer.profession || ''} onChange={e => setCustomer({ ...customer, profession: e.target.value })}>
+                                        <option value="">Select Profession</option>
+                                        {getOpt('PROFESSIONS').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="form-label">Type</label>
+                                    <select className="input-field" value={customer.customerType || 'Lead'} onChange={e => setCustomer({ ...customer, customerType: e.target.value })}>
+                                        <option value="Lead">Lead</option>
+                                        <option value="Customer">Customer</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-dashed" style={{ borderColor: 'var(--border)' }}>
+                                <label className="form-label mb-2">Referral Information</label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <select className="input-field h-[38px]" value={customer.referredBy || ''} onChange={e => setCustomer({ ...customer, referredBy: e.target.value })}>
+                                        <option value="">Select Referral Source</option>
+                                        {getOpt('REFERRAL_SOURCES').map((o, i) => <option key={o.value || i} value={o.value}>{o.label}</option>)}
+                                    </select>
+                                    <input className="input-field" placeholder="Referrer Name / Details" value={customer.referredByName || ''} onChange={e => setCustomer({ ...customer, referredByName: e.target.value })} />
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-dashed" style={{ borderColor: 'var(--border)' }}>
+                                <label className="form-label mb-2 flex items-center gap-2">
+                                    <MapPin size={12} /> Address
+                                </label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                    <input className="input-field md:col-span-2" placeholder="Street Address / Area" value={customer.address || ''} onChange={e => setCustomer({ ...customer, address: e.target.value })} />
+                                    <input className="input-field" placeholder="Landmark" value={customer.landMark || ''} onChange={e => setCustomer({ ...customer, landMark: e.target.value })} />
+                                    <input className="input-field" placeholder="District" value={customer.district || ''} onChange={e => setCustomer({ ...customer, district: e.target.value })} />
+                                    <input className="input-field" placeholder="State" value={customer.state || ''} onChange={e => setCustomer({ ...customer, state: e.target.value })} />
+                                    <input className="input-field" placeholder="Country" value={customer.country || ''} onChange={e => setCustomer({ ...customer, country: e.target.value })} />
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Enquiry Details Section */}
