@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Filter, Plus, X } from 'lucide-react';
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
+import { Filter, Plus, X, Search } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../context/ToastContext';
 import Modal from './Modal';
@@ -13,6 +13,57 @@ const CarEditModal = ({ isOpen, onClose, car, onSave, restrictedMode = false }) 
     
     const [currentCar, setCurrentCar] = useState(null);
     const [submitting, setSubmitting] = useState(false);
+
+    // Registration autocomplete state
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const searchTimerRef = useRef(null);
+    const dropdownRef = useRef(null);
+
+    // Debounced search for registration number autocomplete
+    const searchRegistration = useCallback((query) => {
+        if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+        if (!query || query.length < 2) {
+            setSearchResults([]);
+            setShowDropdown(false);
+            return;
+        }
+        searchTimerRef.current = setTimeout(async () => {
+            setIsSearching(true);
+            try {
+                const res = await api.get('/cars/search', { params: { q: query, excludeSold: 'true' } });
+                setSearchResults(res.data || []);
+                setShowDropdown((res.data || []).length > 0);
+            } catch (err) {
+                console.error('Registration search error:', err);
+                setSearchResults([]);
+            } finally {
+                setIsSearching(false);
+            }
+        }, 300);
+    }, []);
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setShowDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Handle selecting a vehicle from autocomplete dropdown
+    const handleSelectVehicle = (vehicle) => {
+        setCurrentCar({ ...vehicle });
+        setShowDropdown(false);
+        setSearchResults([]);
+        // Reset manual entry states since we're loading an existing vehicle
+        setManualEntry({ make: false, carType: false, model: false, variant: false });
+        setNewMasterValues({ make: '', carType: '', model: '', modelTypeId: '', variant: '' });
+    };
     
     // Manual Entry States (for adding new master data)
     const [manualEntry, setManualEntry] = useState({
@@ -39,6 +90,10 @@ const CarEditModal = ({ isOpen, onClose, car, onSave, restrictedMode = false }) 
             // Reset manual states
             setManualEntry({ make: false, carType: false, model: false, variant: false });
             setNewMasterValues({ make: '', carType: '', model: '', variant: '' });
+            // Reset autocomplete states
+            setSearchResults([]);
+            setShowDropdown(false);
+            setIsSearching(false);
         }
     }, [car, isOpen]);
 
@@ -157,19 +212,57 @@ const CarEditModal = ({ isOpen, onClose, car, onSave, restrictedMode = false }) 
             <form onSubmit={handleSave} className="space-y-8">
                 <fieldset disabled={user?.role === 'SALES_REP' && !restrictedMode} className="space-y-8">
                     <div className="grid grid-cols-2 gap-6">
-                        <div className="col-span-2 md:col-span-1 space-y-2">
+                        <div className="col-span-2 md:col-span-1 space-y-2" ref={dropdownRef} style={{ position: 'relative' }}>
                             <label className="form-label">Registration Number</label>
-                            <input
-                                type="text"
-                                placeholder="MH12AB1234"
-                                className="input-field uppercase font-bold"
-                                disabled={restrictedMode}
-                                value={currentCar?.registrationNumber || ''}
-                                onChange={(e) => {
-                                    const val = e.target.value.toUpperCase().replace(/\s+/g, '');
-                                    setCurrentCar({ ...currentCar, registrationNumber: val });
-                                }}
-                            />
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="MH12AB1234"
+                                    className="input-field uppercase font-bold pr-10"
+                                    disabled={restrictedMode || !!currentCar?.carId}
+                                    value={currentCar?.registrationNumber || ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value.toUpperCase().replace(/\s+/g, '');
+                                        setCurrentCar({ ...currentCar, registrationNumber: val });
+                                        // Only trigger autocomplete for new vehicles (no carId)
+                                        if (!currentCar?.carId) {
+                                            searchRegistration(val);
+                                        }
+                                    }}
+                                    autoComplete="off"
+                                />
+                                {isSearching && (
+                                    <div className="absolute inset-y-0 right-3 flex items-center">
+                                        <div className="w-4 h-4 border-2 border-slate-300 border-t-indigo-500 rounded-full animate-spin"></div>
+                                    </div>
+                                )}
+                                {!isSearching && !currentCar?.carId && (
+                                    <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                        <Search size={14} className="text-[var(--text-muted)]" />
+                                    </div>
+                                )}
+                            </div>
+                            {/* Autocomplete Dropdown */}
+                            {showDropdown && searchResults.length > 0 && !currentCar?.carId && (
+                                <div className="absolute z-50 left-0 right-0 mt-1 bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl shadow-lg max-h-60 overflow-y-auto" style={{ top: '100%' }}>
+                                    {searchResults.map((vehicle) => (
+                                        <button
+                                            key={vehicle.carId}
+                                            type="button"
+                                            className="w-full text-left px-4 py-3 hover:bg-[var(--bg-secondary)] transition-colors border-b border-[var(--border)] last:border-b-0 flex items-center justify-between gap-3"
+                                            onClick={() => handleSelectVehicle(vehicle)}
+                                        >
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="font-bold text-sm text-[var(--text-primary)] uppercase tracking-wide">{vehicle.registrationNumber}</span>
+                                                <span className="text-[10px] text-[var(--text-muted)] truncate">{vehicle.make} {vehicle.model} {vehicle.variant ? `• ${vehicle.variant}` : ''}</span>
+                                            </div>
+                                            <span className="shrink-0 rounded-full px-3 py-0.5 text-[9px] font-bold uppercase tracking-widest border bg-amber-50 text-amber-700 border-amber-200">
+                                                {vehicle.inventoryStatus}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                         <div className="col-span-2 md:col-span-1 space-y-2">
                             <label className="form-label">Inventory Status</label>
